@@ -289,6 +289,57 @@
             border-color: var(--accent);
         }
 
+        .ref-table {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .ref-row {
+            display: contents;
+        }
+
+        .ref-row span {
+            background: var(--input-bg);
+            padding: 10px 14px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--muted);
+        }
+
+        .ref-row span:last-child {
+            color: var(--accent2);
+            text-align: right;
+        }
+
+        .ref-row:first-child span:first-child {
+            border-radius: 10px 0 0 0;
+        }
+
+        .ref-row:first-child span:last-child {
+            border-radius: 0 10px 0 0;
+        }
+
+        .ref-row:last-child span:first-child {
+            border-radius: 0 0 0 10px;
+        }
+
+        .ref-row:last-child span:last-child {
+            border-radius: 0 0 10px 0;
+        }
+
+        .ref-header span {
+            background: var(--border);
+            color: var(--muted);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
         footer {
             text-align: center;
             margin-top: 28px;
@@ -335,6 +386,19 @@
         </div>
     </div>
 
+    <!-- QUICK REFERENCE -->
+    <div class="card">
+        <div class="card-header" data-target="card-reference">
+            <span class="dot"></span> Quick Reference
+            <span class="card-summary" id="summary-reference"></span>
+        </div>
+        <div class="card-body" id="card-reference">
+            <div class="card-body-inner">
+                <div class="ref-table" id="reference-table"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- COST -->
     <div class="card">
         <div class="card-header" data-target="card-cost">
@@ -351,7 +415,7 @@
                     <div class="arrow-label">→</div>
                     <div class="input-group">
                         <label id="to-label">Dollars (USD)</label>
-                        <input type="number" class="big-input output" id="cost-to-val" placeholder="—" readonly>
+                        <input class="big-input output" id="cost-to-val" placeholder="—" readonly>
                     </div>
                 </div>
                 <div class="input-row">
@@ -506,6 +570,8 @@
         const rateHintOutput = document.getElementById('rate-hint');
         const rateRefreshButton = document.getElementById('rate-refresh');
 
+        const referenceAmounts = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000];
+
         const costSummaryOutput = document.getElementById('summary-cost');
         const costInput = document.getElementById('cost-from-val');
         const costOutput = document.getElementById('cost-to-val');
@@ -538,7 +604,7 @@
 
         let lastCost = null;
         let lastBillCurrency = 'mxn';
-        let lastBillPercent = null; // tracks current tip %
+        let lastBillPercent = null;
 
         // RATE
 
@@ -581,6 +647,30 @@
                 });
         }
 
+        // REFERENCE
+
+        function buildReferenceTable() {
+            const table = document.getElementById('reference-table');
+            table.innerHTML = `
+        <div class="ref-row ref-header">
+            <span>MXN</span>
+            <span>USD</span>
+        </div>
+        ${referenceAmounts.map(amount => `
+        <div class="ref-row">
+            <span>$${amount.toLocaleString()}</span>
+            <span class="ref-usd" data-pesos="${amount}">—</span>
+        </div>`).join('')}
+    `;
+        }
+
+        function updateReferenceTable() {
+            document.querySelectorAll('.ref-usd').forEach(cell => {
+                const pesos = parseFloat(cell.dataset.pesos);
+                cell.textContent = '$' + format(pesos / getRate());
+            });
+        }
+
         // COST
 
         function calcCost() {
@@ -600,7 +690,7 @@
                 costTotalOutput.value = '';
                 return;
             }
-            costOutput.value = format(lastCost).replace(/,/g, '');
+            costOutput.value = '$' + format(lastCost);
             const total = lastCost * getCostQuantity();
             costTotalOutput.value = '$' + format(total);
             updateSummary(costSummaryOutput, '$' + format(total) + ' USD');
@@ -622,8 +712,8 @@
                 return;
             }
             const totalMxn = perKg * kg;
-            const totalUsd = '$' + format(totalMxn / getRate()).replace(/,/g, '');
-            marketTotal1Output.value = '$' + format(totalMxn).replace(/,/g, '');
+            const totalUsd = '$' + format(totalMxn / getRate());
+            marketTotal1Output.value = '$' + format(totalMxn);
             marketTotal2Output.value = totalUsd;
             updateSummary(marketSummaryOutput, totalUsd + ' USD');
         }
@@ -652,7 +742,7 @@
 
             // sync bill fields
             let total1, total2;
-            if (lastBillCurrency != 'usd') {
+            if (lastBillCurrency !== 'usd') {
                 total1 = parseFloat(bill1Input.value);
                 if (!isNaN(total1) && bill1Input.value !== '') {
                     total2 = total1 / rate;
@@ -713,6 +803,7 @@
 
         function refresh() {
             updateSummary(rateSummaryOutput, '$' + getRate() + " MXN");
+            updateReferenceTable();
             calcCost();
             calcMarket();
             calcBill();
@@ -786,6 +877,7 @@
             calcBill();
         });
 
+        buildReferenceTable();
         fetchRate();
 
     </script>
