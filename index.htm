@@ -249,6 +249,35 @@ header p {
     background: #2a7aaa;
 }
 
+.tip-presets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.preset-btn {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--muted);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.preset-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.preset-custom.active {
+  border-color: var(--accent);
+}
+
 footer {
     text-align: center;
     margin-top: 28px;
@@ -360,6 +389,70 @@ footer {
             </div>
         </div>
     </div>
+</div>
+
+<!-- TIP -->
+<div class="card">
+  <div class="card-header" data-target="card-tip">
+    <span class="dot"></span> Tip Calculator
+    <span class="card-summary" id="summary-tip"></span>
+  </div>
+  <div class="card-body" id="card-tip">
+    <div class="card-body-inner">
+
+      <!-- Row 1: Bill amount -->
+      <div class="input-row">
+        <div class="input-group">
+          <label>Bill (MXN)</label>
+          <input type="number" class="big-input" id="tip-bill-mxn" placeholder="0" min="0" step="any">
+        </div>
+        <div class="arrow-label">⇄</div>
+        <div class="input-group">
+          <label>Bill (USD)</label>
+          <input type="number" class="big-input" id="tip-bill-usd" placeholder="0" min="0" step="any">
+        </div>
+      </div>
+
+      <!-- Row 2: Tip presets -->
+      <div class="tip-presets">
+        <button class="preset-btn" data-pct="10">10%</button>
+        <button class="preset-btn" data-pct="15">15%</button>
+        <button class="preset-btn" data-pct="20">20%</button>
+        <input type="number" class="big-input preset-custom" id="tip-pct" placeholder="%" min="0" max="100">
+      </div>
+
+      <!-- Row 3: People -->
+      <div class="input-row">
+        <div class="input-group">
+          <label>Split between</label>
+          <div class="qty-controls">
+            <button class="qty-btn" id="tip-people-minus">−</button>
+            <input type="number" class="big-input big-input-inner" id="tip-people" value="1" min="1">
+            <button class="qty-btn" id="tip-people-plus">+</button>
+          </div>
+        </div>
+        <div class="arrow-label"></div>
+        <div class="input-group">
+          <label>&nbsp;</label>
+          <div class="big-input output" id="tip-people-label">1 person</div>
+        </div>
+      </div>
+
+      <!-- Row 4: Tip outputs -->
+      <div class="input-row">
+        <div class="input-group">
+          <label>Tip (MXN)</label>
+          <input class="big-input output" id="tip-out-mxn" placeholder="—" readonly>
+        </div>
+        <div class="arrow-label">→</div>
+        <div class="input-group">
+          <label>Tip (USD)</label>
+          <input class="big-input output" id="tip-out-usd" placeholder="—" readonly>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <footer>
