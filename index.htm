@@ -130,6 +130,15 @@
             pointer-events: none;
         }
 
+        .content-row {
+            display: flex;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+            justify-content: space-between;
+        }
+
         .input-row {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
@@ -192,22 +201,22 @@
             background: var(--border);
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 30px;
+            height: 30px;
             cursor: pointer;
             color: var(--muted);
-            font-size: 1rem;
             transition: background 0.2s, color 0.2s, transform 0.3s;
             flex-shrink: 0;
-            margin-top: 22px;
         }
 
         .btn-round:hover {
             background: var(--accent);
             color: var(--bg);
+        }
+
+        .btn-round:disabled {
+            opacity: 0.4;
+            cursor: default;
         }
 
         .arrow-label {
@@ -318,7 +327,10 @@
                     <label>MXN per $1 USD</label>
                     <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
                 </div>
-                <div id="hint-rate">Fetching live rate…</div>
+                <div class="content-row">
+                    <div class="rate-hint" id="rate-hint">Fetching live rate…</div>
+                    <button class="btn-round" id="rate-refresh" title="Refresh rate">↻</button>
+                </div>
             </div>
         </div>
     </div>
@@ -434,7 +446,8 @@
                     <button class="preset-btn" data-pct="10">10%</button>
                     <button class="preset-btn" data-pct="15">15%</button>
                     <button class="preset-btn" data-pct="20">20%</button>
-                    <input type="number" class="big-input preset-custom" id="bill-tip-custom" placeholder="%" min="0" max="100">
+                    <input type="number" class="big-input preset-custom" id="bill-tip-custom" placeholder="%" min="0"
+                        max="100">
                 </div>
 
                 <!-- Tip -->
@@ -490,7 +503,8 @@
 
         const rateSummaryOutput = document.getElementById('summary-rate');
         const rateInput = document.getElementById('rate');
-        const rateHintOutput = document.getElementById('hint-rate');
+        const rateHintOutput = document.getElementById('rate-hint');
+        const rateRefreshButton = document.getElementById('rate-refresh');
 
         const costSummaryOutput = document.getElementById('summary-cost');
         const costInput = document.getElementById('cost-from-val');
@@ -534,6 +548,7 @@
 
         function fetchRate() {
             rateHintOutput.textContent = 'Fetching live rate…';
+            rateRefreshButton.disabled = true;
 
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 5000);
@@ -551,15 +566,18 @@
                         day: 'numeric',
                         year: 'numeric'
                     });
-                    rateHintOutput.textContent = `Live rate as of ${date} · ECB · Editable`;
+                    rateHintOutput.textContent = `Live rate as of ${date} · European Central Bank`;
                     refresh();
                 })
                 .catch(err => {
                     clearTimeout(timeout);
                     const msg = err.name === 'AbortError' ?
-                        'Request timed out · using fallback · Editable' :
-                        'Could not fetch live rate · using fallback · Editable';
+                        'Request timed out · using fallback' :
+                        'Could not fetch live rate · using fallback';
                     rateHintOutput.textContent = msg;
+                })
+                .finally(() => {
+                    rateRefreshButton.disabled = false;
                 });
         }
 
@@ -630,7 +648,7 @@
             const people = getTipPeople();
             const pct = lastBillPercent;
 
-            billSubtotalElement.style.display = people > 1 ? 'grid' : 'none';            
+            billSubtotalElement.style.display = people > 1 ? 'grid' : 'none';
 
             // sync bill fields
             let total1, total2;
@@ -731,6 +749,7 @@
         });
 
         rateInput.addEventListener('input', refresh);
+        rateRefreshButton.addEventListener('click', fetchRate);
 
         costQuantityMinusButton.addEventListener('click', () => {
             if (getCostQuantity() > 1) { costQuantityInput.value = getCostQuantity() - 1; updateCost(); }
@@ -767,8 +786,7 @@
             calcBill();
         });
 
-        //fetchRate();
-        refresh();
+        fetchRate();
 
     </script>
 </body>
