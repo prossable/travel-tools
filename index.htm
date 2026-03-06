@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MX Converter</title>
+<title>Travel Tools</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -24,11 +24,11 @@
 }
 
 body {
-    background: var(--bg);
-    color: var(--text);
     font-family: 'Roboto Mono', monospace;
     font-weight: 700;
-    font-size: 0.6rem;
+    font-size: 0.7rem;
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
     padding: 24px 16px 48px;
     color: var(--muted);
@@ -95,11 +95,11 @@ header p {
 }
 
 .card-summary {
-  margin-left: auto;
-  margin-right: 8px;
-  opacity: 1;
-  transition: opacity 0.2s;
-  color: var(--accent);
+    margin-left: auto;
+    margin-right: 8px;
+    opacity: 1;
+    transition: opacity 0.2s;
+    color: var(--accent);
 }
 
 .card-body {
@@ -362,29 +362,30 @@ footer {
 <div class="card">
     <div class="card-header" data-target="card-market">
         <span class="dot"></span> Market Weight
+        <span class="card-summary" id="summary-market"></span>
     </div>
     <div class="card-body" id="card-market">
         <div class="card-body-inner">
             <div class="input-row">
                 <div class="input-group">
                     <label>Pesos / kg</label>
-                    <input type="number" class="big-input" id="mxn-per-kg" placeholder="0" min="0" step="any">
+                    <input type="number" class="big-input" id="market-rate" placeholder="0" min="0" step="any">
                 </div>
                 <div class="arrow-label">×</div>
                 <div class="input-group">
                     <label>Kilograms</label>
-                    <input type="number" class="big-input" id="wt-kg" placeholder="0" min="0" step="any">
+                    <input type="number" class="big-input" id="market-kg" placeholder="0" min="0" step="any">
                 </div>
             </div>
             <div class="input-row">
                 <div class="input-group">
                     <label>Total (MXN)</label>
-                    <input class="big-input output" id="wt-mxn-total" placeholder="—" readonly>
+                    <input class="big-input output" id="market-total1" placeholder="—" readonly>
                 </div>
                 <div class="arrow-label">→</div>
                 <div class="input-group">
                     <label>Total (USD)</label>
-                    <input class="big-input output" id="wt-usd-total" placeholder="—" readonly>
+                    <input class="big-input output" id="market-total2" placeholder="—" readonly>
                 </div>
             </div>
         </div>
@@ -458,21 +459,23 @@ footer {
 // VARS
 const cards = document.querySelectorAll('.card');
 
+const rateSummary = document.getElementById('summary-rate');
 const rateInput = document.getElementById('rate');
 const rateHint = document.getElementById('hint-rate');
-const rateSummary = document.getElementById('summary-rate');
 
+const costSummary = document.getElementById('summary-cost');
 const costFromVal = document.getElementById('cost-from-val');
 const costToVal = document.getElementById('cost-to-val');
-const costQtyMinus = document.getElementById('cost-qty-minus');
-const costQtyPlus = document.getElementById('cost-qty-plus');
-const costQtyVal = document.getElementById('cost-qty-val');
-const costQtyTotal = document.getElementById('cost-qty-total');
+const costQuantityMinus = document.getElementById('cost-qty-minus');
+const costQuantityPlus = document.getElementById('cost-qty-plus');
+const costQuantityVal = document.getElementById('cost-qty-val');
+const costQuantityTotal = document.getElementById('cost-qty-total');
 
-const mxnPerKg = document.getElementById('mxn-per-kg');
-const wtKg = document.getElementById('wt-kg');
-const wtMxnTotal = document.getElementById('wt-mxn-total');
-const wtUsdTotal = document.getElementById('wt-usd-total');
+const marketSummary = document.getElementById('summary-market');
+const marketRate = document.getElementById('market-rate');
+const marketKg = document.getElementById('market-kg');
+const marketTotal1 = document.getElementById('market-total1');
+const marketTotal2 = document.getElementById('market-total2');
 
 const tipBillMxn = document.getElementById('tip-bill-mxn');
 const tipBillUsd = document.getElementById('tip-bill-usd');
@@ -485,7 +488,7 @@ const tipPeoplePlus = document.getElementById('tip-people-plus');
 const presetBtns = document.querySelectorAll('.preset-btn');
 const summaryTip = document.getElementById('summary-tip');
 
-let lastConvertedUnit = null;
+let lastCost = null;
 let tipLastEdited = 'mxn';
 let activePct = null; // tracks current tip %
 
@@ -549,49 +552,46 @@ function fetchRate() {
 function calcCost() {
     const v = parseFloat(costFromVal.value);
     if (isNaN(v) || costFromVal.value === '') {
+        lastCost = null;
+        updateCost();
+        return;
+    }
+    lastCost = v / getRate();
+    updateCost();
+}
+
+function updateCost() {
+    if (lastCost === null) {
         costToVal.value = '';
-        lastConvertedUnit = null;
-        updateQtyTotal();
+        costQuantityTotal.value = '';
         return;
     }
-    const result = v / getRate();
-    costToVal.value = fmt(result).replace(/,/g, '');
-    lastConvertedUnit = result;
-    updateQtyTotal();
+    costToVal.value = format(lastCost).replace(/,/g, '');
+    const total = lastCost * getCostQuantity();
+    costQuantityTotal.value = '$' + format(total);
+    updateSummary(costSummary, '$' + format(total) + ' USD');
 }
 
-function getQty() {
-    return Math.max(1, parseInt(costQtyVal.value) || 1);
+function getCostQuantity() {
+    return Math.max(1, parseInt(costQuantityVal.value) || 1);
 }
 
-function fmt(n, decimals = 2) {
-    if (isNaN(n) || !isFinite(n)) return '—';
-    return n.toLocaleString('en-US', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    });
-}
+// MARKET
 
-function updateQtyTotal() {
-    if (lastConvertedUnit === null) {
-        costQtyTotal.value = '';
-        return;
-    }
-    const total = lastConvertedUnit * getQty();
-    costQtyTotal.value = '$' + fmt(total);
-}
-
-function calcWeight() {
-    const perKg = parseFloat(mxnPerKg.value);
-    const kg = parseFloat(wtKg.value);
-    if (isNaN(perKg) || isNaN(kg) || mxnPerKg.value === '' || wtKg.value === '') {
-        wtMxnTotal.value = '';
-        wtUsdTotal.value = '';
+function calcMarket() {
+    const perKg = parseFloat(marketRate.value);
+    const kg = parseFloat(marketKg.value);
+    if (isNaN(perKg) || isNaN(kg) || marketRate.value === '' || marketKg.value === '') {
+        marketTotal1.value = '';
+        marketTotal2.value = '';
+        updateSummary(marketSummary, '');
         return;
     }
     const totalMxn = perKg * kg;
-    wtMxnTotal.value = fmt(totalMxn).replace(/,/g, '');
-    wtUsdTotal.value = fmt(totalMxn / getRate()).replace(/,/g, '');
+    const totalUsd = '$' + format(totalMxn / getRate()).replace(/,/g, '');
+    marketTotal1.value = '$' + format(totalMxn).replace(/,/g, '');
+    marketTotal2.value = totalUsd;
+    updateSummary(marketSummary, totalUsd + ' USD');
 }
 
 // TIPS
@@ -649,7 +649,7 @@ function calcTip() {
   if (tipLastEdited === 'mxn') {
     billMxn = parseFloat(tipBillMxn.value);
     if (!isNaN(billMxn) && tipBillMxn.value !== '') {
-      tipBillUsd.value = fmt(billMxn / rate).replace(/,/g, '');
+      tipBillUsd.value = format(billMxn / rate).replace(/,/g, '');
     } else {
       tipBillUsd.value = '';
     }
@@ -657,7 +657,7 @@ function calcTip() {
     const billUsd = parseFloat(tipBillUsd.value);
     if (!isNaN(billUsd) && tipBillUsd.value !== '') {
       billMxn = billUsd * rate;
-      tipBillMxn.value = fmt(billMxn, 0).replace(/,/g, '');
+      tipBillMxn.value = format(billMxn, 0).replace(/,/g, '');
     } else {
       billMxn = NaN;
       tipBillMxn.value = '';
@@ -678,23 +678,31 @@ function calcTip() {
   const perUsd      = tipTotalUsd / people;
 
   if (people > 1) {
-    tipOutMxn.value = `${fmt(perMxn)} (${fmt(tipTotalMxn)})`;
-    tipOutUsd.value = `${fmt(perUsd)} (${fmt(tipTotalUsd)})`;
-    updateSummary(summaryTip, `$${fmt(perUsd)}/person`);
+    tipOutMxn.value = `${format(perMxn)} (${format(tipTotalMxn)})`;
+    tipOutUsd.value = `${format(perUsd)} (${format(tipTotalUsd)})`;
+    updateSummary(summaryTip, `$${format(perUsd)}/person`);
   } else {
-    tipOutMxn.value = fmt(tipTotalMxn);
-    tipOutUsd.value = fmt(tipTotalUsd);
-    updateSummary(summaryTip, `$${fmt(tipTotalUsd)}`);
+    tipOutMxn.value = format(tipTotalMxn);
+    tipOutUsd.value = format(tipTotalUsd);
+    updateSummary(summaryTip, `$${format(tipTotalUsd)}`);
   }
 }
 
 // GLOBAL
 
 function refresh() {
-    updateSummary(rateSummary, getRate() + " MXN");
+    updateSummary(rateSummary, '$' + getRate() + " MXN");
     calcCost();
-    calcWeight();
+    calcMarket();
     calcTip();
+}
+
+function format(n, decimals = 2) {
+    if (isNaN(n) || !isFinite(n)) return '—';
+    return n.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
 }
 
 function updateSummary(summaryEl, value) {
@@ -703,21 +711,21 @@ function updateSummary(summaryEl, value) {
 
 // LISTENERS
 
-costQtyMinus.addEventListener('click', () => {
-    if (getQty() > 1) {
-        costQtyVal.value = getQty() - 1;
-        updateQtyTotal();
+rateInput.addEventListener('input', refresh);
+costQuantityMinus.addEventListener('click', () => {
+    if (getCostQuantity() > 1) {
+        costQuantityVal.value = getCostQuantity() - 1;
+        updateCost();
     }
 });
-costQtyPlus.addEventListener('click', () => {
-    costQtyVal.value = getQty() + 1;
-    updateQtyTotal();
+costQuantityPlus.addEventListener('click', () => {
+    costQuantityVal.value = getCostQuantity() + 1;
+    updateCost();
 });
-costQtyVal.addEventListener('input', updateQtyTotal);
-rateInput.addEventListener('input', refresh);
+costQuantityVal.addEventListener('input', updateCost);
 costFromVal.addEventListener('input', calcCost);
-mxnPerKg.addEventListener('input', calcWeight);
-wtKg.addEventListener('input', calcWeight);
+marketRate.addEventListener('input', calcMarket);
+marketKg.addEventListener('input', calcMarket);
 
 fetchRate();
 
