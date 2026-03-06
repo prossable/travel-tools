@@ -460,145 +460,194 @@ footer {
 </footer>
 
 <script>
-  const rateInput     = document.getElementById('rate');
-  const fromVal       = document.getElementById('from-val');
-  const toVal         = document.getElementById('to-val');
-  const flipBtn       = document.getElementById('flip-btn');
-  const fromLabel     = document.getElementById('from-label');
-  const toLabel       = document.getElementById('to-label');
-  const convDir       = document.getElementById('conv-direction');
-  const qtyMinus      = document.getElementById('qty-minus');
-  const qtyPlus       = document.getElementById('qty-plus');
-  const qtyValEl      = document.getElementById('qty-val');
-  const qtyTotal      = document.getElementById('qty-total');
-  const qtyTotalLabel = document.getElementById('qty-total-label');
-  const mxnPerKg      = document.getElementById('mxn-per-kg');
-  const wtKg          = document.getElementById('wt-kg');
-  const wtMxnTotal    = document.getElementById('wt-mxn-total');
-  const wtUsdTotal    = document.getElementById('wt-usd-total');
-  const rateHint      = document.getElementById('rate-hint');
-  const summaryRate   = document.getElementById('summary-rate');
-  const cards         = document.querySelectorAll('.card');
+const cards = document.querySelectorAll('.card');
+const rateInput = document.getElementById('rate');
+const fromVal = document.getElementById('from-val');
+const toVal = document.getElementById('to-val');
+const flipBtn = document.getElementById('flip-btn');
+const fromLabel = document.getElementById('from-label');
+const toLabel = document.getElementById('to-label');
+const convDir = document.getElementById('conv-direction');
+const qtyMinus = document.getElementById('qty-minus');
+const qtyPlus = document.getElementById('qty-plus');
+const qtyValEl = document.getElementById('qty-val');
+const qtyTotal = document.getElementById('qty-total');
+const qtyTotalLabel = document.getElementById('qty-total-label');
+const mxnPerKg = document.getElementById('mxn-per-kg');
+const wtKg = document.getElementById('wt-kg');
+const wtMxnTotal = document.getElementById('wt-mxn-total');
+const wtUsdTotal = document.getElementById('wt-usd-total');
+const rateHint = document.getElementById('rate-hint');
+const summaryRate = document.getElementById('summary-rate');
+const tipBillMxn = document.getElementById('tip-bill-mxn');
 
-  let mode = 'mxn-to-usd';
-  let lastConvertedUnit = null;
+const tipBillUsd = document.getElementById('tip-bill-usd');
+const tipPct = document.getElementById('tip-pct');
+const tipPeoplEl = document.getElementById('tip-people');
+const tipPeopleLabel = document.getElementById('tip-people-label');
+const tipOutMxn = document.getElementById('tip-out-mxn');
+const tipOutUsd = document.getElementById('tip-out-usd');
+const tipPeopleMinus = document.getElementById('tip-people-minus');
+const tipPeoplePlus = document.getElementById('tip-people-plus');
+const presetBtns = document.querySelectorAll('.preset-btn');
+const summaryTip = document.getElementById('summary-tip');
 
-  function getRate() { return parseFloat(rateInput.value) || 17.57; }
-  function getQty()  { return Math.max(1, parseInt(qtyValEl.value) || 1); }
+let mode = 'mxn-to-usd';
+let lastConvertedUnit = null;
+let tipLastEdited = 'mxn';
+let activePct = null; // tracks current tip %
 
-  function fmt(n, decimals = 2) {
+function getRate() {
+    return parseFloat(rateInput.value) || 17.57;
+}
+
+function getQty() {
+    return Math.max(1, parseInt(qtyValEl.value) || 1);
+}
+
+function updateFromRate() {
+    calcCurrency();
+    calcWeight();
+    calcTip();
+}
+
+function fmt(n, decimals = 2) {
     if (isNaN(n) || !isFinite(n)) return '—';
-    return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-  }
+    return n.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    });
+}
 
-  function updateQtyTotal() {
-    if (lastConvertedUnit === null) { qtyTotal.value = ''; return; }
+function updateQtyTotal() {
+    if (lastConvertedUnit === null) {
+        qtyTotal.value = '';
+        return;
+    }
     const total = lastConvertedUnit * getQty();
     qtyTotal.value = '$' + (mode === 'mxn-to-usd' ? fmt(total) : fmt(total, 0));
-  }
+}
 
-  function calcCurrency() {
+function calcCurrency() {
     const v = parseFloat(fromVal.value);
     if (isNaN(v) || fromVal.value === '') {
-      toVal.value = '';
-      lastConvertedUnit = null;
-      updateQtyTotal();
-      return;
+        toVal.value = '';
+        lastConvertedUnit = null;
+        updateQtyTotal();
+        return;
     }
     const result = mode === 'mxn-to-usd' ? v / getRate() : v * getRate();
     toVal.value = fmt(result).replace(/,/g, '');
     lastConvertedUnit = result;
     updateQtyTotal();
-  }
+}
 
-  function calcWeight() {
+function calcWeight() {
     const perKg = parseFloat(mxnPerKg.value);
-    const kg    = parseFloat(wtKg.value);
+    const kg = parseFloat(wtKg.value);
     if (isNaN(perKg) || isNaN(kg) || mxnPerKg.value === '' || wtKg.value === '') {
-      wtMxnTotal.value = '';
-      wtUsdTotal.value = '';
-      return;
+        wtMxnTotal.value = '';
+        wtUsdTotal.value = '';
+        return;
     }
     const totalMxn = perKg * kg;
     wtMxnTotal.value = fmt(totalMxn).replace(/,/g, '');
     wtUsdTotal.value = fmt(totalMxn / getRate()).replace(/,/g, '');
-  }
+}
 
-  function fetchRate() {
+function fetchRate() {
     rateHint.textContent = 'Fetching live rate…';
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', { signal: controller.signal })
-      .then(r => r.json())
-      .then(data => {
-        clearTimeout(timeout);
-        const live = data.rates.MXN;
-        rateInput.value = live.toFixed(2);
-        const date = new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        rateHint.textContent = `Live rate as of ${date} · ECB · Editable`;
-        updateSummary(summaryRate, live.toFixed(2));
-        calcCurrency();
-        calcWeight();
-      })
-      .catch(err => {
-        clearTimeout(timeout);
-        const msg = err.name === 'AbortError'
-          ? 'Request timed out · using fallback · Editable'
-          : 'Could not fetch live rate · using fallback · Editable';
-        rateHint.textContent = msg;
-      });
-  }
-
-function updateSummary(summaryEl, value) {
-  if (summaryEl) summaryEl.textContent = value;
+    fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
+            signal: controller.signal
+        })
+        .then(r => r.json())
+        .then(data => {
+            clearTimeout(timeout);
+            const live = data.rates.MXN;
+            rateInput.value = live.toFixed(2);
+            const date = new Date(data.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            rateHint.textContent = `Live rate as of ${date} · ECB · Editable`;
+            updateSummary(summaryRate, live.toFixed(2));
+            calcCurrency();
+            calcWeight();
+        })
+        .catch(err => {
+            clearTimeout(timeout);
+            const msg = err.name === 'AbortError' ?
+                'Request timed out · using fallback · Editable' :
+                'Could not fetch live rate · using fallback · Editable';
+            rateHint.textContent = msg;
+        });
 }
 
-  flipBtn.addEventListener('click', () => {
+function updateSummary(summaryEl, value) {
+    if (summaryEl) summaryEl.textContent = value;
+}
+
+flipBtn.addEventListener('click', () => {
     const currentVal = parseFloat(toVal.value);
     if (mode === 'mxn-to-usd') {
-      mode = 'usd-to-mxn';
-      fromLabel.textContent = 'Dollars (USD)';
-      toLabel.textContent = 'Pesos (MXN)';
-      convDir.textContent = 'Dollars → Pesos';
-      qtyTotalLabel.textContent = 'Total (MXN)';
+        mode = 'usd-to-mxn';
+        fromLabel.textContent = 'Dollars (USD)';
+        toLabel.textContent = 'Pesos (MXN)';
+        convDir.textContent = 'Dollars → Pesos';
+        qtyTotalLabel.textContent = 'Total (MXN)';
     } else {
-      mode = 'mxn-to-usd';
-      fromLabel.textContent = 'Pesos (MXN)';
-      toLabel.textContent = 'Dollars (USD)';
-      convDir.textContent = 'Pesos → Dollars';
-      qtyTotalLabel.textContent = 'Total (USD)';
+        mode = 'mxn-to-usd';
+        fromLabel.textContent = 'Pesos (MXN)';
+        toLabel.textContent = 'Dollars (USD)';
+        convDir.textContent = 'Pesos → Dollars';
+        qtyTotalLabel.textContent = 'Total (USD)';
     }
     fromVal.value = isNaN(currentVal) ? '' : currentVal;
     calcCurrency();
-  });
+});
 
-  qtyMinus.addEventListener('click', () => { if (getQty() > 1) { qtyValEl.value = getQty() - 1; updateQtyTotal(); } });
-  qtyPlus.addEventListener('click',  () => { qtyValEl.value = getQty() + 1; updateQtyTotal(); });
-  qtyValEl.addEventListener('input', updateQtyTotal);
-  rateInput.addEventListener('input', () => { updateSummary(summaryRate, rateInput.value); calcCurrency(); calcWeight(); });
-  fromVal.addEventListener('input', calcCurrency);
-  mxnPerKg.addEventListener('input', calcWeight);
-  wtKg.addEventListener('input', calcWeight);
+qtyMinus.addEventListener('click', () => {
+    if (getQty() > 1) {
+        qtyValEl.value = getQty() - 1;
+        updateQtyTotal();
+    }
+});
+qtyPlus.addEventListener('click', () => {
+    qtyValEl.value = getQty() + 1;
+    updateQtyTotal();
+});
+qtyValEl.addEventListener('input', updateQtyTotal);
+rateInput.addEventListener('input', () => {
+    updateSummary(summaryRate, rateInput.value);
+    calcCurrency();
+    calcWeight();
+});
+fromVal.addEventListener('input', calcCurrency);
+mxnPerKg.addEventListener('input', calcWeight);
+wtKg.addEventListener('input', calcWeight);
 
-  fetchRate();
+fetchRate();
 
 
 cards.forEach(card => {
-  card.addEventListener('click', () => {
-    const body = card.querySelector('.card-body');
-    const isOpen = body.classList.contains('open');
-    if (isOpen) return; // already open, do nothing
+    card.addEventListener('click', () => {
+        const body = card.querySelector('.card-body');
+        const isOpen = body.classList.contains('open');
+        if (isOpen) return; // already open, do nothing
 
-    // collapse all
-    document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
-    document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
+        // collapse all
+        document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
+        document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
 
-    // open this one
-    body.classList.add('open');
-    card.querySelector('.card-header').classList.add('active');
-  });
+        // open this one
+        body.classList.add('open');
+        card.querySelector('.card-header').classList.add('active');
+    });
 });
 
 </script>
