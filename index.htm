@@ -22,7 +22,8 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Syne', sans-serif;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
     min-height: 100vh;
     padding: 24px 16px 48px;
   }
@@ -34,18 +35,16 @@
   }
 
   header h1 {
+    font-family: 'Syne', sans-serif;
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: -0.5px;
     color: var(--text);
   }
 
-  header h1 span {
-    color: var(--accent);
-  }
+  header h1 span { color: var(--accent); }
 
   header p {
-    font-family: 'Roboto Mono', monospace;
     font-size: 0.7rem;
     color: var(--muted);
     margin-top: 4px;
@@ -66,12 +65,9 @@
     transition: border-color 0.2s;
   }
 
-  .card:focus-within {
-    border-color: #1e3a52;
-  }
+  .card:focus-within { border-color: #1e3a52; }
 
   .card-label {
-    font-family: 'Roboto Mono', monospace;
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -99,13 +95,40 @@
   }
 
   /* Rate card */
-  .input-row label {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-    white-space: nowrap;
+  .rate-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    gap: 8px;
   }
 
+  .rate-hint {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+  }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .refresh-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* Shared row grid */
   .input-row {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -118,10 +141,10 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    align-items: start;
   }
 
   .input-group label {
-    font-family: 'Roboto Mono', monospace;
     font-size: 0.62rem;
     color: var(--muted);
     text-transform: uppercase;
@@ -133,7 +156,6 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     color: var(--text);
-    font-family: 'Roboto Mono', monospace;
     font-size: 1.1rem;
     font-weight: 700;
     padding: 10px;
@@ -154,13 +176,10 @@
   .big-input::-webkit-outer-spin-button,
   .big-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 
-  .big-input:focus {
-    border-color: var(--accent);
-  }
+  .big-input:focus { border-color: var(--accent); }
 
   .big-input.output {
     color: var(--accent2);
-    border-color: transparent;
     background: rgba(58, 155, 213, 0.05);
     cursor: default;
     border: 1px solid rgba(58, 155, 213, 0.15);
@@ -197,20 +216,6 @@
     flex-shrink: 0;
   }
 
-  footer {
-    text-align: center;
-    margin-top: 28px;
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.6rem;
-    color: #1e2e3e;
-    letter-spacing: 0.06em;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  /* Quantity row */
-
   .qty-controls {
     display: flex;
     align-items: center;
@@ -225,10 +230,8 @@
     border: none;
     color: var(--accent);
     font-size: 1.3rem;
-    font-family: 'Roboto Mono', monospace;
-    font-weight: 700;
     width: 42px;
-    height: 52px;
+    height: 44px;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
     flex-shrink: 0;
@@ -237,13 +240,22 @@
     justify-content: center;
   }
 
-  .qty-btn:hover {
-    background: var(--accent);
-    color: var(--bg);
+  .qty-btn:hover  { background: var(--accent); color: var(--bg); }
+  .qty-btn:active { background: #2a7aaa; }
+
+  footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 0.6rem;
+    color: #1e2e3e;
+    letter-spacing: 0.06em;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .qty-btn:active {
-    background: #2a7aaa;
+  @media (max-width: 360px) {
+    .big-input { font-size: 0.95rem; padding: 6px; }
   }
 </style>
 </head>
@@ -257,9 +269,13 @@
 <!-- EXCHANGE RATE -->
 <div class="card">
   <div class="card-label"><span class="dot"></span> Exchange Rate</div>
-  <div class="input-row">
-    <label>MXN per $1 USD</label>
-    <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
+  <div class="input-row input-group">
+      <label>MXN per $1 USD</label>
+      <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
+  </div>
+  <div class="rate-footer">
+    <div class="rate-hint" id="rate-hint">Fetching live rate…</div>
+    <button class="refresh-btn" id="refresh-btn" title="Refresh rate">↻</button>
   </div>
 </div>
 
@@ -277,8 +293,6 @@
       <input type="number" class="big-input output" id="to-val" placeholder="—" readonly>
     </div>
   </div>
-
-  <!-- QUANTITY ROW -->
   <div class="input-row">
     <div class="input-group">
       <label>Quantity</label>
@@ -296,7 +310,7 @@
   </div>
 </div>
 
-<!-- PRICE PER WEIGHT -->
+<!-- MARKET WEIGHT -->
 <div class="card">
   <div class="card-label"><span class="dot"></span> Market Weight</div>
   <div class="input-row">
@@ -328,28 +342,30 @@
 </footer>
 
 <script>
-  const rateInput  = document.getElementById('rate');
-  const fromVal    = document.getElementById('from-val');
-  const toVal      = document.getElementById('to-val');
-  const flipBtn    = document.getElementById('flip-btn');
-  const fromLabel  = document.getElementById('from-label');
-  const toLabel    = document.getElementById('to-label');
-  const convDir    = document.getElementById('conv-direction');
-  const qtyMinus     = document.getElementById('qty-minus');
-  const qtyPlus      = document.getElementById('qty-plus');
-  const qtyValEl     = document.getElementById('qty-val');
-  const qtyTotal     = document.getElementById('qty-total');
+  const rateInput     = document.getElementById('rate');
+  const fromVal       = document.getElementById('from-val');
+  const toVal         = document.getElementById('to-val');
+  const flipBtn       = document.getElementById('flip-btn');
+  const fromLabel     = document.getElementById('from-label');
+  const toLabel       = document.getElementById('to-label');
+  const convDir       = document.getElementById('conv-direction');
+  const qtyMinus      = document.getElementById('qty-minus');
+  const qtyPlus       = document.getElementById('qty-plus');
+  const qtyValEl      = document.getElementById('qty-val');
+  const qtyTotal      = document.getElementById('qty-total');
   const qtyTotalLabel = document.getElementById('qty-total-label');
   const mxnPerKg      = document.getElementById('mxn-per-kg');
   const wtKg          = document.getElementById('wt-kg');
   const wtMxnTotal    = document.getElementById('wt-mxn-total');
   const wtUsdTotal    = document.getElementById('wt-usd-total');
-  
+  const rateHint      = document.getElementById('rate-hint');
+  const refreshBtn    = document.getElementById('refresh-btn');
+
   let mode = 'mxn-to-usd';
   let lastConvertedUnit = null;
 
   function getRate() { return parseFloat(rateInput.value) || 17.57; }
-  function getQty()    { return Math.max(1, parseInt(qtyValEl.value) || 1); }
+  function getQty()  { return Math.max(1, parseInt(qtyValEl.value) || 1); }
 
   function fmt(n, decimals = 2) {
     if (isNaN(n) || !isFinite(n)) return '—';
@@ -385,8 +401,38 @@
       return;
     }
     const totalMxn = perKg * kg;
-    wtMxnTotal.value = fmt(totalMxn, 2).replace(/,/g, '');
-    wtUsdTotal.value = fmt(totalMxn / getRate(), 2).replace(/,/g, '');
+    wtMxnTotal.value = fmt(totalMxn).replace(/,/g, '');
+    wtUsdTotal.value = fmt(totalMxn / getRate()).replace(/,/g, '');
+  }
+
+  function fetchRate() {
+    rateHint.textContent = 'Fetching live rate…';
+    refreshBtn.disabled = true;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', { signal: controller.signal })
+      .then(r => r.json())
+      .then(data => {
+        clearTimeout(timeout);
+        const live = data.rates.MXN;
+        rateInput.value = live.toFixed(2);
+        const date = new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        rateHint.textContent = `Live rate as of ${date} · ECB · Editable`;
+        calcCurrency();
+        calcWeight();
+      })
+      .catch(err => {
+        clearTimeout(timeout);
+        const msg = err.name === 'AbortError'
+          ? 'Request timed out · using fallback · Editable'
+          : 'Could not fetch live rate · using fallback · Editable';
+        rateHint.textContent = msg;
+      })
+      .finally(() => {
+        refreshBtn.disabled = false;
+      });
   }
 
   flipBtn.addEventListener('click', () => {
@@ -415,6 +461,9 @@
   fromVal.addEventListener('input', calcCurrency);
   mxnPerKg.addEventListener('input', calcWeight);
   wtKg.addEventListener('input', calcWeight);
+  refreshBtn.addEventListener('click', fetchRate);
+
+  fetchRate();
 </script>
 </body>
 </html>
