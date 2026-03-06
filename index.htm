@@ -13,7 +13,7 @@
     --accent: #3a9bd5;
     --accent2: #5fd4c8;
     --text: #e2eaf0;
-    --muted: #5a7080;
+    --muted: #bed1df;
     --input-bg: #0a0e14;
 }
 
@@ -76,21 +76,6 @@ header p {
     border-color: #1e3a52;
 }
 
-.card-body {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.3s ease;
-    overflow: hidden;
-}
-
-.card-body.open {
-    grid-template-rows: 1fr;
-}
-
-.card-body > .card-body-inner {
-    overflow: hidden;
-}
-
 .card-header {
     text-transform: uppercase;
     letter-spacing: 0.12em;
@@ -98,13 +83,6 @@ header p {
     display: flex;
     align-items: center;
     gap: 8px;
-}
-
-.card-header::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
 }
 
 .card-header .dot {
@@ -124,10 +102,29 @@ header p {
   color: var(--accent);
 }
 
+.card-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+    overflow: hidden;
+    border-top: 0px solid var(--border);
+    transition: border-top-width 0.2s, grid-template-rows 0.3s ease;
+}
+
+.card-body.open {
+    border-top-width: 1px;
+    grid-template-rows: 1fr;
+    margin-top: 10px;
+}
+
+.card-body > .card-body-inner {
+    overflow: hidden;
+}
+
 .card-body.open ~ .card-header .card-summary,
 .card-header.active .card-summary {
-  opacity: 0;
-  pointer-events: none;
+    opacity: 0;
+    pointer-events: none;
 }
 
 .input-row {
