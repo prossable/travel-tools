@@ -316,7 +316,7 @@ footer {
                 <label>MXN per $1 USD</label>
                 <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
             </div>
-            <div id="rate-hint">Fetching live rate…</div>
+            <div id="hint-rate">Fetching live rate…</div>
         </div>
     </div>
 </div>
@@ -431,11 +431,6 @@ footer {
             <button class="qty-btn" id="tip-people-plus">+</button>
           </div>
         </div>
-        <div class="arrow-label"></div>
-        <div class="input-group">
-          <label>&nbsp;</label>
-          <div class="big-input output" id="tip-people-label">1 person</div>
-        </div>
       </div>
 
       <!-- Row 4: Tip outputs -->
@@ -461,7 +456,11 @@ footer {
 
 <script>
 const cards = document.querySelectorAll('.card');
+
 const rateInput = document.getElementById('rate');
+const rateHint = document.getElementById('hint-rate');
+const rateSummary = document.getElementById('summary-rate');
+
 const fromVal = document.getElementById('from-val');
 const toVal = document.getElementById('to-val');
 const flipBtn = document.getElementById('flip-btn');
@@ -477,14 +476,11 @@ const mxnPerKg = document.getElementById('mxn-per-kg');
 const wtKg = document.getElementById('wt-kg');
 const wtMxnTotal = document.getElementById('wt-mxn-total');
 const wtUsdTotal = document.getElementById('wt-usd-total');
-const rateHint = document.getElementById('rate-hint');
-const summaryRate = document.getElementById('summary-rate');
-const tipBillMxn = document.getElementById('tip-bill-mxn');
 
+const tipBillMxn = document.getElementById('tip-bill-mxn');
 const tipBillUsd = document.getElementById('tip-bill-usd');
 const tipPct = document.getElementById('tip-pct');
 const tipPeoplEl = document.getElementById('tip-people');
-const tipPeopleLabel = document.getElementById('tip-people-label');
 const tipOutMxn = document.getElementById('tip-out-mxn');
 const tipOutUsd = document.getElementById('tip-out-usd');
 const tipPeopleMinus = document.getElementById('tip-people-minus');
@@ -497,18 +493,76 @@ let lastConvertedUnit = null;
 let tipLastEdited = 'mxn';
 let activePct = null; // tracks current tip %
 
+// CARDS
+
+cards.forEach(card => {
+    card.addEventListener('click', () => {
+        const body = card.querySelector('.card-body');
+        const isOpen = body.classList.contains('open');
+        if (isOpen) return; // already open, do nothing
+
+        // collapse all
+        document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
+        document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
+
+        // open this one
+        body.classList.add('open');
+        card.querySelector('.card-header').classList.add('active');
+    });
+});
+
+// RATE
+
 function getRate() {
     return parseFloat(rateInput.value) || 17.57;
 }
 
-function getQty() {
-    return Math.max(1, parseInt(qtyValEl.value) || 1);
-}
-
-function updateFromRate() {
+function updateRate() {
+    updateRateSummary(rateSummary, getRate());
     calcCurrency();
     calcWeight();
     calcTip();
+}
+
+function fetchRate() {
+    rateHint.textContent = 'Fetching live rate…';
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
+            signal: controller.signal
+        })
+        .then(r => r.json())
+        .then(data => {
+            clearTimeout(timeout);
+            const live = data.rates.MXN;
+            rateInput.value = live.toFixed(2);
+            const date = new Date(data.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            rateHint.textContent = `Live rate as of ${date} · ECB · Editable`;
+            updateRate();
+        })
+        .catch(err => {
+            clearTimeout(timeout);
+            const msg = err.name === 'AbortError' ?
+                'Request timed out · using fallback · Editable' :
+                'Could not fetch live rate · using fallback · Editable';
+            rateHint.textContent = msg;
+        });
+}
+
+function updateRateSummary(summaryEl, value) {
+    if (summaryEl) summaryEl.textContent = value;
+}
+
+// COST
+
+function getQty() {
+    return Math.max(1, parseInt(qtyValEl.value) || 1);
 }
 
 function fmt(n, decimals = 2) {
@@ -555,43 +609,6 @@ function calcWeight() {
     wtUsdTotal.value = fmt(totalMxn / getRate()).replace(/,/g, '');
 }
 
-function fetchRate() {
-    rateHint.textContent = 'Fetching live rate…';
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-
-    fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
-            signal: controller.signal
-        })
-        .then(r => r.json())
-        .then(data => {
-            clearTimeout(timeout);
-            const live = data.rates.MXN;
-            rateInput.value = live.toFixed(2);
-            const date = new Date(data.date).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-            rateHint.textContent = `Live rate as of ${date} · ECB · Editable`;
-            updateSummary(summaryRate, live.toFixed(2));
-            calcCurrency();
-            calcWeight();
-        })
-        .catch(err => {
-            clearTimeout(timeout);
-            const msg = err.name === 'AbortError' ?
-                'Request timed out · using fallback · Editable' :
-                'Could not fetch live rate · using fallback · Editable';
-            rateHint.textContent = msg;
-        });
-}
-
-function updateSummary(summaryEl, value) {
-    if (summaryEl) summaryEl.textContent = value;
-}
-
 flipBtn.addEventListener('click', () => {
     const currentVal = parseFloat(toVal.value);
     if (mode === 'mxn-to-usd') {
@@ -611,6 +628,102 @@ flipBtn.addEventListener('click', () => {
     calcCurrency();
 });
 
+// TIPS
+
+// Preset / custom selection
+function setActivePreset(btn) {
+  presetBtns.forEach(b => b.classList.remove('active'));
+  tipPct.classList.remove('active');
+  if (btn) btn.classList.add('active');
+}
+
+function setActiveCustom() {
+  presetBtns.forEach(b => b.classList.remove('active'));
+  tipPct.classList.add('active');
+}
+
+presetBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    activePct = parseFloat(btn.dataset.pct);
+    tipPct.value = '';
+    setActivePreset(btn);
+    calcTip();
+  });
+});
+
+tipPct.addEventListener('input', () => {
+  activePct = parseFloat(tipPct.value) || null;
+  setActiveCustom();
+  calcTip();
+});
+
+// People counter
+function getTipPeople() { return Math.max(1, parseInt(tipPeoplEl.value) || 1); }
+
+tipPeopleMinus.addEventListener('click', () => {
+  if (getTipPeople() > 1) { tipPeoplEl.value = getTipPeople() - 1; calcTip(); }
+});
+tipPeoplePlus.addEventListener('click', () => {
+  tipPeoplEl.value = getTipPeople() + 1; calcTip();
+});
+tipPeoplEl.addEventListener('input', calcTip);
+
+// Bill inputs — bidirectional
+tipBillMxn.addEventListener('input', () => { tipLastEdited = 'mxn'; calcTip(); });
+tipBillUsd.addEventListener('input', () => { tipLastEdited = 'usd'; calcTip(); });
+
+// Core calc
+function calcTip() {
+  const rate    = getRate();
+  const people  = getTipPeople();
+  const pct     = activePct;
+
+  // sync bill fields
+  let billMxn;
+  if (tipLastEdited === 'mxn') {
+    billMxn = parseFloat(tipBillMxn.value);
+    if (!isNaN(billMxn) && tipBillMxn.value !== '') {
+      tipBillUsd.value = fmt(billMxn / rate).replace(/,/g, '');
+    } else {
+      tipBillUsd.value = '';
+    }
+  } else {
+    const billUsd = parseFloat(tipBillUsd.value);
+    if (!isNaN(billUsd) && tipBillUsd.value !== '') {
+      billMxn = billUsd * rate;
+      tipBillMxn.value = fmt(billMxn, 0).replace(/,/g, '');
+    } else {
+      billMxn = NaN;
+      tipBillMxn.value = '';
+    }
+  }
+
+  // bail if we don't have what we need
+  if (isNaN(billMxn) || billMxn === '' || pct === null || isNaN(pct)) {
+    tipOutMxn.value = '';
+    tipOutUsd.value = '';
+    updateSummary(summaryTip, '');
+    return;
+  }
+
+  const tipTotalMxn = billMxn * (pct / 100);
+  const tipTotalUsd = tipTotalMxn / rate;
+  const perMxn      = tipTotalMxn / people;
+  const perUsd      = tipTotalUsd / people;
+
+  if (people > 1) {
+    tipOutMxn.value = `${fmt(perMxn)} (${fmt(tipTotalMxn)})`;
+    tipOutUsd.value = `${fmt(perUsd)} (${fmt(tipTotalUsd)})`;
+    updateSummary(summaryTip, `$${fmt(perUsd)}/person`);
+  } else {
+    tipOutMxn.value = fmt(tipTotalMxn);
+    tipOutUsd.value = fmt(tipTotalUsd);
+    updateSummary(summaryTip, `$${fmt(tipTotalUsd)}`);
+  }
+}
+
+// LISTENERS
+
 qtyMinus.addEventListener('click', () => {
     if (getQty() > 1) {
         qtyValEl.value = getQty() - 1;
@@ -622,33 +735,12 @@ qtyPlus.addEventListener('click', () => {
     updateQtyTotal();
 });
 qtyValEl.addEventListener('input', updateQtyTotal);
-rateInput.addEventListener('input', () => {
-    updateSummary(summaryRate, rateInput.value);
-    calcCurrency();
-    calcWeight();
-});
+rateInput.addEventListener('input', updateRate);
 fromVal.addEventListener('input', calcCurrency);
 mxnPerKg.addEventListener('input', calcWeight);
 wtKg.addEventListener('input', calcWeight);
 
 fetchRate();
-
-
-cards.forEach(card => {
-    card.addEventListener('click', () => {
-        const body = card.querySelector('.card-body');
-        const isOpen = body.classList.contains('open');
-        if (isOpen) return; // already open, do nothing
-
-        // collapse all
-        document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
-        document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
-
-        // open this one
-        body.classList.add('open');
-        card.querySelector('.card-header').classList.add('active');
-    });
-});
 
 </script>
 </body>
