@@ -1,734 +1,740 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Travel Tools</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-:root {
-    --bg: #0c0f14;
-    --card: #131820;
-    --border: #1e2a38;
-    --accent: #3a9bd5;
-    --accent2: #5fd4c8;
-    --text: #e2eaf0;
-    --muted: #bed1df;
-    --input-bg: #0a0e14;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Tools</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0c0f14;
+            --card: #131820;
+            --border: #1e2a38;
+            --accent: #3a9bd5;
+            --accent2: #5fd4c8;
+            --text: #e2eaf0;
+            --muted: #bed1df;
+            --input-bg: #0a0e14;
+        }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-body {
-    font-family: 'Roboto Mono', monospace;
-    font-weight: 700;
-    font-size: 0.7rem;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 24px 16px 48px;
-    color: var(--muted);
-}
+        body {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            font-size: 0.7rem;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 24px 16px 48px;
+            color: var(--muted);
+        }
 
-header {
-    text-align: center;
-    margin-bottom: 36px;
-    padding-top: 8px;
-}
+        header {
+            text-align: center;
+            margin-bottom: 36px;
+            padding-top: 8px;
+        }
 
-header h1 {
-    font-family: 'Syne', sans-serif;
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    color: var(--text);
-}
+        header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text);
+        }
 
-header h1 span {
-    color: var(--accent);
-}
+        header h1 span {
+            color: var(--accent);
+        }
 
-header p {
-    color: var(--muted);
-    margin-top: 4px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
+        header p {
+            color: var(--muted);
+            margin-top: 4px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
 
-.card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 16px;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
-    position: relative;
-    transition: border-color 0.2s;
-}
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 16px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            transition: border-color 0.2s;
+        }
 
-.card:focus-within {
-    border-color: #1e3a52;
-}
+        .card:focus-within {
+            border-color: #1e3a52;
+        }
 
-.card-header {
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+        .card-header {
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.card-header .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-    flex-shrink: 0;
-    background: var(--accent);
-}
+        .card-header .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+            background: var(--accent);
+        }
 
-.card-summary {
-    margin-left: auto;
-    margin-right: 8px;
-    opacity: 1;
-    transition: opacity 0.2s;
-    color: var(--accent);
-}
+        .card-summary {
+            margin-left: auto;
+            margin-right: 8px;
+            opacity: 1;
+            transition: opacity 0.2s;
+            color: var(--accent);
+        }
 
-.card-body {
-    display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.3s ease;
-    overflow: hidden;
-    border-top: 0px solid var(--border);
-    transition: border-top-width 0.2s, grid-template-rows 0.3s ease;
-}
+        .card-body {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease;
+            overflow: hidden;
+            border-top: 0px solid var(--border);
+            transition: border-top-width 0.2s, grid-template-rows 0.3s ease;
+        }
 
-.card-body.open {
-    border-top-width: 1px;
-    grid-template-rows: 1fr;
-    margin-top: 10px;
-}
+        .card-body.open {
+            border-top-width: 1px;
+            grid-template-rows: 1fr;
+            margin-top: 10px;
+        }
 
-.card-body > .card-body-inner {
-    overflow: hidden;
-}
+        .card-body>.card-body-inner {
+            overflow: hidden;
+        }
 
-.card-body.open ~ .card-header .card-summary,
-.card-header.active .card-summary {
-    opacity: 0;
-    pointer-events: none;
-}
+        .card-body.open~.card-header .card-summary,
+        .card-header.active .card-summary {
+            opacity: 0;
+            pointer-events: none;
+        }
 
-.input-row {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-}
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
 
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: start;
-}
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: start;
+        }
 
-.input-group label {
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
+        .input-group label {
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
 
-.big-input {
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-size: 1.1rem;
-    font-weight: 700;
-    padding: 10px;
-    width: 100%;
-    outline: none;
-    transition: border-color 0.2s;
-    -moz-appearance: textfield;
-}
+        .big-input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 1.1rem;
+            font-weight: 700;
+            padding: 10px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+        }
 
-.big-input-inner {
-    border: none;
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    border-radius: 0;
-    text-align: center;
-}
+        .big-input-inner {
+            border: none;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-radius: 0;
+            text-align: center;
+        }
 
-.big-input::-webkit-outer-spin-button,
-.big-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-}
+        .big-input::-webkit-outer-spin-button,
+        .big-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
 
-.big-input:focus {
-    border-color: var(--accent);
-}
+        .big-input:focus {
+            border-color: var(--accent);
+        }
 
-.big-input.output {
-    color: var(--accent2);
-    background: rgba(58, 155, 213, 0.05);
-    cursor: default;
-    border: 1px solid rgba(58, 155, 213, 0.15);
-}
+        .big-input.output {
+            color: var(--accent2);
+            background: rgba(58, 155, 213, 0.05);
+            cursor: default;
+            border: 1px solid rgba(58, 155, 213, 0.15);
+        }
 
-.btn-round {
-    background: var(--border);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--muted);
-    font-size: 1rem;
-    transition: background 0.2s, color 0.2s, transform 0.3s;
-    flex-shrink: 0;
-    margin-top: 22px;
-}
+        .btn-round {
+            background: var(--border);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--muted);
+            font-size: 1rem;
+            transition: background 0.2s, color 0.2s, transform 0.3s;
+            flex-shrink: 0;
+            margin-top: 22px;
+        }
 
-.btn-round:hover {
-    background: var(--accent);
-    color: var(--bg);
-}
+        .btn-round:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
 
-.arrow-label {
-    font-size: 1.2rem;
-    color: var(--muted);
-    text-align: center;
-    margin-top: 22px;
-    flex-shrink: 0;
-}
+        .arrow-label {
+            font-size: 1.2rem;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 22px;
+            flex-shrink: 0;
+        }
 
-.qty-controls {
-    display: flex;
-    align-items: center;
-    background: var(--input-bg);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-}
+        .qty-controls {
+            display: flex;
+            align-items: center;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
 
-.qty-btn {
-    background: none;
-    border: none;
-    color: var(--accent);
-    font-size: 1.3rem;
-    width: 42px;
-    height: 44px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+        .qty-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 1.3rem;
+            width: 42px;
+            height: 44px;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-.qty-btn:hover {
-    background: var(--accent);
-    color: var(--bg);
-}
+        .qty-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
 
-.qty-btn:active {
-    background: #2a7aaa;
-}
+        .qty-btn:active {
+            background: #2a7aaa;
+        }
 
-.tip-presets {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr) 1fr;
-  gap: 8px;
-  margin-top: 14px;
-}
+        .tip-presets {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr) 1fr;
+            gap: 8px;
+            margin-top: 14px;
+        }
 
-.preset-btn {
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--muted);
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 10px;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
-}
+        .preset-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--muted);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 10px;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
 
-.preset-btn.active {
-  border-color: var(--accent);
-  color: var(--accent);
-}
+        .preset-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
 
-.preset-custom.active {
-  border-color: var(--accent);
-}
+        .preset-custom.active {
+            border-color: var(--accent);
+        }
 
-footer {
-    text-align: center;
-    margin-top: 28px;
-    color: #1e2e3e;
-    letter-spacing: 0.06em;
-    max-width: 480px;
-    margin-left: auto;
-    margin-right: auto;
-}
+        footer {
+            text-align: center;
+            margin-top: 28px;
+            color: #1e2e3e;
+            letter-spacing: 0.06em;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+        }
 
-@media (max-width: 360px) {
-    .big-input {
-        font-size: 0.95rem;
-        padding: 6px;
-    }
-}
-
-</style>
+        @media (max-width: 360px) {
+            .big-input {
+                font-size: 0.95rem;
+                padding: 6px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<header>
-  <h1>Travel <span>Tools</span></h1>
-  <p>Travel calculator · MXN / USD</p>
-</header>
+    <header>
+        <h1>Travel <span>Tools</span></h1>
+        <p>Travel calculator · MXN / USD</p>
+    </header>
 
-<!-- EXCHANGE RATE -->
-<div class="card">
-    <div class="card-header" data-target="card-rate">
-        <span class="dot"></span> Exchange Rate
-        <span class="card-summary" id="summary-rate"></span>
-    </div>
-    <div class="card-body" id="card-rate">
-        <div class="card-body-inner">
-            <div class="input-row input-group">
-                <label>MXN per $1 USD</label>
-                <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
+    <!-- EXCHANGE RATE -->
+    <div class="card">
+        <div class="card-header" data-target="card-rate">
+            <span class="dot"></span> Exchange Rate
+            <span class="card-summary" id="summary-rate"></span>
+        </div>
+        <div class="card-body" id="card-rate">
+            <div class="card-body-inner">
+                <div class="input-row input-group">
+                    <label>MXN per $1 USD</label>
+                    <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
+                </div>
+                <div id="hint-rate">Fetching live rate…</div>
             </div>
-            <div id="hint-rate">Fetching live rate…</div>
         </div>
     </div>
-</div>
 
-<!-- COST -->
-<div class="card">
-    <div class="card-header" data-target="card-cost">
-        <span class="dot"></span> Cost
-        <span class="card-summary" id="summary-cost"></span>
-    </div>
-    <div class="card-body" id="card-cost">
-        <div class="card-body-inner">
-            <div class="input-row">
-                <div class="input-group">
-                    <label id="from-label">Pesos (MXN)</label>
-                    <input type="number" class="big-input" id="cost-from-val" placeholder="0" min="0" step="any">
-                </div>
-                <div class="arrow-label">→</div>
-                <div class="input-group">
-                    <label id="to-label">Dollars (USD)</label>
-                    <input type="number" class="big-input output" id="cost-to-val" placeholder="—" readonly>
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Quantity</label>
-                    <div class="qty-controls">
-                        <button class="qty-btn" id="cost-qty-minus">−</button>
-                        <input type="number" class="big-input big-input-inner" id="cost-qty-val" value="1" min="1">
-                        <button class="qty-btn" id="cost-qty-plus">+</button>
+    <!-- COST -->
+    <div class="card">
+        <div class="card-header" data-target="card-cost">
+            <span class="dot"></span> Cost
+            <span class="card-summary" id="summary-cost"></span>
+        </div>
+        <div class="card-body" id="card-cost">
+            <div class="card-body-inner">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label id="from-label">Pesos (MXN)</label>
+                        <input type="number" class="big-input" id="cost-from-val" placeholder="0" min="0" step="any">
+                    </div>
+                    <div class="arrow-label">→</div>
+                    <div class="input-group">
+                        <label id="to-label">Dollars (USD)</label>
+                        <input type="number" class="big-input output" id="cost-to-val" placeholder="—" readonly>
                     </div>
                 </div>
-                <div class="arrow-label">×</div>
-                <div class="input-group">
-                    <label>Total (USD)</label>
-                    <input class="big-input output" id="cost-qty-total" placeholder="—" readonly>
-                </div>
-            </div>
-         </div>
-    </div>
-</div>
-
-<!-- MARKET WEIGHT -->
-<div class="card">
-    <div class="card-header" data-target="card-market">
-        <span class="dot"></span> Market Weight
-        <span class="card-summary" id="summary-market"></span>
-    </div>
-    <div class="card-body" id="card-market">
-        <div class="card-body-inner">
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Pesos / kg</label>
-                    <input type="number" class="big-input" id="market-rate" placeholder="0" min="0" step="any">
-                </div>
-                <div class="arrow-label">×</div>
-                <div class="input-group">
-                    <label>Kilograms</label>
-                    <input type="number" class="big-input" id="market-kg" placeholder="0" min="0" step="any">
-                </div>
-            </div>
-            <div class="input-row">
-                <div class="input-group">
-                    <label>Total (MXN)</label>
-                    <input class="big-input output" id="market-total1" placeholder="—" readonly>
-                </div>
-                <div class="arrow-label">→</div>
-                <div class="input-group">
-                    <label>Total (USD)</label>
-                    <input class="big-input output" id="market-total2" placeholder="—" readonly>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Quantity</label>
+                        <div class="qty-controls">
+                            <button class="qty-btn" id="cost-qty-minus">−</button>
+                            <input type="number" class="big-input big-input-inner" id="cost-qty" value="1" min="1">
+                            <button class="qty-btn" id="cost-qty-plus">+</button>
+                        </div>
+                    </div>
+                    <div class="arrow-label">×</div>
+                    <div class="input-group">
+                        <label>Total (USD)</label>
+                        <input class="big-input output" id="cost-total" placeholder="—" readonly>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- CHECK -->
-<div class="card">
-  <div class="card-header" data-target="card-tip">
-    <span class="dot"></span> Tip Calculator
-    <span class="card-summary" id="summary-tip"></span>
-  </div>
-  <div class="card-body" id="card-tip">
-    <div class="card-body-inner">
-
-      <!-- Row 1: Bill amount -->
-      <div class="input-row">
-        <div class="input-group">
-          <label>Bill (MXN)</label>
-          <input type="number" class="big-input" id="tip-bill-mxn" placeholder="0" min="0" step="any">
+    <!-- MARKET WEIGHT -->
+    <div class="card">
+        <div class="card-header" data-target="card-market">
+            <span class="dot"></span> Market Weight
+            <span class="card-summary" id="summary-market"></span>
         </div>
-        <div class="arrow-label">⇄</div>
-        <div class="input-group">
-          <label>Bill (USD)</label>
-          <input type="number" class="big-input" id="tip-bill-usd" placeholder="0" min="0" step="any">
+        <div class="card-body" id="card-market">
+            <div class="card-body-inner">
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Pesos / kg</label>
+                        <input type="number" class="big-input" id="market-rate" placeholder="0" min="0" step="any">
+                    </div>
+                    <div class="arrow-label">×</div>
+                    <div class="input-group">
+                        <label>Kilograms</label>
+                        <input type="number" class="big-input" id="market-kg" placeholder="0" min="0" step="any">
+                    </div>
+                </div>
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Total (MXN)</label>
+                        <input class="big-input output" id="market-total1" placeholder="—" readonly>
+                    </div>
+                    <div class="arrow-label">→</div>
+                    <div class="input-group">
+                        <label>Total (USD)</label>
+                        <input class="big-input output" id="market-total2" placeholder="—" readonly>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-
-      <!-- Row 2: Tip presets -->
-      <div class="tip-presets">
-        <button class="preset-btn" data-pct="10">10%</button>
-        <button class="preset-btn" data-pct="15">15%</button>
-        <button class="preset-btn" data-pct="20">20%</button>
-        <input type="number" class="big-input preset-custom" id="tip-pct" placeholder="%" min="0" max="100">
-      </div>
-
-      <!-- Row 3: People -->
-      <div class="input-row">
-        <div class="input-group">
-          <label>Split between</label>
-          <div class="qty-controls">
-            <button class="qty-btn" id="tip-people-minus">−</button>
-            <input type="number" class="big-input big-input-inner" id="tip-people" value="1" min="1">
-            <button class="qty-btn" id="tip-people-plus">+</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 4: Tip outputs -->
-      <div class="input-row">
-        <div class="input-group">
-          <label>Tip (MXN)</label>
-          <input class="big-input output" id="tip-out-mxn" placeholder="—" readonly>
-        </div>
-        <div class="arrow-label">→</div>
-        <div class="input-group">
-          <label>Tip (USD)</label>
-          <input class="big-input output" id="tip-out-usd" placeholder="—" readonly>
-        </div>
-      </div>
-
     </div>
-  </div>
-</div>
 
-<footer>
-  Prices are approximate · Always verify before purchasing
-</footer>
+    <!-- CHECK -->
+    <div class="card">
+        <div class="card-header" data-target="card-bill">
+            <span class="dot"></span> Tip Calculator
+            <span class="card-summary" id="summary-bill"></span>
+        </div>
+        <div class="card-body" id="card-bill">
+            <div class="card-body-inner">
 
-<script>
-// VARS
-const cards = document.querySelectorAll('.card');
+                <!-- Bill amount -->
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Bill (MXN)</label>
+                        <input type="number" class="big-input" id="bill-mxn" placeholder="0" min="0" step="any">
+                    </div>
+                    <div class="arrow-label">⇄</div>
+                    <div class="input-group">
+                        <label>Bill (USD)</label>
+                        <input type="number" class="big-input" id="bill-usd" placeholder="0" min="0" step="any">
+                    </div>
+                </div>
 
-const rateSummary = document.getElementById('summary-rate');
-const rateInput = document.getElementById('rate');
-const rateHint = document.getElementById('hint-rate');
+                <!-- People -->
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Split between</label>
+                        <div class="qty-controls">
+                            <button class="qty-btn" id="bill-people-minus">−</button>
+                            <input type="number" class="big-input big-input-inner" id="bill-people" value="1" min="1">
+                            <button class="qty-btn" id="bill-people-plus">+</button>
+                        </div>
+                    </div>
+                </div>
 
-const costSummary = document.getElementById('summary-cost');
-const costFromVal = document.getElementById('cost-from-val');
-const costToVal = document.getElementById('cost-to-val');
-const costQuantityMinus = document.getElementById('cost-qty-minus');
-const costQuantityPlus = document.getElementById('cost-qty-plus');
-const costQuantityVal = document.getElementById('cost-qty-val');
-const costQuantityTotal = document.getElementById('cost-qty-total');
+                <!-- Tip presets -->
+                <div class="tip-presets">
+                    <button class="preset-btn" data-pct="10">10%</button>
+                    <button class="preset-btn" data-pct="15">15%</button>
+                    <button class="preset-btn" data-pct="20">20%</button>
+                    <input type="number" class="big-input preset-custom" id="tip-pct" placeholder="%" min="0" max="100">
+                </div>
 
-const marketSummary = document.getElementById('summary-market');
-const marketRate = document.getElementById('market-rate');
-const marketKg = document.getElementById('market-kg');
-const marketTotal1 = document.getElementById('market-total1');
-const marketTotal2 = document.getElementById('market-total2');
+                <!-- Tip outputs -->
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Tip (MXN)</label>
+                        <input class="big-input output" id="tip-out-mxn" placeholder="—" readonly>
+                    </div>
+                    <div class="arrow-label">→</div>
+                    <div class="input-group">
+                        <label>Tip (USD)</label>
+                        <input class="big-input output" id="tip-out-usd" placeholder="—" readonly>
+                    </div>
+                </div>
 
-const tipBillMxn = document.getElementById('tip-bill-mxn');
-const tipBillUsd = document.getElementById('tip-bill-usd');
-const tipPct = document.getElementById('tip-pct');
-const tipPeoplEl = document.getElementById('tip-people');
-const tipOutMxn = document.getElementById('tip-out-mxn');
-const tipOutUsd = document.getElementById('tip-out-usd');
-const tipPeopleMinus = document.getElementById('tip-people-minus');
-const tipPeoplePlus = document.getElementById('tip-people-plus');
-const presetBtns = document.querySelectorAll('.preset-btn');
-const summaryTip = document.getElementById('summary-tip');
+            </div>
+        </div>
+    </div>
 
-let lastCost = null;
-let tipLastEdited = 'mxn';
-let activePct = null; // tracks current tip %
+    <footer>
+        Prices are approximate · Always verify before purchasing
+    </footer>
 
-// CARDS
+    <script>
+        // VARS
+        const cards = document.querySelectorAll('.card');
 
-cards.forEach(card => {
-    card.addEventListener('click', () => {
-        const body = card.querySelector('.card-body');
-        const isOpen = body.classList.contains('open');
-        if (isOpen) return; // already open, do nothing
+        const rateSummaryOutput = document.getElementById('summary-rate');
+        const rateInput = document.getElementById('rate');
+        const rateHintOutput = document.getElementById('hint-rate');
 
-        // collapse all
-        document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
-        document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
+        const costSummaryOutput = document.getElementById('summary-cost');
+        const costInput = document.getElementById('cost-from-val');
+        const costOutput = document.getElementById('cost-to-val');
+        const costQuantityInput = document.getElementById('cost-qty');
+        const costQuantityMinusButton = document.getElementById('cost-qty-minus');
+        const costQuantityPlusButton = document.getElementById('cost-qty-plus');
+        const costTotalOutput = document.getElementById('cost-total');
 
-        // open this one
-        body.classList.add('open');
-        card.querySelector('.card-header').classList.add('active');
-    });
-});
+        const marketSummaryOutput = document.getElementById('summary-market');
+        const marketRateInput = document.getElementById('market-rate');
+        const marketKgInput = document.getElementById('market-kg');
+        const marketTotal1Output = document.getElementById('market-total1');
+        const marketTotal2Output = document.getElementById('market-total2');
 
-// RATE
+        const billSummaryOutput = document.getElementById('summary-bill');
+        const bill1Input = document.getElementById('bill-mxn');
+        const bill2Input = document.getElementById('bill-usd');
+        const tipPeoplInput = document.getElementById('bill-people');
+        const tipPeopleMinusButton = document.getElementById('bill-people-minus');
+        const tipPeoplePlusButton = document.getElementById('bill-people-plus');
+        const tipPct = document.getElementById('tip-pct');
+        const tipOutMxn = document.getElementById('tip-out-mxn');
+        const tipOutUsd = document.getElementById('tip-out-usd');
+        const presetBtns = document.querySelectorAll('.preset-btn');
 
-function getRate() {
-    return parseFloat(rateInput.value) || 17.57;
-}
+        let lastCost = null;
+        let lastBillCurrency = 'mxn';
+        let lastBillPercent = null; // tracks current tip %
 
-function fetchRate() {
-    rateHint.textContent = 'Fetching live rate…';
+        // CARDS
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const body = card.querySelector('.card-body');
+                const isOpen = body.classList.contains('open');
+                if (isOpen) return; // already open, do nothing
 
-    fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
-            signal: controller.signal
-        })
-        .then(r => r.json())
-        .then(data => {
-            clearTimeout(timeout);
-            const live = data.rates.MXN;
-            rateInput.value = live.toFixed(2);
-            const date = new Date(data.date).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
+                // collapse all
+                document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
+                document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
+
+                // open this one
+                body.classList.add('open');
+                card.querySelector('.card-header').classList.add('active');
             });
-            rateHint.textContent = `Live rate as of ${date} · ECB · Editable`;
-            refresh();
-        })
-        .catch(err => {
-            clearTimeout(timeout);
-            const msg = err.name === 'AbortError' ?
-                'Request timed out · using fallback · Editable' :
-                'Could not fetch live rate · using fallback · Editable';
-            rateHint.textContent = msg;
         });
-}
 
-// COST
+        // RATE
 
-function calcCost() {
-    const v = parseFloat(costFromVal.value);
-    if (isNaN(v) || costFromVal.value === '') {
-        lastCost = null;
-        updateCost();
-        return;
-    }
-    lastCost = v / getRate();
-    updateCost();
-}
+        function getRate() {
+            return parseFloat(rateInput.value) || 17.57;
+        }
 
-function updateCost() {
-    if (lastCost === null) {
-        costToVal.value = '';
-        costQuantityTotal.value = '';
-        return;
-    }
-    costToVal.value = format(lastCost).replace(/,/g, '');
-    const total = lastCost * getCostQuantity();
-    costQuantityTotal.value = '$' + format(total);
-    updateSummary(costSummary, '$' + format(total) + ' USD');
-}
+        function fetchRate() {
+            rateHintOutput.textContent = 'Fetching live rate…';
 
-function getCostQuantity() {
-    return Math.max(1, parseInt(costQuantityVal.value) || 1);
-}
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 5000);
 
-// MARKET
+            fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
+                signal: controller.signal
+            })
+                .then(r => r.json())
+                .then(data => {
+                    clearTimeout(timeout);
+                    const live = data.rates.MXN;
+                    rateInput.value = live.toFixed(2);
+                    const date = new Date(data.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                    });
+                    rateHintOutput.textContent = `Live rate as of ${date} · ECB · Editable`;
+                    refresh();
+                })
+                .catch(err => {
+                    clearTimeout(timeout);
+                    const msg = err.name === 'AbortError' ?
+                        'Request timed out · using fallback · Editable' :
+                        'Could not fetch live rate · using fallback · Editable';
+                    rateHintOutput.textContent = msg;
+                });
+        }
 
-function calcMarket() {
-    const perKg = parseFloat(marketRate.value);
-    const kg = parseFloat(marketKg.value);
-    if (isNaN(perKg) || isNaN(kg) || marketRate.value === '' || marketKg.value === '') {
-        marketTotal1.value = '';
-        marketTotal2.value = '';
-        updateSummary(marketSummary, '');
-        return;
-    }
-    const totalMxn = perKg * kg;
-    const totalUsd = '$' + format(totalMxn / getRate()).replace(/,/g, '');
-    marketTotal1.value = '$' + format(totalMxn).replace(/,/g, '');
-    marketTotal2.value = totalUsd;
-    updateSummary(marketSummary, totalUsd + ' USD');
-}
+        // COST
 
-// TIPS
+        function calcCost() {
+            const v = parseFloat(costInput.value);
+            if (isNaN(v) || costInput.value === '') {
+                lastCost = null;
+                updateCost();
+                return;
+            }
+            lastCost = v / getRate();
+            updateCost();
+        }
 
-// Preset / custom selection
-function setActivePreset(btn) {
-  presetBtns.forEach(b => b.classList.remove('active'));
-  tipPct.classList.remove('active');
-  if (btn) btn.classList.add('active');
-}
+        function updateCost() {
+            if (lastCost === null) {
+                costOutput.value = '';
+                costTotalOutput.value = '';
+                return;
+            }
+            costOutput.value = format(lastCost).replace(/,/g, '');
+            const total = lastCost * getCostQuantity();
+            costTotalOutput.value = '$' + format(total);
+            updateSummary(costSummaryOutput, '$' + format(total) + ' USD');
+        }
 
-function setActiveCustom() {
-  presetBtns.forEach(b => b.classList.remove('active'));
-  tipPct.classList.add('active');
-}
+        function getCostQuantity() {
+            return Math.max(1, parseInt(costQuantityInput.value) || 1);
+        }
 
-presetBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    activePct = parseFloat(btn.dataset.pct);
-    tipPct.value = '';
-    setActivePreset(btn);
-    calcTip();
-  });
-});
+        // MARKET
 
-tipPct.addEventListener('input', () => {
-  activePct = parseFloat(tipPct.value) || null;
-  setActiveCustom();
-  calcTip();
-});
+        function calcMarket() {
+            const perKg = parseFloat(marketRateInput.value);
+            const kg = parseFloat(marketKgInput.value);
+            if (isNaN(perKg) || isNaN(kg) || marketRateInput.value === '' || marketKgInput.value === '') {
+                marketTotal1Output.value = '';
+                marketTotal2Output.value = '';
+                updateSummary(marketSummaryOutput, '');
+                return;
+            }
+            const totalMxn = perKg * kg;
+            const totalUsd = '$' + format(totalMxn / getRate()).replace(/,/g, '');
+            marketTotal1Output.value = '$' + format(totalMxn).replace(/,/g, '');
+            marketTotal2Output.value = totalUsd;
+            updateSummary(marketSummaryOutput, totalUsd + ' USD');
+        }
 
-// People counter
-function getTipPeople() { return Math.max(1, parseInt(tipPeoplEl.value) || 1); }
+        // BILL
 
-tipPeopleMinus.addEventListener('click', () => {
-  if (getTipPeople() > 1) { tipPeoplEl.value = getTipPeople() - 1; calcTip(); }
-});
-tipPeoplePlus.addEventListener('click', () => {
-  tipPeoplEl.value = getTipPeople() + 1; calcTip();
-});
-tipPeoplEl.addEventListener('input', calcTip);
+        // Preset / custom selection
+        function setActivePreset(btn) {
+            presetBtns.forEach(b => b.classList.remove('active'));
+            tipPct.classList.remove('active');
+            if (btn) btn.classList.add('active');
+        }
 
-// Bill inputs — bidirectional
-tipBillMxn.addEventListener('input', () => { tipLastEdited = 'mxn'; calcTip(); });
-tipBillUsd.addEventListener('input', () => { tipLastEdited = 'usd'; calcTip(); });
+        function setActiveCustom() {
+            presetBtns.forEach(b => b.classList.remove('active'));
+            tipPct.classList.add('active');
+        }
 
-// Core calc
-function calcTip() {
-  const rate    = getRate();
-  const people  = getTipPeople();
-  const pct     = activePct;
+        presetBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                lastBillPercent = parseFloat(btn.dataset.pct);
+                tipPct.value = '';
+                setActivePreset(btn);
+                calcTip();
+            });
+        });
 
-  // sync bill fields
-  let billMxn;
-  if (tipLastEdited === 'mxn') {
-    billMxn = parseFloat(tipBillMxn.value);
-    if (!isNaN(billMxn) && tipBillMxn.value !== '') {
-      tipBillUsd.value = format(billMxn / rate).replace(/,/g, '');
-    } else {
-      tipBillUsd.value = '';
-    }
-  } else {
-    const billUsd = parseFloat(tipBillUsd.value);
-    if (!isNaN(billUsd) && tipBillUsd.value !== '') {
-      billMxn = billUsd * rate;
-      tipBillMxn.value = format(billMxn, 0).replace(/,/g, '');
-    } else {
-      billMxn = NaN;
-      tipBillMxn.value = '';
-    }
-  }
+        tipPct.addEventListener('input', () => {
+            lastBillPercent = parseFloat(tipPct.value) || null;
+            setActiveCustom();
+            calcTip();
+        });
 
-  // bail if we don't have what we need
-  if (isNaN(billMxn) || billMxn === '' || pct === null || isNaN(pct)) {
-    tipOutMxn.value = '';
-    tipOutUsd.value = '';
-    updateSummary(summaryTip, '');
-    return;
-  }
+        // People counter
+        function getTipPeople() { return Math.max(1, parseInt(tipPeoplInput.value) || 1); }
 
-  const tipTotalMxn = billMxn * (pct / 100);
-  const tipTotalUsd = tipTotalMxn / rate;
-  const perMxn      = tipTotalMxn / people;
-  const perUsd      = tipTotalUsd / people;
+        tipPeopleMinusButton.addEventListener('click', () => {
+            if (getTipPeople() > 1) { tipPeoplInput.value = getTipPeople() - 1; calcTip(); }
+        });
+        tipPeoplePlusButton.addEventListener('click', () => {
+            tipPeoplInput.value = getTipPeople() + 1; calcTip();
+        });
+        tipPeoplInput.addEventListener('input', calcTip);
 
-  if (people > 1) {
-    tipOutMxn.value = `${format(perMxn)} (${format(tipTotalMxn)})`;
-    tipOutUsd.value = `${format(perUsd)} (${format(tipTotalUsd)})`;
-    updateSummary(summaryTip, `$${format(perUsd)}/person`);
-  } else {
-    tipOutMxn.value = format(tipTotalMxn);
-    tipOutUsd.value = format(tipTotalUsd);
-    updateSummary(summaryTip, `$${format(tipTotalUsd)}`);
-  }
-}
+        // Bill inputs — bidirectional
+        bill1Input.addEventListener('input', () => { lastBillCurrency = 'mxn'; calcTip(); });
+        bill2Input.addEventListener('input', () => { lastBillCurrency = 'usd'; calcTip(); });
 
-// GLOBAL
+        // Core calc
+        function calcTip() {
+            const rate = getRate();
+            const people = getTipPeople();
+            const pct = lastBillPercent;
 
-function refresh() {
-    updateSummary(rateSummary, '$' + getRate() + " MXN");
-    calcCost();
-    calcMarket();
-    calcTip();
-}
+            // sync bill fields
+            let billMxn;
+            if (lastBillCurrency === 'mxn') {
+                billMxn = parseFloat(bill1Input.value);
+                if (!isNaN(billMxn) && bill1Input.value !== '') {
+                    bill2Input.value = format(billMxn / rate).replace(/,/g, '');
+                } else {
+                    bill2Input.value = '';
+                }
+            } else {
+                const billUsd = parseFloat(bill2Input.value);
+                if (!isNaN(billUsd) && bill2Input.value !== '') {
+                    billMxn = billUsd * rate;
+                    bill1Input.value = format(billMxn, 0).replace(/,/g, '');
+                } else {
+                    billMxn = NaN;
+                    bill1Input.value = '';
+                }
+            }
 
-function format(n, decimals = 2) {
-    if (isNaN(n) || !isFinite(n)) return '—';
-    return n.toLocaleString('en-US', {
-        minimumFractionDigits: decimals,
-        maximumFractionDigits: decimals
-    });
-}
+            // bail if we don't have what we need
+            if (isNaN(billMxn) || billMxn === '' || pct === null || isNaN(pct)) {
+                tipOutMxn.value = '';
+                tipOutUsd.value = '';
+                updateSummary(billSummaryOutput, '');
+                return;
+            }
 
-function updateSummary(summaryEl, value) {
-    if (summaryEl) summaryEl.textContent = value;
-}
+            const tipTotalMxn = billMxn * (pct / 100);
+            const tipTotalUsd = tipTotalMxn / rate;
+            const perMxn = tipTotalMxn / people;
+            const perUsd = tipTotalUsd / people;
 
-// LISTENERS
+            if (people > 1) {
+                tipOutMxn.value = `${format(perMxn)} (${format(tipTotalMxn)})`;
+                tipOutUsd.value = `${format(perUsd)} (${format(tipTotalUsd)})`;
+                updateSummary(billSummaryOutput, `$${format(perUsd)}/person`);
+            } else {
+                tipOutMxn.value = format(tipTotalMxn);
+                tipOutUsd.value = format(tipTotalUsd);
+                updateSummary(billSummaryOutput, `$${format(tipTotalUsd)}`);
+            }
+        }
 
-rateInput.addEventListener('input', refresh);
-costQuantityMinus.addEventListener('click', () => {
-    if (getCostQuantity() > 1) {
-        costQuantityVal.value = getCostQuantity() - 1;
-        updateCost();
-    }
-});
-costQuantityPlus.addEventListener('click', () => {
-    costQuantityVal.value = getCostQuantity() + 1;
-    updateCost();
-});
-costQuantityVal.addEventListener('input', updateCost);
-costFromVal.addEventListener('input', calcCost);
-marketRate.addEventListener('input', calcMarket);
-marketKg.addEventListener('input', calcMarket);
+        // GLOBAL
 
-fetchRate();
+        function refresh() {
+            updateSummary(rateSummaryOutput, '$' + getRate() + " MXN");
+            calcCost();
+            calcMarket();
+            calcTip();
+        }
 
-</script>
+        function format(n, decimals = 2) {
+            if (isNaN(n) || !isFinite(n)) return '—';
+            return n.toLocaleString('en-US', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function updateSummary(summaryEl, value) {
+            if (summaryEl) summaryEl.textContent = value;
+        }
+
+        // LISTENERS
+
+        rateInput.addEventListener('input', refresh);
+        costQuantityMinusButton.addEventListener('click', () => {
+            if (getCostQuantity() > 1) {
+                costQuantityInput.value = getCostQuantity() - 1;
+                updateCost();
+            }
+        });
+        costQuantityPlusButton.addEventListener('click', () => {
+            costQuantityInput.value = getCostQuantity() + 1;
+            updateCost();
+        });
+        costQuantityInput.addEventListener('input', updateCost);
+        costInput.addEventListener('input', calcCost);
+        marketRateInput.addEventListener('input', calcMarket);
+        marketKgInput.addEventListener('input', calcMarket);
+
+
+
+        //fetchRate();
+
+    </script>
 </body>
+
 </html>
