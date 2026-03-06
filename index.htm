@@ -487,26 +487,23 @@ footer {
 
   fetchRate();
 
-  const headers = document.querySelectorAll('.card-header');
+const cards = document.querySelectorAll('.card');
 
-headers.forEach(header => {
-  header.addEventListener('click', () => {
-    const targetId = header.dataset.target;
-    const target = document.getElementById(targetId);
-    const isOpen = target.classList.contains('open');
+cards.forEach(card => {
+  card.addEventListener('click', () => {
+    const body = card.querySelector('.card-body');
+    const isOpen = body.classList.contains('open');
+    if (isOpen) return; // already open, do nothing
 
     // collapse all
-    document.querySelectorAll('.card-body').forEach(body => {
-      body.classList.remove('open');
-    });
+    document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
 
-    // open clicked one unless it was already open
-    if (!isOpen) target.classList.add('open');
+    // open this one
+    body.classList.add('open');
+    card.querySelector('.card-header').classList.add('active');
   });
 });
-
-// mark clicked header active
-if (!isOpen) header.classList.add('active');
 
 </script>
 </body>
