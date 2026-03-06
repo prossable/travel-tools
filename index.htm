@@ -185,7 +185,7 @@ header p {
     border: 1px solid rgba(58, 155, 213, 0.15);
 }
 
-.flip-btn {
+.btn-round {
     background: var(--border);
     border: none;
     border-radius: 50%;
@@ -202,10 +202,9 @@ header p {
     margin-top: 22px;
 }
 
-.flip-btn:hover {
+.btn-round:hover {
     background: var(--accent);
     color: var(--bg);
-    transform: rotate(180deg);
 }
 
 .arrow-label {
@@ -306,11 +305,11 @@ footer {
 
 <!-- EXCHANGE RATE -->
 <div class="card">
-    <div class="card-header" data-target="card-currency">
+    <div class="card-header" data-target="card-rate">
         <span class="dot"></span> Exchange Rate
-        <span class="card-summary" id="summary-rate">99</span>
+        <span class="card-summary" id="summary-rate"></span>
     </div>
-    <div class="card-body" id="card-currency">
+    <div class="card-body" id="card-rate">
         <div class="card-body-inner">
             <div class="input-row input-group">
                 <label>MXN per $1 USD</label>
@@ -321,37 +320,38 @@ footer {
     </div>
 </div>
 
-<!-- CURRENCY CONVERTER -->
+<!-- COST -->
 <div class="card">
-    <div class="card-header" data-target="card-exchange">
-        <span class="dot"></span> Currency <span id="conv-direction">Pesos → Dollars</span>
+    <div class="card-header" data-target="card-cost">
+        <span class="dot"></span> Cost
+        <span class="card-summary" id="summary-cost"></span>
     </div>
-    <div class="card-body" id="card-exchange">
+    <div class="card-body" id="card-cost">
         <div class="card-body-inner">
             <div class="input-row">
                 <div class="input-group">
                     <label id="from-label">Pesos (MXN)</label>
-                    <input type="number" class="big-input" id="from-val" placeholder="0" min="0" step="any">
+                    <input type="number" class="big-input" id="cost-from-val" placeholder="0" min="0" step="any">
                 </div>
-                <button class="flip-btn" id="flip-btn" title="Flip direction">⇄</button>
+                <div class="arrow-label">→</div>
                 <div class="input-group">
                     <label id="to-label">Dollars (USD)</label>
-                    <input type="number" class="big-input output" id="to-val" placeholder="—" readonly>
+                    <input type="number" class="big-input output" id="cost-to-val" placeholder="—" readonly>
                 </div>
             </div>
             <div class="input-row">
                 <div class="input-group">
                     <label>Quantity</label>
                     <div class="qty-controls">
-                        <button class="qty-btn" id="qty-minus">−</button>
-                        <input type="number" class="big-input big-input-inner" id="qty-val" value="1" min="1">
-                        <button class="qty-btn" id="qty-plus">+</button>
+                        <button class="qty-btn" id="cost-qty-minus">−</button>
+                        <input type="number" class="big-input big-input-inner" id="cost-qty-val" value="1" min="1">
+                        <button class="qty-btn" id="cost-qty-plus">+</button>
                     </div>
                 </div>
                 <div class="arrow-label">×</div>
                 <div class="input-group">
-                    <label id="qty-total-label">Total (USD)</label>
-                    <input class="big-input output" id="qty-total" placeholder="—" readonly>
+                    <label>Total (USD)</label>
+                    <input class="big-input output" id="cost-qty-total" placeholder="—" readonly>
                 </div>
             </div>
          </div>
@@ -391,7 +391,7 @@ footer {
     </div>
 </div>
 
-<!-- TIP -->
+<!-- CHECK -->
 <div class="card">
   <div class="card-header" data-target="card-tip">
     <span class="dot"></span> Tip Calculator
@@ -455,23 +455,20 @@ footer {
 </footer>
 
 <script>
+// VARS
 const cards = document.querySelectorAll('.card');
 
 const rateInput = document.getElementById('rate');
 const rateHint = document.getElementById('hint-rate');
 const rateSummary = document.getElementById('summary-rate');
 
-const fromVal = document.getElementById('from-val');
-const toVal = document.getElementById('to-val');
-const flipBtn = document.getElementById('flip-btn');
-const fromLabel = document.getElementById('from-label');
-const toLabel = document.getElementById('to-label');
-const convDir = document.getElementById('conv-direction');
-const qtyMinus = document.getElementById('qty-minus');
-const qtyPlus = document.getElementById('qty-plus');
-const qtyValEl = document.getElementById('qty-val');
-const qtyTotal = document.getElementById('qty-total');
-const qtyTotalLabel = document.getElementById('qty-total-label');
+const costFromVal = document.getElementById('cost-from-val');
+const costToVal = document.getElementById('cost-to-val');
+const costQtyMinus = document.getElementById('cost-qty-minus');
+const costQtyPlus = document.getElementById('cost-qty-plus');
+const costQtyVal = document.getElementById('cost-qty-val');
+const costQtyTotal = document.getElementById('cost-qty-total');
+
 const mxnPerKg = document.getElementById('mxn-per-kg');
 const wtKg = document.getElementById('wt-kg');
 const wtMxnTotal = document.getElementById('wt-mxn-total');
@@ -488,7 +485,6 @@ const tipPeoplePlus = document.getElementById('tip-people-plus');
 const presetBtns = document.querySelectorAll('.preset-btn');
 const summaryTip = document.getElementById('summary-tip');
 
-let mode = 'mxn-to-usd';
 let lastConvertedUnit = null;
 let tipLastEdited = 'mxn';
 let activePct = null; // tracks current tip %
@@ -517,13 +513,6 @@ function getRate() {
     return parseFloat(rateInput.value) || 17.57;
 }
 
-function updateRate() {
-    updateRateSummary(rateSummary, getRate());
-    calcCurrency();
-    calcWeight();
-    calcTip();
-}
-
 function fetchRate() {
     rateHint.textContent = 'Fetching live rate…';
 
@@ -544,7 +533,7 @@ function fetchRate() {
                 year: 'numeric'
             });
             rateHint.textContent = `Live rate as of ${date} · ECB · Editable`;
-            updateRate();
+            refresh();
         })
         .catch(err => {
             clearTimeout(timeout);
@@ -555,14 +544,24 @@ function fetchRate() {
         });
 }
 
-function updateRateSummary(summaryEl, value) {
-    if (summaryEl) summaryEl.textContent = value;
-}
-
 // COST
 
+function calcCost() {
+    const v = parseFloat(costFromVal.value);
+    if (isNaN(v) || costFromVal.value === '') {
+        costToVal.value = '';
+        lastConvertedUnit = null;
+        updateQtyTotal();
+        return;
+    }
+    const result = v / getRate();
+    costToVal.value = fmt(result).replace(/,/g, '');
+    lastConvertedUnit = result;
+    updateQtyTotal();
+}
+
 function getQty() {
-    return Math.max(1, parseInt(qtyValEl.value) || 1);
+    return Math.max(1, parseInt(costQtyVal.value) || 1);
 }
 
 function fmt(n, decimals = 2) {
@@ -575,25 +574,11 @@ function fmt(n, decimals = 2) {
 
 function updateQtyTotal() {
     if (lastConvertedUnit === null) {
-        qtyTotal.value = '';
+        costQtyTotal.value = '';
         return;
     }
     const total = lastConvertedUnit * getQty();
-    qtyTotal.value = '$' + (mode === 'mxn-to-usd' ? fmt(total) : fmt(total, 0));
-}
-
-function calcCurrency() {
-    const v = parseFloat(fromVal.value);
-    if (isNaN(v) || fromVal.value === '') {
-        toVal.value = '';
-        lastConvertedUnit = null;
-        updateQtyTotal();
-        return;
-    }
-    const result = mode === 'mxn-to-usd' ? v / getRate() : v * getRate();
-    toVal.value = fmt(result).replace(/,/g, '');
-    lastConvertedUnit = result;
-    updateQtyTotal();
+    costQtyTotal.value = '$' + fmt(total);
 }
 
 function calcWeight() {
@@ -608,25 +593,6 @@ function calcWeight() {
     wtMxnTotal.value = fmt(totalMxn).replace(/,/g, '');
     wtUsdTotal.value = fmt(totalMxn / getRate()).replace(/,/g, '');
 }
-
-flipBtn.addEventListener('click', () => {
-    const currentVal = parseFloat(toVal.value);
-    if (mode === 'mxn-to-usd') {
-        mode = 'usd-to-mxn';
-        fromLabel.textContent = 'Dollars (USD)';
-        toLabel.textContent = 'Pesos (MXN)';
-        convDir.textContent = 'Dollars → Pesos';
-        qtyTotalLabel.textContent = 'Total (MXN)';
-    } else {
-        mode = 'mxn-to-usd';
-        fromLabel.textContent = 'Pesos (MXN)';
-        toLabel.textContent = 'Dollars (USD)';
-        convDir.textContent = 'Pesos → Dollars';
-        qtyTotalLabel.textContent = 'Total (USD)';
-    }
-    fromVal.value = isNaN(currentVal) ? '' : currentVal;
-    calcCurrency();
-});
 
 // TIPS
 
@@ -722,21 +688,34 @@ function calcTip() {
   }
 }
 
+// GLOBAL
+
+function refresh() {
+    updateSummary(rateSummary, getRate() + " MXN");
+    calcCost();
+    calcWeight();
+    calcTip();
+}
+
+function updateSummary(summaryEl, value) {
+    if (summaryEl) summaryEl.textContent = value;
+}
+
 // LISTENERS
 
-qtyMinus.addEventListener('click', () => {
+costQtyMinus.addEventListener('click', () => {
     if (getQty() > 1) {
-        qtyValEl.value = getQty() - 1;
+        costQtyVal.value = getQty() - 1;
         updateQtyTotal();
     }
 });
-qtyPlus.addEventListener('click', () => {
-    qtyValEl.value = getQty() + 1;
+costQtyPlus.addEventListener('click', () => {
+    costQtyVal.value = getQty() + 1;
     updateQtyTotal();
 });
-qtyValEl.addEventListener('input', updateQtyTotal);
-rateInput.addEventListener('input', updateRate);
-fromVal.addEventListener('input', calcCurrency);
+costQtyVal.addEventListener('input', updateQtyTotal);
+rateInput.addEventListener('input', refresh);
+costFromVal.addEventListener('input', calcCost);
 mxnPerKg.addEventListener('input', calcWeight);
 wtKg.addEventListener('input', calcWeight);
 
