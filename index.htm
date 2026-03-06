@@ -6,7 +6,7 @@
 <title>MX Converter</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root {
+:root {
     --bg: #0c0f14;
     --card: #131820;
     --border: #1e2a38;
@@ -15,44 +15,51 @@
     --text: #e2eaf0;
     --muted: #5a7080;
     --input-bg: #0a0e14;
-  }
+}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-  body {
+body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Roboto Mono', monospace;
     font-weight: 700;
+    font-size: 0.6rem;
     min-height: 100vh;
     padding: 24px 16px 48px;
-  }
+    color: var(--muted);
+}
 
-  header {
+header {
     text-align: center;
     margin-bottom: 36px;
     padding-top: 8px;
-  }
+}
 
-  header h1 {
+header h1 {
     font-family: 'Syne', sans-serif;
     font-size: 2rem;
     font-weight: 800;
     letter-spacing: -0.5px;
     color: var(--text);
-  }
+}
 
-  header h1 span { color: var(--accent); }
+header h1 span {
+    color: var(--accent);
+}
 
-  header p {
-    font-size: 0.7rem;
+header p {
     color: var(--muted);
     margin-top: 4px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-  }
+}
 
-  .card {
+.card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 16px;
@@ -63,95 +70,85 @@
     margin-right: auto;
     position: relative;
     transition: border-color 0.2s;
-  }
+}
 
-  .card:focus-within { border-color: #1e3a52; }
+.card:focus-within {
+    border-color: #1e3a52;
+}
 
-  .card-label {
-    font-size: 0.65rem;
+.card-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+    overflow: hidden;
+}
+
+.card-body.open {
+    grid-template-rows: 1fr;
+}
+
+.card-body > .card-body-inner {
+    overflow: hidden;
+}
+
+.card-header {
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--muted);
-    margin-bottom: 16px;
     display: flex;
     align-items: center;
     gap: 8px;
-  }
+}
 
-  .card-label::after {
+.card-header::after {
     content: '';
     flex: 1;
     height: 1px;
     background: var(--border);
-  }
+}
 
-  .dot {
+.card-header .chevron {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+    font-size: 1rem;
+    padding-left: 8px;
+}
+
+.card-header.active .chevron {
+    transform: rotate(180deg);
+}
+
+.card-header .dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
     display: inline-block;
     flex-shrink: 0;
     background: var(--accent);
-  }
+}
 
-  /* Rate card */
-  .rate-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 10px;
-    gap: 8px;
-  }
-
-  .rate-hint {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.62rem;
-    color: var(--muted);
-  }
-
-  .refresh-btn {
-    background: none;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--muted);
-    font-size: 1rem;
-    width: 28px;
-    height: 28px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: border-color 0.2s, color 0.2s;
-  }
-
-  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .refresh-btn:disabled { opacity: 0.4; cursor: default; }
-
-  /* Shared row grid */
-  .input-row {
+/* Shared row grid */
+.input-row {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 12px;
     margin-top: 14px;
-  }
+}
 
-  .input-group {
+.input-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
     align-items: start;
-  }
+}
 
-  .input-group label {
-    font-size: 0.62rem;
-    color: var(--muted);
+.input-group label {
     text-transform: uppercase;
     letter-spacing: 0.1em;
-  }
+}
 
-  .big-input {
+.big-input {
     background: var(--input-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
@@ -163,29 +160,33 @@
     outline: none;
     transition: border-color 0.2s;
     -moz-appearance: textfield;
-  }
+}
 
-  .big-input-inner {
+.big-input-inner {
     border: none;
     border-left: 1px solid var(--border);
     border-right: 1px solid var(--border);
     border-radius: 0;
     text-align: center;
-  }
+}
 
-  .big-input::-webkit-outer-spin-button,
-  .big-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.big-input::-webkit-outer-spin-button,
+.big-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+}
 
-  .big-input:focus { border-color: var(--accent); }
+.big-input:focus {
+    border-color: var(--accent);
+}
 
-  .big-input.output {
+.big-input.output {
     color: var(--accent2);
     background: rgba(58, 155, 213, 0.05);
     cursor: default;
     border: 1px solid rgba(58, 155, 213, 0.15);
-  }
+}
 
-  .flip-btn {
+.flip-btn {
     background: var(--border);
     border: none;
     border-radius: 50%;
@@ -200,32 +201,32 @@
     transition: background 0.2s, color 0.2s, transform 0.3s;
     flex-shrink: 0;
     margin-top: 22px;
-  }
+}
 
-  .flip-btn:hover {
+.flip-btn:hover {
     background: var(--accent);
     color: var(--bg);
     transform: rotate(180deg);
-  }
+}
 
-  .arrow-label {
+.arrow-label {
     font-size: 1.2rem;
     color: var(--muted);
     text-align: center;
     margin-top: 22px;
     flex-shrink: 0;
-  }
+}
 
-  .qty-controls {
+.qty-controls {
     display: flex;
     align-items: center;
     background: var(--input-bg);
     border: 1px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
-  }
+}
 
-  .qty-btn {
+.qty-btn {
     background: none;
     border: none;
     color: var(--accent);
@@ -238,103 +239,130 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
+}
 
-  .qty-btn:hover  { background: var(--accent); color: var(--bg); }
-  .qty-btn:active { background: #2a7aaa; }
+.qty-btn:hover {
+    background: var(--accent);
+    color: var(--bg);
+}
 
-  footer {
+.qty-btn:active {
+    background: #2a7aaa;
+}
+
+footer {
     text-align: center;
     margin-top: 28px;
-    font-size: 0.6rem;
     color: #1e2e3e;
     letter-spacing: 0.06em;
     max-width: 480px;
     margin-left: auto;
     margin-right: auto;
-  }
+}
 
-  @media (max-width: 360px) {
-    .big-input { font-size: 0.95rem; padding: 6px; }
-  }
+@media (max-width: 360px) {
+    .big-input {
+        font-size: 0.95rem;
+        padding: 6px;
+    }
+}
+
 </style>
 </head>
 <body>
 
 <header>
-  <h1>MX <span>Converter</span></h1>
+  <h1>Travel <span>Tools</span></h1>
   <p>Travel calculator · MXN / USD</p>
 </header>
 
 <!-- EXCHANGE RATE -->
 <div class="card">
-  <div class="card-label"><span class="dot"></span> Exchange Rate</div>
-  <div class="input-row input-group">
-      <label>MXN per $1 USD</label>
-      <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
-  </div>
-  <div class="rate-footer">
-    <div class="rate-hint" id="rate-hint">Fetching live rate…</div>
-    <button class="refresh-btn" id="refresh-btn" title="Refresh rate">↻</button>
-  </div>
+    <div class="card-header" data-target="card-currency">
+        <span class="dot"></span> Exchange Rate
+        <span class="chevron">▾</span>
+    </div>
+    <div class="card-body" id="card-currency">
+        <div class="card-body-inner">
+            <div class="input-row input-group">
+                <label>MXN per $1 USD</label>
+                <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
+            </div>
+            <div id="rate-hint">Fetching live rate…</div>
+        </div>
+    </div>
 </div>
 
 <!-- CURRENCY CONVERTER -->
 <div class="card">
-  <div class="card-label"><span class="dot"></span> Currency <span id="conv-direction">Pesos → Dollars</span></div>
-  <div class="input-row">
-    <div class="input-group">
-      <label id="from-label">Pesos (MXN)</label>
-      <input type="number" class="big-input" id="from-val" placeholder="0" min="0" step="any">
+    <div class="card-header" data-target="card-exchange">
+        <span class="dot"></span> Currency <span id="conv-direction">Pesos → Dollars</span>
+        <span class="chevron">▾</span>
     </div>
-    <button class="flip-btn" id="flip-btn" title="Flip direction">⇄</button>
-    <div class="input-group">
-      <label id="to-label">Dollars (USD)</label>
-      <input type="number" class="big-input output" id="to-val" placeholder="—" readonly>
+    <div class="card-body" id="card-exchange">
+        <div class="card-body-inner">
+            <div class="input-row">
+                <div class="input-group">
+                    <label id="from-label">Pesos (MXN)</label>
+                    <input type="number" class="big-input" id="from-val" placeholder="0" min="0" step="any">
+                </div>
+                <button class="flip-btn" id="flip-btn" title="Flip direction">⇄</button>
+                <div class="input-group">
+                    <label id="to-label">Dollars (USD)</label>
+                    <input type="number" class="big-input output" id="to-val" placeholder="—" readonly>
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Quantity</label>
+                    <div class="qty-controls">
+                        <button class="qty-btn" id="qty-minus">−</button>
+                        <input type="number" class="big-input big-input-inner" id="qty-val" value="1" min="1">
+                        <button class="qty-btn" id="qty-plus">+</button>
+                    </div>
+                </div>
+                <div class="arrow-label">×</div>
+                <div class="input-group">
+                    <label id="qty-total-label">Total (USD)</label>
+                    <input class="big-input output" id="qty-total" placeholder="—" readonly>
+                </div>
+            </div>
+         </div>
     </div>
-  </div>
-  <div class="input-row">
-    <div class="input-group">
-      <label>Quantity</label>
-      <div class="qty-controls">
-        <button class="qty-btn" id="qty-minus">−</button>
-        <input type="number" class="big-input big-input-inner" id="qty-val" value="1" min="1">
-        <button class="qty-btn" id="qty-plus">+</button>
-      </div>
-    </div>
-    <div class="arrow-label">×</div>
-    <div class="input-group">
-      <label id="qty-total-label">Total (USD)</label>
-      <input class="big-input output" id="qty-total" placeholder="—" readonly>
-    </div>
-  </div>
 </div>
 
 <!-- MARKET WEIGHT -->
 <div class="card">
-  <div class="card-label"><span class="dot"></span> Market Weight</div>
-  <div class="input-row">
-    <div class="input-group">
-      <label>Pesos / kg</label>
-      <input type="number" class="big-input" id="mxn-per-kg" placeholder="0" min="0" step="any">
+    <div class="card-header" data-target="card-market">
+        <span class="dot"></span> Market Weight
+        <span class="chevron">▾</span>
     </div>
-    <div class="arrow-label">×</div>
-    <div class="input-group">
-      <label>Kilograms</label>
-      <input type="number" class="big-input" id="wt-kg" placeholder="0" min="0" step="any">
+    <div class="card-body" id="card-market">
+        <div class="card-body-inner">
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Pesos / kg</label>
+                    <input type="number" class="big-input" id="mxn-per-kg" placeholder="0" min="0" step="any">
+                </div>
+                <div class="arrow-label">×</div>
+                <div class="input-group">
+                    <label>Kilograms</label>
+                    <input type="number" class="big-input" id="wt-kg" placeholder="0" min="0" step="any">
+                </div>
+            </div>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Total (MXN)</label>
+                    <input class="big-input output" id="wt-mxn-total" placeholder="—" readonly>
+                </div>
+                <div class="arrow-label">→</div>
+                <div class="input-group">
+                    <label>Total (USD)</label>
+                    <input class="big-input output" id="wt-usd-total" placeholder="—" readonly>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="input-row">
-    <div class="input-group">
-      <label>Total (MXN)</label>
-      <input class="big-input output" id="wt-mxn-total" placeholder="—" readonly>
-    </div>
-    <div class="arrow-label">→</div>
-    <div class="input-group">
-      <label>Total (USD)</label>
-      <input class="big-input output" id="wt-usd-total" placeholder="—" readonly>
-    </div>
-  </div>
 </div>
 
 <footer>
@@ -359,7 +387,6 @@
   const wtMxnTotal    = document.getElementById('wt-mxn-total');
   const wtUsdTotal    = document.getElementById('wt-usd-total');
   const rateHint      = document.getElementById('rate-hint');
-  const refreshBtn    = document.getElementById('refresh-btn');
 
   let mode = 'mxn-to-usd';
   let lastConvertedUnit = null;
@@ -407,7 +434,6 @@
 
   function fetchRate() {
     rateHint.textContent = 'Fetching live rate…';
-    refreshBtn.disabled = true;
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
@@ -429,9 +455,6 @@
           ? 'Request timed out · using fallback · Editable'
           : 'Could not fetch live rate · using fallback · Editable';
         rateHint.textContent = msg;
-      })
-      .finally(() => {
-        refreshBtn.disabled = false;
       });
   }
 
@@ -461,9 +484,30 @@
   fromVal.addEventListener('input', calcCurrency);
   mxnPerKg.addEventListener('input', calcWeight);
   wtKg.addEventListener('input', calcWeight);
-  refreshBtn.addEventListener('click', fetchRate);
 
   fetchRate();
+
+  const headers = document.querySelectorAll('.card-header');
+
+headers.forEach(header => {
+  header.addEventListener('click', () => {
+    const targetId = header.dataset.target;
+    const target = document.getElementById(targetId);
+    const isOpen = target.classList.contains('open');
+
+    // collapse all
+    document.querySelectorAll('.card-body').forEach(body => {
+      body.classList.remove('open');
+    });
+
+    // open clicked one unless it was already open
+    if (!isOpen) target.classList.add('open');
+  });
+});
+
+// mark clicked header active
+if (!isOpen) header.classList.add('active');
+
 </script>
 </body>
 </html>
