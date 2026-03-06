@@ -251,7 +251,7 @@
             background: #2a7aaa;
         }
 
-        .tip-presets {
+        .presets {
             display: grid;
             grid-template-columns: repeat(3, 1fr) 1fr;
             gap: 8px;
@@ -398,7 +398,7 @@
     <!-- CHECK -->
     <div class="card">
         <div class="card-header" data-target="card-bill">
-            <span class="dot"></span> Tip Calculator
+            <span class="dot"></span> Restaurant Bill
             <span class="card-summary" id="summary-bill"></span>
         </div>
         <div class="card-body" id="card-bill">
@@ -408,12 +408,12 @@
                 <div class="input-row">
                     <div class="input-group">
                         <label>Bill (MXN)</label>
-                        <input type="number" class="big-input" id="bill-mxn" placeholder="0" min="0" step="any">
+                        <input type="number" class="big-input" id="bill-total1" placeholder="0" min="0" step="any">
                     </div>
                     <div class="arrow-label">⇄</div>
                     <div class="input-group">
                         <label>Bill (USD)</label>
-                        <input type="number" class="big-input" id="bill-usd" placeholder="0" min="0" step="any">
+                        <input type="number" class="big-input" id="bill-total2" placeholder="0" min="0" step="any">
                     </div>
                 </div>
 
@@ -430,23 +430,49 @@
                 </div>
 
                 <!-- Tip presets -->
-                <div class="tip-presets">
+                <div class="presets">
                     <button class="preset-btn" data-pct="10">10%</button>
                     <button class="preset-btn" data-pct="15">15%</button>
                     <button class="preset-btn" data-pct="20">20%</button>
-                    <input type="number" class="big-input preset-custom" id="tip-pct" placeholder="%" min="0" max="100">
+                    <input type="number" class="big-input preset-custom" id="bill-tip-custom" placeholder="%" min="0" max="100">
                 </div>
 
-                <!-- Tip outputs -->
+                <!-- Tip -->
                 <div class="input-row">
                     <div class="input-group">
                         <label>Tip (MXN)</label>
-                        <input class="big-input output" id="tip-out-mxn" placeholder="—" readonly>
+                        <input class="big-input output" id="bill-tip1" placeholder="—" readonly>
                     </div>
                     <div class="arrow-label">→</div>
                     <div class="input-group">
                         <label>Tip (USD)</label>
-                        <input class="big-input output" id="tip-out-usd" placeholder="—" readonly>
+                        <input class="big-input output" id="bill-tip2" placeholder="—" readonly>
+                    </div>
+                </div>
+
+                <!-- Subtotal -->
+                <div class="input-row" id="bill-subtotal">
+                    <div class="input-group">
+                        <label>Subtotal (MXN)</label>
+                        <input class="big-input output" id="bill-sub1" placeholder="—" readonly>
+                    </div>
+                    <div class="arrow-label">→</div>
+                    <div class="input-group">
+                        <label>Subtotal (USD)</label>
+                        <input class="big-input output" id="bill-sub2" placeholder="—" readonly>
+                    </div>
+                </div>
+
+                <!-- total -->
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Total (MXN)</label>
+                        <input class="big-input output" id="bill-final1" placeholder="—" readonly>
+                    </div>
+                    <div class="arrow-label">→</div>
+                    <div class="input-group">
+                        <label>Total (USD)</label>
+                        <input class="big-input output" id="bill-final2" placeholder="—" readonly>
                     </div>
                 </div>
 
@@ -481,37 +507,24 @@
         const marketTotal2Output = document.getElementById('market-total2');
 
         const billSummaryOutput = document.getElementById('summary-bill');
-        const bill1Input = document.getElementById('bill-mxn');
-        const bill2Input = document.getElementById('bill-usd');
-        const tipPeoplInput = document.getElementById('bill-people');
-        const tipPeopleMinusButton = document.getElementById('bill-people-minus');
-        const tipPeoplePlusButton = document.getElementById('bill-people-plus');
-        const tipPct = document.getElementById('tip-pct');
-        const tipOutMxn = document.getElementById('tip-out-mxn');
-        const tipOutUsd = document.getElementById('tip-out-usd');
-        const presetBtns = document.querySelectorAll('.preset-btn');
+        const billSubtotalElement = document.getElementById('bill-subtotal');
+        const bill1Input = document.getElementById('bill-total1');
+        const bill2Input = document.getElementById('bill-total2');
+        const billPeopleInput = document.getElementById('bill-people');
+        const billPeopleMinusButton = document.getElementById('bill-people-minus');
+        const billPeoplePlusButton = document.getElementById('bill-people-plus');
+        const billTipButtons = document.getElementById('card-bill').querySelectorAll('.preset-btn');
+        const billTipCustomInput = document.getElementById('bill-tip-custom');
+        const billTip1Output = document.getElementById('bill-tip1');
+        const billTip2Output = document.getElementById('bill-tip2');
+        const billSub1Output = document.getElementById('bill-sub1');
+        const billSub2Output = document.getElementById('bill-sub2');
+        const billFinal1Output = document.getElementById('bill-final1');
+        const billFinal2Output = document.getElementById('bill-final2');
 
         let lastCost = null;
         let lastBillCurrency = 'mxn';
         let lastBillPercent = null; // tracks current tip %
-
-        // CARDS
-
-        cards.forEach(card => {
-            card.addEventListener('click', () => {
-                const body = card.querySelector('.card-body');
-                const isOpen = body.classList.contains('open');
-                if (isOpen) return; // already open, do nothing
-
-                // collapse all
-                document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
-                document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
-
-                // open this one
-                body.classList.add('open');
-                card.querySelector('.card-header').classList.add('active');
-            });
-        });
 
         // RATE
 
@@ -599,95 +612,82 @@
 
         // BILL
 
-        // Preset / custom selection
         function setActivePreset(btn) {
-            presetBtns.forEach(b => b.classList.remove('active'));
-            tipPct.classList.remove('active');
+            billTipButtons.forEach(b => b.classList.remove('active'));
+            billTipCustomInput.classList.remove('active');
             if (btn) btn.classList.add('active');
         }
 
         function setActiveCustom() {
-            presetBtns.forEach(b => b.classList.remove('active'));
-            tipPct.classList.add('active');
+            billTipButtons.forEach(b => b.classList.remove('active'));
+            billTipCustomInput.classList.add('active');
         }
 
-        presetBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                lastBillPercent = parseFloat(btn.dataset.pct);
-                tipPct.value = '';
-                setActivePreset(btn);
-                calcTip();
-            });
-        });
+        function getTipPeople() { return Math.max(1, parseInt(billPeopleInput.value) || 1); }
 
-        tipPct.addEventListener('input', () => {
-            lastBillPercent = parseFloat(tipPct.value) || null;
-            setActiveCustom();
-            calcTip();
-        });
-
-        // People counter
-        function getTipPeople() { return Math.max(1, parseInt(tipPeoplInput.value) || 1); }
-
-        tipPeopleMinusButton.addEventListener('click', () => {
-            if (getTipPeople() > 1) { tipPeoplInput.value = getTipPeople() - 1; calcTip(); }
-        });
-        tipPeoplePlusButton.addEventListener('click', () => {
-            tipPeoplInput.value = getTipPeople() + 1; calcTip();
-        });
-        tipPeoplInput.addEventListener('input', calcTip);
-
-        // Bill inputs — bidirectional
-        bill1Input.addEventListener('input', () => { lastBillCurrency = 'mxn'; calcTip(); });
-        bill2Input.addEventListener('input', () => { lastBillCurrency = 'usd'; calcTip(); });
-
-        // Core calc
-        function calcTip() {
+        function calcBill() {
             const rate = getRate();
             const people = getTipPeople();
             const pct = lastBillPercent;
 
+            billSubtotalElement.style.display = people > 1 ? 'grid' : 'none';            
+
             // sync bill fields
-            let billMxn;
-            if (lastBillCurrency === 'mxn') {
-                billMxn = parseFloat(bill1Input.value);
-                if (!isNaN(billMxn) && bill1Input.value !== '') {
-                    bill2Input.value = format(billMxn / rate).replace(/,/g, '');
+            let total1, total2;
+            if (lastBillCurrency != 'usd') {
+                total1 = parseFloat(bill1Input.value);
+                if (!isNaN(total1) && bill1Input.value !== '') {
+                    total2 = total1 / rate;
+                    bill2Input.value = format(total2).replace(/,/g, '');
                 } else {
                     bill2Input.value = '';
                 }
             } else {
-                const billUsd = parseFloat(bill2Input.value);
-                if (!isNaN(billUsd) && bill2Input.value !== '') {
-                    billMxn = billUsd * rate;
-                    bill1Input.value = format(billMxn, 0).replace(/,/g, '');
+                total2 = parseFloat(bill2Input.value);
+                if (!isNaN(total2) && bill2Input.value !== '') {
+                    total1 = total2 * rate;
+                    bill1Input.value = format(total1, 0).replace(/,/g, '');
                 } else {
-                    billMxn = NaN;
+                    total1 = NaN;
                     bill1Input.value = '';
                 }
             }
 
             // bail if we don't have what we need
-            if (isNaN(billMxn) || billMxn === '' || pct === null || isNaN(pct)) {
-                tipOutMxn.value = '';
-                tipOutUsd.value = '';
+            if (isNaN(total1) || total1 === '' || pct === null || isNaN(pct)) {
+                billTip1Output.value = '';
+                billTip2Output.value = '';
+                billSub1Output.value = '';
+                billSub2Output.value = '';
+                billFinal1Output.value = '';
+                billFinal2Output.value = '';
                 updateSummary(billSummaryOutput, '');
                 return;
             }
 
-            const tipTotalMxn = billMxn * (pct / 100);
-            const tipTotalUsd = tipTotalMxn / rate;
-            const perMxn = tipTotalMxn / people;
-            const perUsd = tipTotalUsd / people;
+            const tipTotal1 = total1 * (pct / 100);
+            const tipTotal2 = tipTotal1 / rate;
+            const tipPer1 = tipTotal1 / people;
+            const tipPer2 = tipPer1 / rate;
+            const sub1 = total1 / people;
+            const sub2 = sub1 / rate;
+            const final1 = sub1 + tipPer1;
+            const final2 = final1 / rate;
 
+            billSub1Output.value = '$' + format(sub1);
+            billSub2Output.value = '$' + format(sub2);
             if (people > 1) {
-                tipOutMxn.value = `${format(perMxn)} (${format(tipTotalMxn)})`;
-                tipOutUsd.value = `${format(perUsd)} (${format(tipTotalUsd)})`;
-                updateSummary(billSummaryOutput, `$${format(perUsd)}/person`);
+                billTip1Output.value = `$${format(tipPer1)} ($${format(tipTotal1)})`;
+                billTip2Output.value = `$${format(tipPer2)} ($${format(tipTotal2)})`;
+                billFinal1Output.value = `$${format(final1)} ($${format(total1 + tipTotal1)})`;
+                billFinal2Output.value = `$${format(final2)} ($${format(total2 + tipTotal2)})`;
+                updateSummary(billSummaryOutput, `$${format(final2)} USD /person`);
             } else {
-                tipOutMxn.value = format(tipTotalMxn);
-                tipOutUsd.value = format(tipTotalUsd);
-                updateSummary(billSummaryOutput, `$${format(tipTotalUsd)}`);
+                billTip1Output.value = `$${format(tipTotal1)}`;
+                billTip2Output.value = `$${format(tipTotal2)}`;
+                billFinal1Output.value = `$${format(final1)}`;
+                billFinal2Output.value = `$${format(final2)}`;
+                updateSummary(billSummaryOutput, `$${format(final2)} USD`);
             }
         }
 
@@ -697,7 +697,7 @@
             updateSummary(rateSummaryOutput, '$' + getRate() + " MXN");
             calcCost();
             calcMarket();
-            calcTip();
+            calcBill();
         }
 
         function format(n, decimals = 2) {
@@ -714,25 +714,61 @@
 
         // LISTENERS
 
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const body = card.querySelector('.card-body');
+                const isOpen = body.classList.contains('open');
+                if (isOpen) return; // already open, do nothing
+
+                // collapse all
+                document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
+                document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
+
+                // open this one
+                body.classList.add('open');
+                card.querySelector('.card-header').classList.add('active');
+            });
+        });
+
         rateInput.addEventListener('input', refresh);
+
         costQuantityMinusButton.addEventListener('click', () => {
-            if (getCostQuantity() > 1) {
-                costQuantityInput.value = getCostQuantity() - 1;
-                updateCost();
-            }
+            if (getCostQuantity() > 1) { costQuantityInput.value = getCostQuantity() - 1; updateCost(); }
         });
         costQuantityPlusButton.addEventListener('click', () => {
-            costQuantityInput.value = getCostQuantity() + 1;
-            updateCost();
+            costQuantityInput.value = getCostQuantity() + 1; updateCost();
         });
         costQuantityInput.addEventListener('input', updateCost);
         costInput.addEventListener('input', calcCost);
+
         marketRateInput.addEventListener('input', calcMarket);
         marketKgInput.addEventListener('input', calcMarket);
 
-
+        bill1Input.addEventListener('input', () => { lastBillCurrency = 'mxn'; calcBill(); });
+        bill2Input.addEventListener('input', () => { lastBillCurrency = 'usd'; calcBill(); });
+        billPeopleInput.addEventListener('input', calcBill);
+        billPeopleMinusButton.addEventListener('click', () => {
+            if (getTipPeople() > 1) { billPeopleInput.value = getTipPeople() - 1; calcBill(); }
+        });
+        billPeoplePlusButton.addEventListener('click', () => {
+            billPeopleInput.value = getTipPeople() + 1; calcBill();
+        });
+        billTipButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                lastBillPercent = parseFloat(btn.dataset.pct);
+                billTipCustomInput.value = '';
+                setActivePreset(btn);
+                calcBill();
+            });
+        });
+        billTipCustomInput.addEventListener('input', () => {
+            lastBillPercent = parseFloat(billTipCustomInput.value) || null;
+            setActiveCustom();
+            calcBill();
+        });
 
         //fetchRate();
+        refresh();
 
     </script>
 </body>
