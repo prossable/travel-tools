@@ -601,14 +601,181 @@
         let lastBillCurrency = 'mxn';
         let lastBillPercent = null;
 
-        // RATE
-        class RateCard extends EventTarget {
+        // CONFIG
+
+        class Config {
+            static DEFAULT_RATE = 17.57;
+            static API_TIMEOUT = 5000;
+
+            static #activeCurrencyCode = 'MXN';
+
+            static currencies = {
+                MXN: {
+                    code: 'MXN',
+                    name: 'Mexican Peso',
+                    symbol: '$',
+                    apiBase: 'USD',
+                    apiTarget: 'MXN',
+                    defaultRate: 17.57,
+                    flag: '🇲🇽'
+                },
+                JPY: {
+                    code: 'JPY',
+                    name: 'Japanese Yen',
+                    symbol: '¥',
+                    apiBase: 'USD',
+                    apiTarget: 'JPY',
+                    defaultRate: 149.50,
+                    flag: '🇯🇵'
+                }
+            };
+
+            static getCurrency() {
+                return Config.currencies[Config.#activeCurrencyCode]
+                    ?? Config.currencies['MXN'];
+            }
+
+            static setActiveCurrency(code) {
+                if (!Config.currencies[code]) {
+                    throw new Error(`Unknown currency code: ${code}`);
+                }
+                Config.#activeCurrencyCode = code;
+            }
+
+            static getActiveCurrencyCode() {
+                return Config.#activeCurrencyCode;
+            }
+
+            static formatMoney(value, decimals = 2) {
+                const currency = Config.getCurrency();
+                return `${currency.symbol}${value.toLocaleString('en-US', {
+                    minimumFractionDigits: decimals,
+                    maximumFractionDigits: decimals
+                })} ${currency.code}`;
+            }
+
+
+            static format(value, currency) {
+                if (isNaN(value) || !isFinite(value)) return '—';
+                return value.toLocaleString('en-US', {
+                    minimumFractionDigits: currency.decimals,
+                    maximumFractionDigits: currency.decimals
+                });
+            }
+
+            static formatInput(value, currency) {
+                return Config.format(value, currency).replace(/,/g, '');
+            }
+
+            static formatSymbol(value, currency) {
+                return `${currency.symbol}${Config.format(value, currency)}`;
+            }
+
+            static formatFull(value, currency) {
+                return `${currency.symbol}${Config.format(value, currency)} ${currency.code}`;
+            }
+        }
+
+        class RateService extends EventTarget {
+            #rate = null;
+
             constructor() {
                 super();
+                this.fetchRate();
+            }
 
-                // bindings
-                this.getRate = this.getRate.bind(this);
-                this.fetchRate = this.fetchRate.bind(this);
+            getRate() {
+                return this.#rate ?? Config.getCurrency().defaultRate;
+            }
+
+            setRate(value) {
+                console.log("setrate: " + value);
+                const changed = this.#rate !== parseFloat(value);
+                this.#rate = parseFloat(value);
+                if (changed) {
+                    this.dispatchEvent(new CustomEvent('rateChanged', {
+                        detail: { rate: this.#rate }
+                    }));
+                }
+            }
+
+            fetchRate() {
+                console.log("fetchRate: " + this);
+
+                this.dispatchEvent(new CustomEvent('stateChanged', {
+                    detail: { busy: true }
+                }));
+                this.dispatchEvent(new CustomEvent('messageSent', {
+                    detail: { msg: 'Fetching live rate…' }
+                }));
+
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), Config.API_TIMEOUT);
+
+                fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
+                    signal: controller.signal
+                })
+                    .then(r => r.json())
+                    .then(data => {
+                        clearTimeout(timeout);
+                        const val = data.rates.MXN;
+                        const date = new Date(data.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        this.setRate(val);
+                        this.dispatchEvent(new CustomEvent('messageSent', {
+                            detail: { msg: `Live rate as of ${date} · European Central Bank` }
+                        }));
+                    })
+                    .catch(err => {
+                        clearTimeout(timeout);
+                        const msg = err.name === 'AbortError' ?
+                            'Request timed out · using fallback' :
+                            'Could not fetch live rate · using fallback';
+                        this.dispatchEvent(new CustomEvent('messageSent', {
+                            detail: { msg: msg }
+                        }));
+                    })
+                    .finally(() => {
+                        this.dispatchEvent(new CustomEvent('stateChanged', {
+                            detail: { busy: false }
+                        }));
+                    });
+            }
+
+            toForeign(amount) { return amount / this.getRate(); }
+            toLocal(amount) { return amount * this.getRate(); }
+
+            // formatted convenience methods
+            toForeignFormatted(amount) { return Config.formatMoney(this.toForeign(amount)); }
+            toLocalFormatted(amount) { return Config.formatMoney(this.toLocal(amount)); }
+
+
+
+            getLocalCurrency() { return Config.getCurrency(); }
+            getForeignCurrency() { return Config.currencies[Config.getCurrency().apiBase]; }
+
+            toForeign(amount) { return amount / this.getRate(); }
+            toLocal(amount) { return amount * this.getRate(); }
+
+            toForeignFormatted(amount) {
+                return Config.formatSymbol(this.toForeign(amount), this.getForeignCurrency());
+            }
+            toLocalFormatted(amount) {
+                return Config.formatSymbol(this.toLocal(amount), this.getLocalCurrency());
+            }
+        }
+
+        // RATE
+        class RateCard {
+            constructor(rateService) {
+                this.rateService = rateService;
+
+                /*// bindings
+                this.setRate = this.setRate.bind(this);
+                this.getRate = this.getRate.bind(this);*/
 
                 // elements
                 this.rateSummaryOutput = document.getElementById('summary-rate');
@@ -617,59 +784,20 @@
                 this.rateRefreshButton = document.getElementById('rate-refresh');
 
                 // listeners
-                this.rateInput.addEventListener('input', () => this.#triggerChange());
-                this.rateRefreshButton.addEventListener('click', this.fetchRate);
-
-                // init
-                this.fetchRate();
-            }
-
-            #triggerChange() {
-                console.log("triggerChange");
-                this.rateSummaryOutput.textContent = '$' + this.getRate() + " MXN";
-                this.dispatchEvent(new CustomEvent('rateChanged', {
-                    detail: { rate: this.getRate() }
-                }));
-            }
-
-            getRate() {
-                return parseFloat(this.rateInput.value) || 17.57;
-            }
-
-            fetchRate() {
-                console.log("fetchRate: " + this);
-                this.rateHintOutput.textContent = 'Fetching live rate…';
-                this.rateRefreshButton.disabled = true;
-
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 5000);
-
-                fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
-                    signal: controller.signal
-                })
-                    .then(r => r.json())
-                    .then(data => {
-                        clearTimeout(timeout);
-                        const live = data.rates.MXN;
-                        this.rateInput.value = live.toFixed(2);
-                        const date = new Date(data.date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                        });
-                        this.rateHintOutput.textContent = `Live rate as of ${date} · European Central Bank`;
-                        this.#triggerChange();
-                    })
-                    .catch(err => {
-                        clearTimeout(timeout);
-                        const msg = err.name === 'AbortError' ?
-                            'Request timed out · using fallback' :
-                            'Could not fetch live rate · using fallback';
-                        this.rateHintOutput.textContent = msg;
-                    })
-                    .finally(() => {
-                        this.rateRefreshButton.disabled = false;
-                    });
+                this.rateInput.addEventListener('input', () => {
+                    this.rateHintOutput.textContent = "Manually set rate";
+                    this.rateService.setRate(parseFloat(this.rateInput.value));
+                });
+                this.rateRefreshButton.addEventListener('click', () => this.rateService.fetchRate());
+                this.rateService.addEventListener('rateChanged', (e) => {
+                    console.log("rateChanged: " + this.rateService.getRate());
+                    if (document.activeElement !== this.rateInput) {
+                        this.rateInput.value = e.detail.rate;
+                    }
+                    this.rateSummaryOutput.textContent = Config.formatMoney(e.detail.rate);
+                });
+                this.rateService.addEventListener('stateChanged', (e) => this.rateRefreshButton.disabled = e.detail.busy);
+                this.rateService.addEventListener('messageSent', (e) => this.rateHintOutput.textContent = e.detail.msg);
             }
         }
 
@@ -827,10 +955,11 @@
 
         // GLOBAL
         function getRate() {
-            return rate.getRate();
+            return rateService.getRate();
         }
 
         function refresh() {
+            console.log("refresh: " + rateService.getRate());
             updateReferenceTable();
             calcCost();
             calcMarket();
@@ -904,8 +1033,9 @@
 
         buildReferenceTable();
 
-        let rate = new RateCard();
-        rate.addEventListener('rateChanged', () => refresh());
+        const rateService = new RateService();
+        const rate = new RateCard(rateService);
+        rateService.addEventListener('rateChanged', () => refresh());
 
 
     </script>
