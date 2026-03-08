@@ -441,12 +441,13 @@
     </div>
 
     <!-- MARKET WEIGHT -->
-    <div class="card">
+    <div class="card" id="card-market">
         <div class="card-header" data-target="card-market">
             <span class="dot"></span> Market Weight
             <span class="card-summary" id="summary-market"></span>
+            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
         </div>
-        <div class="card-body" id="card-market">
+        <div class="card-body">
             <div class="card-body-inner">
                 <div class="input-row">
                     <div class="input-group">
@@ -896,14 +897,49 @@
             }
         }
 
+        class MarketWeightCard extends Card {
+            lastCost = null;
+
+            constructor(rateService) {
+                super('card-market', 'summary-market');
+                this.rateService = rateService;
+
+                // binding
+                this.update = this.update.bind(this);
+
+                // elements
+                this.rateInput = document.getElementById('market-rate');
+                this.weightInput = document.getElementById('market-kg');
+                this.total1Output = document.getElementById('market-total1');
+                this.total2Output = document.getElementById('market-total2');
+
+                // listeners
+                this.rateInput.addEventListener('input', this.update);
+                this.weightInput.addEventListener('input', this.update);
+                this.rateService.addEventListener('rateChanged', (e) => {
+                    this.update();
+                });
+            }
+
+            update() {
+                const perKg = parseFloat(this.rateInput.value);
+                const kg = parseFloat(this.weightInput.value);
+                if (isNaN(perKg) || isNaN(kg) || this.rateInput.value === '' || this.weightInput.value === '') {
+                    this.total1Output.value = '';
+                    this.total2Output.value = '';
+                    this.updateSummary('');
+                    return;
+                }
+                const totalForeign = perKg * kg;
+                const totalLocal = this.rateService.toLocal(totalForeign);
+                this.total1Output.value = this.rateService.formatForeignSymbol(totalForeign);
+                this.total2Output.value = this.rateService.formatLocalSymbol(totalLocal);
+                this.updateSummary(this.rateService.formatLocalFull(totalLocal));
+            }
+        }
+
         // VARS
 
-
-        const marketSummaryOutput = document.getElementById('summary-market');
-        const marketRateInput = document.getElementById('market-rate');
-        const marketKgInput = document.getElementById('market-kg');
-        const marketTotal1Output = document.getElementById('market-total1');
-        const marketTotal2Output = document.getElementById('market-total2');
 
         const billSummaryOutput = document.getElementById('summary-bill');
         const billSubtotalElement = document.getElementById('bill-subtotal');
@@ -923,24 +959,6 @@
 
         let lastBillCurrency = 'mxn';
         let lastBillPercent = null;
-
-        // MARKET
-
-        function calcMarket() {
-            const perKg = parseFloat(marketRateInput.value);
-            const kg = parseFloat(marketKgInput.value);
-            if (isNaN(perKg) || isNaN(kg) || marketRateInput.value === '' || marketKgInput.value === '') {
-                marketTotal1Output.value = '';
-                marketTotal2Output.value = '';
-                updateSummary(marketSummaryOutput, '');
-                return;
-            }
-            const totalMxn = perKg * kg;
-            const totalUsd = '$' + format(totalMxn / getRate());
-            marketTotal1Output.value = '$' + format(totalMxn);
-            marketTotal2Output.value = totalUsd;
-            updateSummary(marketSummaryOutput, totalUsd + ' USD');
-        }
 
         // BILL
 
@@ -1029,7 +1047,6 @@
         }
 
         function refresh() {
-            calcMarket();
             calcBill();
         }
 
@@ -1046,9 +1063,6 @@
         }
 
         // LISTENERS
-        marketRateInput.addEventListener('input', calcMarket);
-        marketKgInput.addEventListener('input', calcMarket);
-
         bill1Input.addEventListener('input', () => { lastBillCurrency = 'mxn'; calcBill(); });
         bill2Input.addEventListener('input', () => { lastBillCurrency = 'usd'; calcBill(); });
         billPeopleInput.addEventListener('input', calcBill);
@@ -1076,6 +1090,7 @@
         const rate = new RateCard(rateService);
         const referenceCard = new ReferenceCard(rateService);
         const costCard = new CostCard(rateService);
+        const marketWeightCard = new MarketWeightCard(rateService);
         rateService.addEventListener('rateChanged', () => refresh());
     </script>
 </body>
