@@ -367,12 +367,13 @@
     </header>
 
     <!-- EXCHANGE RATE -->
-    <div class="card">
+    <div class="card" id="card-rate">
         <div class="card-header" data-target="card-rate">
             <span class="dot"></span> Exchange Rate
             <span class="card-summary" id="summary-rate"></span>
+            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
         </div>
-        <div class="card-body" id="card-rate">
+        <div class="card-body">
             <div class="card-body-inner">
                 <div class="input-row input-group">
                     <label>MXN per $1 USD</label>
@@ -387,12 +388,13 @@
     </div>
 
     <!-- QUICK REFERENCE -->
-    <div class="card">
+    <div class="card" id="card-reference">
         <div class="card-header" data-target="card-reference">
             <span class="dot"></span> Quick Reference
             <span class="card-summary" id="summary-reference"></span>
+            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
         </div>
-        <div class="card-body" id="card-reference">
+        <div class="card-body">
             <div class="card-body-inner">
                 <div class="ref-table" id="reference-table"></div>
             </div>
@@ -562,45 +564,6 @@
     </footer>
 
     <script>
-        // VARS
-        const cards = document.querySelectorAll('.card');
-
-        const referenceAmounts = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000];
-
-        const costSummaryOutput = document.getElementById('summary-cost');
-        const costInput = document.getElementById('cost-from-val');
-        const costOutput = document.getElementById('cost-to-val');
-        const costQuantityInput = document.getElementById('cost-qty');
-        const costQuantityMinusButton = document.getElementById('cost-qty-minus');
-        const costQuantityPlusButton = document.getElementById('cost-qty-plus');
-        const costTotalOutput = document.getElementById('cost-total');
-
-        const marketSummaryOutput = document.getElementById('summary-market');
-        const marketRateInput = document.getElementById('market-rate');
-        const marketKgInput = document.getElementById('market-kg');
-        const marketTotal1Output = document.getElementById('market-total1');
-        const marketTotal2Output = document.getElementById('market-total2');
-
-        const billSummaryOutput = document.getElementById('summary-bill');
-        const billSubtotalElement = document.getElementById('bill-subtotal');
-        const bill1Input = document.getElementById('bill-total1');
-        const bill2Input = document.getElementById('bill-total2');
-        const billPeopleInput = document.getElementById('bill-people');
-        const billPeopleMinusButton = document.getElementById('bill-people-minus');
-        const billPeoplePlusButton = document.getElementById('bill-people-plus');
-        const billTipButtons = document.getElementById('card-bill').querySelectorAll('.preset-btn');
-        const billTipCustomInput = document.getElementById('bill-tip-custom');
-        const billTip1Output = document.getElementById('bill-tip1');
-        const billTip2Output = document.getElementById('bill-tip2');
-        const billSub1Output = document.getElementById('bill-sub1');
-        const billSub2Output = document.getElementById('bill-sub2');
-        const billFinal1Output = document.getElementById('bill-final1');
-        const billFinal2Output = document.getElementById('bill-final2');
-
-        let lastCost = null;
-        let lastBillCurrency = 'mxn';
-        let lastBillPercent = null;
-
         class Config {
             static currencies = {
                 USD: {
@@ -665,7 +628,6 @@
             }
 
             setRate(value) {
-                console.log("setrate: " + value);
                 const changed = this.#rate !== parseFloat(value);
                 this.#rate = parseFloat(value);
                 if (changed) {
@@ -676,8 +638,6 @@
             }
 
             fetchRate() {
-                console.log("fetchRate: " + this);
-
                 this.dispatchEvent(new CustomEvent('stateChanged', {
                     detail: { busy: true }
                 }));
@@ -721,8 +681,8 @@
                     });
             }
 
-            toForeign(amount) { return amount / this.getRate(); }
-            toLocal(amount) { return amount * this.getRate(); }
+            toForeign(amount) { return amount * this.getRate(); }
+            toLocal(amount) { return amount / this.getRate(); }
 
             #format(value, currency) {
                 if (isNaN(value) || !isFinite(value)) return '—';
@@ -769,16 +729,61 @@
             }
         }
 
-        class RateCard {
+        class Card {
+            constructor(cardId, summaryId) {
+                this.cardElement = document.getElementById(cardId);
+                this.cardBody = this.cardElement.querySelector('.card-body');
+                this.cardHeader = this.cardElement.querySelector('.card-header');
+                this.summaryOutput = document.getElementById(summaryId);
+                this.collapseButton = this.cardHeader.querySelector('.btn-round');
+                this.collapseButton.style.display = 'none';
+
+                // bindings
+                this.collapse = this.collapse.bind(this);
+                this.expand = this.expand.bind(this);
+
+                // listeners
+                this.cardElement.addEventListener('click', () => this.expand());
+                this.collapseButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // prevent card click from firing
+                    this.collapse();
+                });
+            }
+
+            expand() {
+                if (this.isOpen()) return;
+                // collapse all
+                document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
+                document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
+                document.querySelectorAll('.collapse-btn').forEach(b => b.style.display = 'none');
+
+                // open this one
+                this.cardBody.classList.add('open');
+                this.cardHeader.classList.add('active');
+                this.collapseButton.style.display = 'block';
+            }
+
+            collapse() {
+                this.cardBody.classList.remove('open');
+                this.cardHeader.classList.remove('active');
+                this.collapseButton.style.display = 'none';
+            }
+
+            isOpen() {
+                return this.cardBody.classList.contains('open');
+            }
+
+            updateSummary(value) {
+                this.summaryOutput.textContent = value;
+            }
+        }
+
+        class RateCard extends Card {
             constructor(rateService) {
+                super('card-rate', 'summary-rate');
                 this.rateService = rateService;
 
-                /*// bindings
-                this.setRate = this.setRate.bind(this);
-                this.getRate = this.getRate.bind(this);*/
-
                 // elements
-                this.rateSummaryOutput = document.getElementById('summary-rate');
                 this.rateInput = document.getElementById('rate');
                 this.rateHintOutput = document.getElementById('rate-hint');
                 this.rateRefreshButton = document.getElementById('rate-refresh');
@@ -790,40 +795,79 @@
                 });
                 this.rateRefreshButton.addEventListener('click', () => this.rateService.fetchRate());
                 this.rateService.addEventListener('rateChanged', (e) => {
-                    console.log("rateChanged: " + this.rateService.getRate());
                     if (document.activeElement !== this.rateInput) {
                         this.rateInput.value = e.detail.rate;
                     }
-                    this.rateSummaryOutput.textContent = this.rateService.formatForeignFull(e.detail.rate);
+                    this.updateSummary(this.rateService.formatForeignFull(e.detail.rate));
                 });
                 this.rateService.addEventListener('stateChanged', (e) => this.rateRefreshButton.disabled = e.detail.busy);
                 this.rateService.addEventListener('messageSent', (e) => this.rateHintOutput.textContent = e.detail.msg);
             }
         }
 
-        // REFERENCE
+        class ReferenceCard extends Card {
+            static referenceAmounts = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000];
 
-        function buildReferenceTable() {
-            const table = document.getElementById('reference-table');
-            table.innerHTML = `
-        <div class="ref-row ref-header">
-            <span>MXN</span>
-            <span>USD</span>
-        </div>
-        ${referenceAmounts.map(amount => `
-        <div class="ref-row">
-            <span>$${amount.toLocaleString()}</span>
-            <span class="ref-usd" data-pesos="${amount}">—</span>
-        </div>`).join('')}
-    `;
+            constructor(rateService) {
+                super('card-reference', 'summary-reference');
+                this.rateService = rateService;
+
+                // init
+                this.#build();
+
+                // listeners
+                this.rateService.addEventListener('rateChanged', (e) => this.update());
+            }
+
+            #build() {
+                const table = document.getElementById('reference-table');
+                const rows = ReferenceCard.referenceAmounts.map(amount => `<div class="ref-row"><span>${this.rateService.formatForeignSymbol(amount)}</span><span class="ref-local" data-foreign="${amount}">—</span></div>`).join('');
+                table.innerHTML = `<div class="ref-row ref-header"><span>MXN</span><span>USD</span></div>${rows}`;
+            }
+
+            update() {
+                document.querySelectorAll('.ref-local').forEach(cell => {
+                    const foreign = parseFloat(cell.dataset.foreign);
+                    cell.textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(foreign));
+                });
+            }
         }
 
-        function updateReferenceTable() {
-            document.querySelectorAll('.ref-usd').forEach(cell => {
-                const pesos = parseFloat(cell.dataset.pesos);
-                cell.textContent = '$' + format(pesos / getRate());
-            });
-        }
+        // VARS
+
+        const costSummaryOutput = document.getElementById('summary-cost');
+        const costInput = document.getElementById('cost-from-val');
+        const costOutput = document.getElementById('cost-to-val');
+        const costQuantityInput = document.getElementById('cost-qty');
+        const costQuantityMinusButton = document.getElementById('cost-qty-minus');
+        const costQuantityPlusButton = document.getElementById('cost-qty-plus');
+        const costTotalOutput = document.getElementById('cost-total');
+
+        const marketSummaryOutput = document.getElementById('summary-market');
+        const marketRateInput = document.getElementById('market-rate');
+        const marketKgInput = document.getElementById('market-kg');
+        const marketTotal1Output = document.getElementById('market-total1');
+        const marketTotal2Output = document.getElementById('market-total2');
+
+        const billSummaryOutput = document.getElementById('summary-bill');
+        const billSubtotalElement = document.getElementById('bill-subtotal');
+        const bill1Input = document.getElementById('bill-total1');
+        const bill2Input = document.getElementById('bill-total2');
+        const billPeopleInput = document.getElementById('bill-people');
+        const billPeopleMinusButton = document.getElementById('bill-people-minus');
+        const billPeoplePlusButton = document.getElementById('bill-people-plus');
+        const billTipButtons = document.getElementById('card-bill').querySelectorAll('.preset-btn');
+        const billTipCustomInput = document.getElementById('bill-tip-custom');
+        const billTip1Output = document.getElementById('bill-tip1');
+        const billTip2Output = document.getElementById('bill-tip2');
+        const billSub1Output = document.getElementById('bill-sub1');
+        const billSub2Output = document.getElementById('bill-sub2');
+        const billFinal1Output = document.getElementById('bill-final1');
+        const billFinal2Output = document.getElementById('bill-final2');
+
+        let lastCost = null;
+        let lastBillCurrency = 'mxn';
+        let lastBillPercent = null;
 
         // COST
 
@@ -960,7 +1004,6 @@
 
         function refresh() {
             console.log("refresh: " + rateService.getRate());
-            updateReferenceTable();
             calcCost();
             calcMarket();
             calcBill();
@@ -979,23 +1022,6 @@
         }
 
         // LISTENERS
-
-        cards.forEach(card => {
-            card.addEventListener('click', () => {
-                const body = card.querySelector('.card-body');
-                const isOpen = body.classList.contains('open');
-                if (isOpen) return; // already open, do nothing
-
-                // collapse all
-                document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
-                document.querySelectorAll('.card-header').forEach(h => h.classList.remove('active'));
-
-                // open this one
-                body.classList.add('open');
-                card.querySelector('.card-header').classList.add('active');
-            });
-        });
-
         costQuantityMinusButton.addEventListener('click', () => {
             if (getCostQuantity() > 1) { costQuantityInput.value = getCostQuantity() - 1; updateCost(); }
         });
@@ -1031,13 +1057,10 @@
             calcBill();
         });
 
-        buildReferenceTable();
-
         const rateService = new RateService();
         const rate = new RateCard(rateService);
+        const referenceCard = new ReferenceCard(rateService);
         rateService.addEventListener('rateChanged', () => refresh());
-
-
     </script>
 </body>
 
