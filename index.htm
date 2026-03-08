@@ -402,12 +402,13 @@
     </div>
 
     <!-- COST -->
-    <div class="card">
+    <div class="card" id="card-cost">
         <div class="card-header" data-target="card-cost">
             <span class="dot"></span> Cost
             <span class="card-summary" id="summary-cost"></span>
+            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
         </div>
-        <div class="card-body" id="card-cost">
+        <div class="card-body">
             <div class="card-body-inner">
                 <div class="input-row">
                     <div class="input-group">
@@ -833,15 +834,70 @@
             }
         }
 
+        class CostCard extends Card {
+            lastCost = null;
+
+            constructor(rateService) {
+                super('card-cost', 'summary-cost');
+                this.rateService = rateService;
+
+                // binding
+                this.calculate = this.calculate.bind(this);
+                this.update = this.update.bind(this);
+                this.getQuantity = this.getQuantity.bind(this);
+
+                // elements
+                this.costInput = document.getElementById('cost-from-val');
+                this.costOutput = document.getElementById('cost-to-val');
+                this.costQuantityInput = document.getElementById('cost-qty');
+                this.costQuantityMinusButton = document.getElementById('cost-qty-minus');
+                this.costQuantityPlusButton = document.getElementById('cost-qty-plus');
+                this.costTotalOutput = document.getElementById('cost-total');
+
+                // listeners
+                this.costQuantityMinusButton.addEventListener('click', () => {
+                    if (this.getQuantity() > 1) { this.costQuantityInput.value = this.getQuantity() - 1; this.update(); }
+                });
+                this.costQuantityPlusButton.addEventListener('click', () => {
+                    this.costQuantityInput.value = this.getQuantity() + 1; this.update();
+                });
+                this.costQuantityInput.addEventListener('input', this.update);
+                this.costInput.addEventListener('input', this.calculate);
+                this.rateService.addEventListener('rateChanged', (e) => {
+                    this.calculate();
+                });
+            }
+
+            calculate() {
+                const val = parseFloat(this.costInput.value);
+                if (isNaN(val) || this.costInput.value === '') {
+                    this.lastCost = null;
+                    this.update();
+                    return;
+                }
+                this.lastCost = this.rateService.toLocal(val);
+                this.update();
+            }
+
+            update() {
+                if (this.lastCost === null) {
+                    this.costOutput.value = '';
+                    this.costTotalOutput.value = '';
+                    return;
+                }
+                const total = this.lastCost * this.getQuantity();
+                this.costOutput.value = this.rateService.formatLocalSymbol(this.lastCost);
+                this.costTotalOutput.value = this.rateService.formatLocalSymbol(total);
+                this.updateSummary(this.rateService.formatLocalFull(total));
+            }
+
+            getQuantity() {
+                return Math.max(1, parseInt(this.costQuantityInput.value) || 1);
+            }
+        }
+
         // VARS
 
-        const costSummaryOutput = document.getElementById('summary-cost');
-        const costInput = document.getElementById('cost-from-val');
-        const costOutput = document.getElementById('cost-to-val');
-        const costQuantityInput = document.getElementById('cost-qty');
-        const costQuantityMinusButton = document.getElementById('cost-qty-minus');
-        const costQuantityPlusButton = document.getElementById('cost-qty-plus');
-        const costTotalOutput = document.getElementById('cost-total');
 
         const marketSummaryOutput = document.getElementById('summary-market');
         const marketRateInput = document.getElementById('market-rate');
@@ -865,38 +921,8 @@
         const billFinal1Output = document.getElementById('bill-final1');
         const billFinal2Output = document.getElementById('bill-final2');
 
-        let lastCost = null;
         let lastBillCurrency = 'mxn';
         let lastBillPercent = null;
-
-        // COST
-
-        function calcCost() {
-            const v = parseFloat(costInput.value);
-            if (isNaN(v) || costInput.value === '') {
-                lastCost = null;
-                updateCost();
-                return;
-            }
-            lastCost = v / getRate();
-            updateCost();
-        }
-
-        function updateCost() {
-            if (lastCost === null) {
-                costOutput.value = '';
-                costTotalOutput.value = '';
-                return;
-            }
-            costOutput.value = '$' + format(lastCost);
-            const total = lastCost * getCostQuantity();
-            costTotalOutput.value = '$' + format(total);
-            updateSummary(costSummaryOutput, '$' + format(total) + ' USD');
-        }
-
-        function getCostQuantity() {
-            return Math.max(1, parseInt(costQuantityInput.value) || 1);
-        }
 
         // MARKET
 
@@ -1003,8 +1029,6 @@
         }
 
         function refresh() {
-            console.log("refresh: " + rateService.getRate());
-            calcCost();
             calcMarket();
             calcBill();
         }
@@ -1022,15 +1046,6 @@
         }
 
         // LISTENERS
-        costQuantityMinusButton.addEventListener('click', () => {
-            if (getCostQuantity() > 1) { costQuantityInput.value = getCostQuantity() - 1; updateCost(); }
-        });
-        costQuantityPlusButton.addEventListener('click', () => {
-            costQuantityInput.value = getCostQuantity() + 1; updateCost();
-        });
-        costQuantityInput.addEventListener('input', updateCost);
-        costInput.addEventListener('input', calcCost);
-
         marketRateInput.addEventListener('input', calcMarket);
         marketKgInput.addEventListener('input', calcMarket);
 
@@ -1060,6 +1075,7 @@
         const rateService = new RateService();
         const rate = new RateCard(rateService);
         const referenceCard = new ReferenceCard(rateService);
+        const costCard = new CostCard(rateService);
         rateService.addEventListener('rateChanged', () => refresh());
     </script>
 </body>
