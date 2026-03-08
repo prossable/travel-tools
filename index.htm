@@ -124,11 +124,11 @@
             overflow: hidden;
         }
 
-        .card-body.open~.card-header .card-summary,
+        /*.card-body.open~.card-header .card-summary,
         .card-header.active .card-summary {
             opacity: 0;
             pointer-events: none;
-        }
+        }*/
 
         .content-row {
             display: flex;
@@ -376,7 +376,7 @@
             <div class="card-body-inner">
                 <div class="input-row input-group">
                     <label>MXN per $1 USD</label>
-                    <input type="number" class="big-input" id="rate" value="17.57" step="0.01" min="1">
+                    <input type="number" class="big-input" id="rate" step="0.01" min="1">
                 </div>
                 <div class="content-row">
                     <div class="rate-hint" id="rate-hint">Fetching live rate…</div>
@@ -601,82 +601,46 @@
         let lastBillCurrency = 'mxn';
         let lastBillPercent = null;
 
-        // CONFIG
-
         class Config {
-            static DEFAULT_RATE = 17.57;
-            static API_TIMEOUT = 5000;
-
-            static #activeCurrencyCode = 'MXN';
-
             static currencies = {
+                USD: {
+                    code: 'USD',
+                    name: 'US Dollar',
+                    symbol: '$',
+                    apiTarget: 'USD',
+                    defaultRate: 1,
+                    flag: '🇺🇸',
+                    decimals: 2
+                },
                 MXN: {
                     code: 'MXN',
                     name: 'Mexican Peso',
                     symbol: '$',
-                    apiBase: 'USD',
                     apiTarget: 'MXN',
                     defaultRate: 17.57,
-                    flag: '🇲🇽'
+                    flag: '🇲🇽',
+                    decimals: 2
                 },
                 JPY: {
                     code: 'JPY',
                     name: 'Japanese Yen',
                     symbol: '¥',
-                    apiBase: 'USD',
                     apiTarget: 'JPY',
                     defaultRate: 149.50,
-                    flag: '🇯🇵'
+                    flag: '🇯🇵',
+                    decimals: 0
                 }
             };
 
-            static getCurrency() {
-                return Config.currencies[Config.#activeCurrencyCode]
-                    ?? Config.currencies['MXN'];
-            }
-
-            static setActiveCurrency(code) {
-                if (!Config.currencies[code]) {
-                    throw new Error(`Unknown currency code: ${code}`);
-                }
-                Config.#activeCurrencyCode = code;
-            }
-
-            static getActiveCurrencyCode() {
-                return Config.#activeCurrencyCode;
-            }
-
-            static formatMoney(value, decimals = 2) {
-                const currency = Config.getCurrency();
-                return `${currency.symbol}${value.toLocaleString('en-US', {
-                    minimumFractionDigits: decimals,
-                    maximumFractionDigits: decimals
-                })} ${currency.code}`;
-            }
-
-
-            static format(value, currency) {
-                if (isNaN(value) || !isFinite(value)) return '—';
-                return value.toLocaleString('en-US', {
-                    minimumFractionDigits: currency.decimals,
-                    maximumFractionDigits: currency.decimals
-                });
-            }
-
-            static formatInput(value, currency) {
-                return Config.format(value, currency).replace(/,/g, '');
-            }
-
-            static formatSymbol(value, currency) {
-                return `${currency.symbol}${Config.format(value, currency)}`;
-            }
-
-            static formatFull(value, currency) {
-                return `${currency.symbol}${Config.format(value, currency)} ${currency.code}`;
+            static getCurrency(code) {
+                return Config.currencies[code];
             }
         }
 
         class RateService extends EventTarget {
+            static API_TIMEOUT = 5000;
+            #localCurrency = Config.currencies['USD'];
+            #foreignCurrency = Config.currencies['MXN'];
             #rate = null;
 
             constructor() {
@@ -684,8 +648,20 @@
                 this.fetchRate();
             }
 
+            getLocalCurrency() { return this.#localCurrency; }
+            getForeignCurrency() { return this.#foreignCurrency; }
+            setForeignCurrency(code) {
+                const currency = Config.getCurrency(code);
+                if (currency === null) {
+                    throw new Error(`Unknown currency code: ${code}`);
+                }
+                this.#foreignCurrency = currency;
+                this.#rate = null;
+                this.fetchRate();
+            }
+
             getRate() {
-                return this.#rate ?? Config.getCurrency().defaultRate;
+                return this.#rate ?? this.#foreignCurrency.defaultRate;
             }
 
             setRate(value) {
@@ -710,15 +686,14 @@
                 }));
 
                 const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), Config.API_TIMEOUT);
+                const timeout = setTimeout(() => controller.abort(), RateService.API_TIMEOUT);
+                const url = `https://api.frankfurter.app/latest?from=${this.#localCurrency.apiTarget}&to=${this.#foreignCurrency.apiTarget}`;
 
-                fetch('https://api.frankfurter.app/latest?from=USD&to=MXN', {
-                    signal: controller.signal
-                })
+                fetch(url, { signal: controller.signal })
                     .then(r => r.json())
                     .then(data => {
                         clearTimeout(timeout);
-                        const val = data.rates.MXN;
+                        const val = data.rates[this.#foreignCurrency.apiTarget];
                         const date = new Date(data.date).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -730,6 +705,7 @@
                         }));
                     })
                     .catch(err => {
+                        console.log(err);
                         clearTimeout(timeout);
                         const msg = err.name === 'AbortError' ?
                             'Request timed out · using fallback' :
@@ -748,27 +724,51 @@
             toForeign(amount) { return amount / this.getRate(); }
             toLocal(amount) { return amount * this.getRate(); }
 
-            // formatted convenience methods
-            toForeignFormatted(amount) { return Config.formatMoney(this.toForeign(amount)); }
-            toLocalFormatted(amount) { return Config.formatMoney(this.toLocal(amount)); }
-
-
-
-            getLocalCurrency() { return Config.getCurrency(); }
-            getForeignCurrency() { return Config.currencies[Config.getCurrency().apiBase]; }
-
-            toForeign(amount) { return amount / this.getRate(); }
-            toLocal(amount) { return amount * this.getRate(); }
-
-            toForeignFormatted(amount) {
-                return Config.formatSymbol(this.toForeign(amount), this.getForeignCurrency());
+            #format(value, currency) {
+                if (isNaN(value) || !isFinite(value)) return '—';
+                return value.toLocaleString('en-US', {
+                    minimumFractionDigits: currency.decimals,
+                    maximumFractionDigits: currency.decimals
+                });
             }
-            toLocalFormatted(amount) {
-                return Config.formatSymbol(this.toLocal(amount), this.getLocalCurrency());
+
+            #formatInput(value, currency) {
+                return this.#format(value, currency).replace(/,/g, '');
+            }
+
+            #formatSymbol(value, currency) {
+                return `${currency.symbol}${this.#format(value, currency)}`;
+            }
+
+            #formatFull(value, currency) {
+                return `${currency.symbol}${this.#format(value, currency)} ${currency.code}`;
+            }
+
+            formatLocalInput(value) {
+                return this.#formatInput(value, this.#localCurrency);
+            }
+
+            formatForeignInput(value) {
+                return this.#formatInput(value, this.#foreignCurrency);
+            }
+
+            formatLocalSymbol(value) {
+                return this.#formatSymbol(value, this.#localCurrency);
+            }
+
+            formatForeignSymbol(value) {
+                return this.#formatSymbol(value, this.#foreignCurrency);
+            }
+
+            formatLocalFull(value) {
+                return this.#formatFull(value, this.#localCurrency);
+            }
+
+            formatForeignFull(value) {
+                return this.#formatFull(value, this.#foreignCurrency);
             }
         }
 
-        // RATE
         class RateCard {
             constructor(rateService) {
                 this.rateService = rateService;
@@ -794,7 +794,7 @@
                     if (document.activeElement !== this.rateInput) {
                         this.rateInput.value = e.detail.rate;
                     }
-                    this.rateSummaryOutput.textContent = Config.formatMoney(e.detail.rate);
+                    this.rateSummaryOutput.textContent = this.rateService.formatForeignFull(e.detail.rate);
                 });
                 this.rateService.addEventListener('stateChanged', (e) => this.rateRefreshButton.disabled = e.detail.busy);
                 this.rateService.addEventListener('messageSent', (e) => this.rateHintOutput.textContent = e.detail.msg);
