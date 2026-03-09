@@ -950,10 +950,10 @@
                 this.rateService = rateService;
 
                 // binding
-                this.setActivePreset = this.setActivePreset.bind(this);
-                this.setActiveCustom = this.setActiveCustom.bind(this);
-                this.getTipPeople = this.getPeople.bind(this);
-                this.calcBill = this.update.bind(this);
+                this.setTipPreset = this.setTipPreset.bind(this);
+                this.setTipCustom = this.setTipCustom.bind(this);
+                this.getPeople = this.getPeople.bind(this);
+                this.update = this.update.bind(this);
 
                 // elements
                 this.subtotalElement = document.getElementById('bill-subtotal');
@@ -985,13 +985,13 @@
                     btn.addEventListener('click', () => {
                         this.lastBillPercent = parseFloat(btn.dataset.pct);
                         this.tipCustomInput.value = '';
-                        this.setActivePreset(btn);
+                        this.setTipPreset(btn);
                         this.update();
                     });
                 });
                 this.tipCustomInput.addEventListener('input', () => {
                     this.lastBillPercent = parseFloat(this.tipCustomInput.value) || null;
-                    this.setActiveCustom();
+                    this.setTipCustom();
                     this.update();
                 });
                 this.rateService.addEventListener('rateChanged', (e) => {
@@ -999,13 +999,13 @@
                 });
             }
 
-            setActivePreset(btn) {
+            setTipPreset(btn) {
                 this.tipButtons.forEach(b => b.classList.remove('active'));
                 this.tipCustomInput.classList.remove('active');
                 if (btn) btn.classList.add('active');
             }
 
-            setActiveCustom() {
+            setTipCustom() {
                 this.tipButtons.forEach(b => b.classList.remove('active'));
                 this.tipCustomInput.classList.add('active');
             }
@@ -1078,13 +1078,18 @@
             }
         }
 
-        const rateService = new RateService();
-        const rate = new RateCard(rateService);
-        const referenceCard = new ReferenceCard(rateService);
-        const costCard = new CostCard(rateService);
-        const marketWeightCard = new MarketWeightCard(rateService);
-        const billCard = new BillCard(rateService);
-        //rateService.addEventListener('rateChanged', () => refresh());
+        class App {
+            constructor() {
+                this.rateService = new RateService();
+                this.rateCard = new RateCard(this.rateService);
+                this.referenceCard = new ReferenceCard(this.rateService);
+                this.costCard = new CostCard(this.rateService);
+                this.marketWeightCard = new MarketWeightCard(this.rateService);
+                this.billCard = new BillCard(this.rateService);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => new App());
     </script>
 </body>
 
