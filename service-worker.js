@@ -1,15 +1,15 @@
-const CACHE = 'travel-tools-1.0.0';
+const CACHE = 'travel-tools-1.0.1';
 
 const ASSETS = [
-    '/',
-    '/index.html',
-    '/site.webmanifest',
-    '/favicon.ico',
-    '/favicon-16x16.png',
-    '/favicon-32x32.png',
-    '/apple-touch-icon.png',
-    '/android-chrome-192x192.png',
-    '/android-chrome-512x512.png'
+    '/travel-tools/',
+    '/travel-tools/index.htm',
+    '/travel-tools/site.webmanifest',
+    '/travel-tools/favicon.ico',
+    '/travel-tools/favicon-16x16.png',
+    '/travel-tools/favicon-32x32.png',
+    '/travel-tools/apple-touch-icon.png',
+    '/travel-tools/android-chrome-192x192.png',
+    '/travel-tools/android-chrome-512x512.png'
 ];
 
 // install — cache all assets
