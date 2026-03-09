@@ -250,7 +250,7 @@ header .buttons {
 }
 
 #install-banner.visible {
-    display: inline;
+    display: flex;
 }
 
 /* CARD */
