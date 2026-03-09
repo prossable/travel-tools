@@ -100,11 +100,35 @@
         }
 
         input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
             width: 20px;
             height: 20px;
-            accent-color: var(--accent);
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
             cursor: pointer;
+            position: relative;
             flex-shrink: 0;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        input[type="checkbox"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        input[type="checkbox"]:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 6px;
+            height: 10px;
+            border: 2px solid var(--bg);
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
         }
 
         button {
@@ -309,7 +333,6 @@
 
         .row-flex {
             display: flex;
-            grid-template-columns: 1fr auto 1fr;
             align-items: center;
             gap: 12px;
             margin-top: 14px;
@@ -324,7 +347,10 @@
         }
 
         .row-2col {
+            display: grid;
             grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 14px;
         }
 
         .row-3col {
@@ -358,6 +384,10 @@
             font-size: 1.3rem;
         }
 
+        .highlight {
+            color: var(--accent2);
+        }
+
         .arrow-label {
             font-size: 1.2rem;
             color: var(--muted);
@@ -387,16 +417,10 @@
             background: var(--input-bg);
             padding: 10px;
             text-align: center;
-            color: var(--muted);
-        }
-
-        .ref-row span:last-child {
-            color: var(--accent2);
         }
 
         .ref-header span {
             background: var(--border);
-            color: var(--muted);
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
@@ -513,7 +537,35 @@
             gap: 6px;
         }
 
+        /* DEBT */
+
+        .debt-form {
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .debt-entry {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .debt-entry-direction.owe {
+            color: #e05555;
+        }
+
+        .debt-entry-direction.owedBy {
+            color: #73d780;
+        }
+
+        .debt-entry.settled {
+            opacity: 0.4;
+        }
+
         /* FOOT */
+
         footer {
             text-align: center;
             margin-top: 28px;
@@ -742,12 +794,12 @@
                 <div class="row-equation">
                     <div class="label-group">
                         <label>Bill (MXN)</label>
-                        <input type="number" class="big" id="bill-total1" placeholder="0" min="0" step="any">
+                        <input type="number" id="bill-total1" placeholder="0" min="0" step="any">
                     </div>
                     <div class="arrow-label">⇄</div>
                     <div class="label-group">
                         <label>Bill (USD)</label>
-                        <input type="number" class="big" id="bill-total2" placeholder="0" min="0" step="any">
+                        <input type="number" id="bill-total2" placeholder="0" min="0" step="any">
                     </div>
                 </div>
 
@@ -814,6 +866,63 @@
                         <input class="output" id="bill-final2" placeholder="—" readonly>
                     </div>
                 </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- DEBT TRACKER -->
+    <div class="card" id="card-debt">
+        <div class="card-header">
+            <span class="dot"></span> Debt Tracker
+            <span class="card-summary" id="summary-debt"></span>
+            <button class="round collapse-btn" title="Collapse">✕</button>
+        </div>
+        <div class="card-body">
+            <div class="card-body-inner">
+
+                <!-- Add form -->
+                <div class="debt-form">
+                    <div class="row-2col">
+                        <div class="label-group">
+                            <label>Person</label>
+                            <input type="text" id="debt-person" placeholder="Name">
+                        </div>
+                        <div class="label-group">
+                            <label>Note</label>
+                            <input type="text" id="debt-note" placeholder="Lunch, taxi…">
+                        </div>
+                    </div>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label>Amount (MXN)</label>
+                            <input type="number" id="debt-amount-foreign" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label">⇄</div>
+                        <div class="label-group">
+                            <label>Amount (USD)</label>
+                            <input type="number" id="debt-amount-local" placeholder="0" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="row-2col">
+                        <div class="label-group">
+                            <label>Direction</label>
+                            <div class="tab">
+                                <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
+                                <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
+                            </div>
+                        </div>
+                        <div class="label-group">
+                            <label>Add</label>
+                            <div>
+                                <button id="debt-add" class="wide">+ Add Entry</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Entry list -->
+                <div id="debt-list"></div>
 
             </div>
         </div>
@@ -1103,8 +1212,8 @@
                 const localCurrency = this.rateService.getLocalCurrency();
                 const foreignCurrency = this.rateService.getForeignCurrency();
                 const table = document.getElementById('reference-table');
-                const rows = ReferenceCard.referenceAmounts.map(amount => `<div class="ref-row"><span>${this.rateService.formatForeignSymbol(amount)}</span><span class="ref-local" data-foreign="${amount}">—</span></div>`).join('');
-                table.innerHTML = `<div class="ref-row ref-header"><span>${foreignCurrency.code}</span><span>${localCurrency.code}</span></div>${rows}`;
+                const rows = ReferenceCard.referenceAmounts.map(amount => `<div class="ref-row"><span>${this.rateService.formatForeignSymbol(amount)}</span><span class="ref-local highlight" data-foreign="${amount}">—</span></div>`).join('');
+                table.innerHTML = `<div class="ref-row ref-header"><span>${foreignCurrency.code}</span><span class="highlight">${localCurrency.code}</span></div>${rows}`;
             }
 
             update() {
@@ -1707,6 +1816,198 @@
             }
         }
 
+        class DebtCard extends Card {
+            #debts = [];
+            #nextId = 1;
+            #direction = 'owe';
+            #lastAmountCurrency = 'foreign';
+
+            constructor(rateService) {
+                super('card-debt', 'summary-debt');
+                this.rateService = rateService;
+
+                // bindings
+                this.render = this.render.bind(this);
+                this.update = this.update.bind(this);
+
+                // elements
+                this.listElement = document.getElementById('debt-list');
+                this.personInput = document.getElementById('debt-person');
+                this.noteInput = document.getElementById('debt-note');
+                this.amountForeignInput = document.getElementById('debt-amount-foreign');
+                this.amountLocalInput = document.getElementById('debt-amount-local');
+                this.dirButtons = document.querySelectorAll('.debt-dir-btn');
+                this.addButton = document.getElementById('debt-add');
+
+                // init
+                this.#load();
+
+                // direction buttons
+                this.dirButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.#direction = btn.dataset.dir;
+                        this.dirButtons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+
+                // bidirectional amount
+                this.amountForeignInput.addEventListener('input', () => {
+                    this.#lastAmountCurrency = 'foreign';
+                    const val = parseFloat(this.amountForeignInput.value);
+                    if (!isNaN(val) && this.amountForeignInput.value !== '') {
+                        this.amountLocalInput.value =
+                            this.rateService.formatLocalInput(this.rateService.toLocal(val));
+                    } else {
+                        this.amountLocalInput.value = '';
+                    }
+                });
+
+                this.amountLocalInput.addEventListener('input', () => {
+                    this.#lastAmountCurrency = 'local';
+                    const val = parseFloat(this.amountLocalInput.value);
+                    if (!isNaN(val) && this.amountLocalInput.value !== '') {
+                        this.amountForeignInput.value =
+                            this.rateService.formatForeignInput(this.rateService.toForeign(val));
+                    } else {
+                        this.amountForeignInput.value = '';
+                    }
+                });
+
+                // add button
+                this.addButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.#addDebt();
+                });
+
+                // rate changes
+                this.rateService.addEventListener('rateChanged', () => this.update());
+            }
+
+            #addDebt() {
+                const person = this.personInput.value.trim();
+                const note = this.noteInput.value.trim();
+
+                if (!person) {
+                    this.personInput.focus();
+                    return;
+                }
+
+                const foreignVal = parseFloat(this.amountForeignInput.value);
+                if (isNaN(foreignVal) || foreignVal <= 0) {
+                    this.amountForeignInput.focus();
+                    return;
+                }
+
+                this.#debts.push({
+                    id: this.#nextId++,
+                    person,
+                    amount: foreignVal,
+                    direction: this.#direction,
+                    note,
+                    settled: false
+                });
+
+                this.#save();
+                this.render();
+                this.#clearForm();
+            }
+
+            #clearForm() {
+                this.personInput.value = '';
+                this.noteInput.value = '';
+                this.amountForeignInput.value = '';
+                this.amountLocalInput.value = '';
+                this.dirButtons.forEach(b => b.classList.remove('active'));
+                this.dirButtons[0].classList.add('active');
+                this.#direction = 'owe';
+                this.personInput.focus();
+            }
+
+            #removeDebt(id) {
+                this.#debts = this.#debts.filter(d => d.id !== id);
+                this.#save();
+                this.render();
+            }
+
+            #toggleSettled(id) {
+                const debt = this.#debts.find(d => d.id === id);
+                if (debt) debt.settled = !debt.settled;
+                this.#save();
+                this.render();
+            }
+
+            #save() {
+                localStorage.setItem('debts', JSON.stringify(this.#debts));
+                localStorage.setItem('debtsNextId', this.#nextId);
+            }
+
+            #load() {
+                const stored = localStorage.getItem('debts');
+                if (stored) {
+                    this.#debts = JSON.parse(stored);
+                    this.#nextId = parseInt(localStorage.getItem('debtsNextId')) ||
+                        this.#debts.reduce((max, d) => Math.max(max, d.id), 0) + 1;
+                }
+                this.render();
+            }
+
+            render() {
+                if (this.#debts.length === 0) {
+                    this.listElement.innerHTML = '';
+                    this.update();
+                    return;
+                }
+
+                this.listElement.innerHTML = this.#debts.map(debt => `
+            <div class="debt-entry ${debt.settled ? 'settled' : ''}" data-id="${debt.id}">
+                <input type="checkbox" class="debt-settled" title="Mark settled" ${debt.settled ? 'checked' : ''}>
+                <div>
+                    ${debt.person}
+                    <span class="debt-entry-direction ${debt.direction}">${debt.direction === 'owe' ? 'is owed' : 'owes me'}</span>
+                    <span class="highlight">${this.rateService.formatLocalFull(this.rateService.toLocal(debt.amount))}</span> 
+                    ${debt.note ? `for <span class="highlight">${debt.note}</span>` : ''}
+                </div>
+                <button class="red debt-delete" title="Delete">✕</button>
+            </div>
+        `).join('');
+
+                // wire up row listeners
+                this.listElement.querySelectorAll('.debt-entry').forEach(row => {
+                    const id = parseInt(row.dataset.id);
+                    const checkbox = row.querySelector('.debt-settled');
+                    const deleteBtn = row.querySelector('.debt-delete');
+
+                    checkbox.addEventListener('change', (e) => {
+                        e.stopPropagation();
+                        this.#toggleSettled(id);
+                    });
+
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const debt = this.#debts.find(d => d.id === id);
+                        if (confirm(`Delete debt with ${debt?.person || 'this person'}?`)) {
+                            this.#removeDebt(id);
+                        }
+                    });
+                });
+
+                this.update();
+            }
+
+            update() {
+                const active = this.#debts.filter(d => !d.settled);
+                const oweCount = active.filter(d => d.direction === 'owe').length;
+                const owedCount = active.filter(d => d.direction === 'owedBy').length;
+                if (oweCount === 0 && owedCount === 0) {
+                    this.updateSummary('All settled');
+                } else {
+                    this.updateSummary(`Owe ${oweCount} · Owed ${owedCount}`);
+                }
+            }
+        }
+
         class App {
             #wakeLock = null;
             #installPrompt = null;
@@ -1725,6 +2026,7 @@
                 new BillCard(this.rateService);
                 new MarketTallyCard(this.rateService);
                 new NotesCard(this.rateService);
+                new DebtCard(this.rateService);
 
                 // init
                 this.rateService.fetchRate();
