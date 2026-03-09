@@ -1,4 +1,4 @@
-const CACHE = 'travel-tools-1.7';
+const CACHE = 'travel-tools-1.8';
 
 const ASSETS = [
     '/travel-tools/',
