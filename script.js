@@ -1072,7 +1072,11 @@ class App {
     #wakeLock = null;
     #installPrompt = null;
     #isInstalled = window.matchMedia('(display-mode: standalone)').matches
-        || window.navigator.standalone === true;
+        || window.navigator.standalone === true
+        || localStorage.getItem('appInstalled') === 'true';
+    #isIOS() {
+        return /iphone|ipad|ipod/i.test(navigator.userAgent);
+    }
 
     constructor() {
         // services
@@ -1129,12 +1133,18 @@ class App {
 
         this.installBanner.addEventListener('click', async () => {
             if (this.#installPrompt) {
-                // native prompt available
                 this.#installPrompt.prompt();
                 const { outcome } = await this.#installPrompt.userChoice;
-                if (outcome === 'accepted') this.#installPrompt = null;
+                if (outcome === 'accepted') {
+                    this.#installPrompt = null;
+                    this.#isInstalled = true;
+                    localStorage.setItem('appInstalled', 'true');
+                    this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg>App Installed';
+                    setTimeout(() => this.installBanner.classList.remove('visible'), 3000);
+                }
+            } else if (this.#isIOS()) {
+                alert('To install on iOS:\n\n1. Tap the Share button (□↑) at the bottom of Safari\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
             } else {
-                // no prompt available — show manual instructions
                 alert('To install: tap the browser menu (⋮) and select "Add to Home Screen"');
             }
         });
