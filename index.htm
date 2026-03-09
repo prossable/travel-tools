@@ -197,24 +197,37 @@
             border: 1px solid rgba(58, 155, 213, 0.15);
         }
 
-        .btn-round {
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .round-btn {
             background: var(--border);
             border: none;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 36px;
+            height: 36px;
             cursor: pointer;
             color: var(--muted);
             transition: background 0.2s, color 0.2s, transform 0.3s;
             flex-shrink: 0;
         }
 
-        .btn-round:hover {
+        .round-btn:hover {
             background: var(--accent);
             color: var(--bg);
         }
 
-        .btn-round:disabled {
+        .round-btn.red:hover {
+            background: #e05555;
+            color: var(--bg);
+        }
+
+        .round-btn:disabled {
             opacity: 0.4;
             cursor: default;
         }
@@ -340,6 +353,150 @@
             letter-spacing: 0.1em;
         }
 
+
+
+        /* Tally toolbar */
+        .tally-toolbar {
+            margin-bottom: 4px;
+        }
+
+        .tally-mode {
+            display: flex;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .tally-mode-btn {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .tally-mode-btn.active {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .tally-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Tally rows */
+        .tally-item {
+            display: flex;
+            grid-template-columns: auto 1fr auto auto auto;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tally-item.shop-mode {
+            grid-template-columns: auto 1fr auto auto auto auto;
+        }
+
+        .tally-check {
+            display: none;
+        }
+
+        .shop-mode .tally-check,
+        .shop-mode .tally-price {
+            display: block;
+        }
+
+        .tally-label {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 8px 10px;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+        }
+
+        .tally-label:focus {
+            border-color: var(--accent);
+        }
+
+        .tally-price {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 8px 10px;
+            outline: none;
+            width: 90px;
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+            text-align: right;
+            display: none;
+        }
+
+        .tally-price::-webkit-outer-spin-button,
+        .tally-price::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        .tally-price:focus {
+            border-color: var(--accent);
+        }
+
+        .tally-item.checked .tally-label {
+            text-decoration: line-through;
+            opacity: 0.4;
+        }
+
+        .tally-item.checked .tally-price {
+            opacity: 0.4;
+        }
+
+        /* Totals */
+        .tally-totals {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .tally-total-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .tally-total-row span:nth-child(2) {
+            color: var(--accent2);
+            text-align: right;
+        }
+
+        .tally-total-row span:nth-child(3) {
+            color: var(--accent);
+            text-align: right;
+        }
+
+
+
+
+
+
         footer {
             text-align: center;
             margin-top: 28px;
@@ -371,7 +528,7 @@
         <div class="card-header" data-target="card-rate">
             <span class="dot"></span> Exchange Rate
             <span class="card-summary" id="summary-rate"></span>
-            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
+            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
@@ -381,7 +538,7 @@
                 </div>
                 <div class="content-row">
                     <div class="rate-hint" id="rate-hint">Fetching live rate…</div>
-                    <button class="btn-round" id="rate-refresh" title="Refresh rate">↻</button>
+                    <button class="round-btn" id="rate-refresh" title="Refresh rate">↻</button>
                 </div>
             </div>
         </div>
@@ -392,7 +549,7 @@
         <div class="card-header" data-target="card-reference">
             <span class="dot"></span> Quick Reference
             <span class="card-summary" id="summary-reference"></span>
-            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
+            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
@@ -406,7 +563,7 @@
         <div class="card-header" data-target="card-cost">
             <span class="dot"></span> Cost
             <span class="card-summary" id="summary-cost"></span>
-            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
+            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
@@ -445,7 +602,7 @@
         <div class="card-header" data-target="card-market">
             <span class="dot"></span> Market Weight
             <span class="card-summary" id="summary-market"></span>
-            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
+            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
@@ -475,12 +632,55 @@
         </div>
     </div>
 
+    <!-- MARKET TALLY -->
+    <div class="card" id="card-tally">
+        <div class="card-header" data-target="card-tally">
+            <span class="dot"></span> Market Tally
+            <span class="card-summary" id="summary-tally"></span>
+            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
+        </div>
+        <div class="card-body">
+            <div class="card-body-inner">
+
+                <!-- Toolbar -->
+                <div class="content-row tally-toolbar">
+                    <div class="tally-mode">
+                        <button class="tally-mode-btn active" data-mode="plan">Plan</button>
+                        <button class="tally-mode-btn" data-mode="shop">Shop</button>
+                    </div>
+                    <div class="tally-actions">
+                        <button class="round-btn" id="tally-add" title="Add item">+</button>
+                        <button class="round-btn red" id="tally-clear" title="Clear all">✕</button>
+                    </div>
+                </div>
+
+                <!-- Item list -->
+                <div id="tally-list"></div>
+
+                <!-- Totals -->
+                <div class="tally-totals" id="tally-totals">
+                    <div class="tally-total-row">
+                        <span>Remaining</span>
+                        <span id="tally-remaining-foreign">—</span>
+                        <span id="tally-remaining-local">—</span>
+                    </div>
+                    <div class="tally-total-row">
+                        <span>Spent</span>
+                        <span id="tally-spent-foreign">—</span>
+                        <span id="tally-spent-local">—</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- CHECK -->
     <div class="card" id="card-bill">
         <div class="card-header" data-target="card-bill">
             <span class="dot"></span> Restaurant Bill
             <span class="card-summary" id="summary-bill"></span>
-            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
+            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
@@ -757,7 +957,7 @@
                 this.cardBody = this.cardElement.querySelector('.card-body');
                 this.cardHeader = this.cardElement.querySelector('.card-header');
                 this.summaryOutput = document.getElementById(summaryId);
-                this.collapseButton = this.cardHeader.querySelector('.btn-round');
+                this.collapseButton = this.cardHeader.querySelector('.round-btn');
                 this.collapseButton.style.display = 'none';
 
                 // bindings
@@ -1097,6 +1297,194 @@
             }
         }
 
+        class MarketTallyCard extends Card {
+            #items = [];
+            #nextId = 1;
+            #mode = 'plan'; // 'plan' | 'shop'
+
+            constructor(rateService) {
+                super('card-tally', 'summary-tally');
+                this.rateService = rateService;
+
+                // bindings
+                this.render = this.render.bind(this);
+                this.update = this.update.bind(this);
+
+                // elements
+                this.listElement = document.getElementById('tally-list');
+                this.addButton = document.getElementById('tally-add');
+                this.clearButton = document.getElementById('tally-clear');
+                this.spentForeignOutput = document.getElementById('tally-spent-foreign');
+                this.spentLocalOutput = document.getElementById('tally-spent-local');
+                this.remainingForeignOutput = document.getElementById('tally-remaining-foreign');
+                this.remainingLocalOutput = document.getElementById('tally-remaining-local');
+                this.modeButtons = document.querySelectorAll('.tally-mode-btn');
+
+                // init
+                this.#load();
+
+                // listeners
+                this.addButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.#addItem();
+                });
+                this.clearButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('Clear all items?')) {
+                        this.#items = [];
+                        this.#nextId = 1;
+                        this.#save();
+                        this.render();
+                    }
+                });
+                this.modeButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.#mode = btn.dataset.mode;
+                        this.modeButtons.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.render();
+                    });
+                });
+                this.rateService.addEventListener('rateChanged', () => this.update());
+            }
+
+            // ── Private ───────────────────────────────────────
+
+            #createItem(label = '', price = null, checked = false) {
+                return { id: this.#nextId++, label, price, checked };
+            }
+
+            #addItem(label = '', price = null) {
+                this.#items.push(this.#createItem(label, price));
+                this.#save();
+                this.render();
+                // focus the new label input
+                const inputs = this.listElement.querySelectorAll('.tally-label');
+                if (inputs.length) inputs[inputs.length - 1].focus();
+            }
+
+            #removeItem(id) {
+                this.#items = this.#items.filter(item => item.id !== id);
+                this.#save();
+                this.render();
+            }
+
+            #duplicateItem(id) {
+                const source = this.#items.find(item => item.id === id);
+                if (!source) return;
+                this.#items.push(this.#createItem(source.label, source.price));
+                this.#save();
+                this.render();
+            }
+
+            #toggleItem(id) {
+                const item = this.#items.find(item => item.id === id);
+                if (item) item.checked = !item.checked;
+                this.#save();
+                this.render();
+            }
+
+            #save() {
+                localStorage.setItem('tallyItems', JSON.stringify(this.#items));
+                localStorage.setItem('tallyNextId', this.#nextId);
+            }
+
+            #load() {
+                const stored = localStorage.getItem('tallyItems');
+                if (stored) {
+                    this.#items = JSON.parse(stored);
+                    this.#nextId = parseInt(localStorage.getItem('tallyNextId')) ||
+                        this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
+                }
+                this.render();
+            }
+
+            // ── Public ────────────────────────────────────────
+
+            addExternalItem(label, price) {
+                this.#addItem(label, price);
+            }
+
+            render() {
+                this.listElement.innerHTML = this.#items.map(item => `
+            <div class="tally-item ${this.#mode === 'shop' ? 'shop-mode' : ''} ${item.checked ? 'checked' : ''}" 
+                 data-id="${item.id}">
+                <input type="checkbox" class="checkbox tally-check" ${item.checked ? 'checked' : ''}>
+                <input type="text" 
+                       class="tally-label" 
+                       value="${item.label}" 
+                       placeholder="Item">
+                <input type="number" 
+                       class="tally-price" 
+                       value="${item.price ?? ''}" 
+                       placeholder="$0"
+                       min="0" 
+                       step="any">
+                <button class="round-btn duplicate" title="Duplicate">⧉</button>
+                <button class="round-btn red delete" title="Delete">✕</button>
+            </div>
+        `).join('');
+
+                // wire up row listeners
+                this.listElement.querySelectorAll('.tally-item').forEach(row => {
+                    const id = parseInt(row.dataset.id);
+                    const checkbox = row.querySelector('.tally-check');
+                    const labelInput = row.querySelector('.tally-label');
+                    const priceInput = row.querySelector('.tally-price');
+                    const dupButton = row.querySelector('.duplicate');
+                    const delButton = row.querySelector('.delete');
+
+                    checkbox.addEventListener('change', () => this.#toggleItem(id));
+
+                    labelInput.addEventListener('input', () => {
+                        const item = this.#items.find(i => i.id === id);
+                        if (item) { item.label = labelInput.value; this.#save(); }
+                    });
+
+                    priceInput.addEventListener('input', () => {
+                        const item = this.#items.find(i => i.id === id);
+                        if (item) {
+                            item.price = parseFloat(priceInput.value) || null;
+                            this.#save();
+                            this.update();
+                        }
+                    });
+
+                    dupButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.#duplicateItem(id);
+                    });
+
+                    delButton.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Delete ${this.#items.find(i => i.id === id)?.label || 'this item'}?`)) {
+                            this.#removeItem(id);
+                        }
+                    });
+                });
+
+                this.update();
+            }
+
+            update() {
+                const withPrice = this.#items.filter(i => i.price !== null);
+                const checked = withPrice.filter(i => i.checked);
+                const unchecked = withPrice.filter(i => !i.checked);
+
+                const totalForeign = withPrice.reduce((sum, i) => sum + i.price, 0);
+                const spentForeign = checked.reduce((sum, i) => sum + i.price, 0);
+                const remainingForeign = unchecked.reduce((sum, i) => sum + i.price, 0);
+
+                this.spentForeignOutput.textContent = this.rateService.formatForeignSymbol(spentForeign);
+                this.spentLocalOutput.textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(spentForeign));
+                this.remainingForeignOutput.textContent = this.rateService.formatForeignSymbol(remainingForeign);
+                this.remainingLocalOutput.textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(remainingForeign));
+
+                this.updateSummary(this.rateService.formatLocalFull(this.rateService.toLocal(totalForeign)));
+            }
+        }
+
         class App {
             constructor() {
                 this.rateService = new RateService();
@@ -1104,6 +1492,7 @@
                 this.referenceCard = new ReferenceCard(this.rateService);
                 this.costCard = new CostCard(this.rateService);
                 this.marketWeightCard = new MarketWeightCard(this.rateService);
+                this.marketTallyCard = new MarketTallyCard(this.rateService);
                 this.billCard = new BillCard(this.rateService);
                 this.rateService.fetchRate();
             }
