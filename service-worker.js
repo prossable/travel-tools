@@ -3,6 +3,8 @@ const CACHE = 'travel-tools-1.0.5';
 const ASSETS = [
     '/travel-tools/',
     '/travel-tools/index.htm',
+    '/travel-tools/styles.css',
+    '/travel-tools/script.js',
     '/travel-tools/site.webmanifest',
     '/travel-tools/favicon.ico',
     '/travel-tools/favicon-16x16.png',
