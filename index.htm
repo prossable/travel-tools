@@ -476,12 +476,13 @@
     </div>
 
     <!-- CHECK -->
-    <div class="card">
+    <div class="card" id="card-bill">
         <div class="card-header" data-target="card-bill">
             <span class="dot"></span> Restaurant Bill
             <span class="card-summary" id="summary-bill"></span>
+            <button class="btn-round collapse-btn" title="Collapse">⯆</button>
         </div>
-        <div class="card-body" id="card-bill">
+        <div class="card-body">
             <div class="card-body-inner">
 
                 <!-- Bill amount -->
@@ -822,9 +823,11 @@
             }
 
             #build() {
+                const localCurrency = this.rateService.getLocalCurrency();
+                const foreignCurrency = this.rateService.getForeignCurrency();
                 const table = document.getElementById('reference-table');
                 const rows = ReferenceCard.referenceAmounts.map(amount => `<div class="ref-row"><span>${this.rateService.formatForeignSymbol(amount)}</span><span class="ref-local" data-foreign="${amount}">—</span></div>`).join('');
-                table.innerHTML = `<div class="ref-row ref-header"><span>MXN</span><span>USD</span></div>${rows}`;
+                table.innerHTML = `<div class="ref-row ref-header"><span>${foreignCurrency.code}</span><span>${localCurrency.code}</span></div>${rows}`;
             }
 
             update() {
@@ -922,15 +925,15 @@
             }
 
             update() {
-                const perKg = parseFloat(this.rateInput.value);
-                const kg = parseFloat(this.weightInput.value);
-                if (isNaN(perKg) || isNaN(kg) || this.rateInput.value === '' || this.weightInput.value === '') {
+                const rate = parseFloat(this.rateInput.value);
+                const weight = parseFloat(this.weightInput.value);
+                if (isNaN(rate) || isNaN(weight) || this.rateInput.value === '' || this.weightInput.value === '') {
                     this.total1Output.value = '';
                     this.total2Output.value = '';
                     this.updateSummary('');
                     return;
                 }
-                const totalForeign = perKg * kg;
+                const totalForeign = rate * weight;
                 const totalLocal = this.rateService.toLocal(totalForeign);
                 this.total1Output.value = this.rateService.formatForeignSymbol(totalForeign);
                 this.total2Output.value = this.rateService.formatLocalSymbol(totalLocal);
@@ -938,160 +941,150 @@
             }
         }
 
-        // VARS
+        class BillCard extends Card {
+            lastBillCurrency = 'foreign';
+            lastBillPercent = null;
 
+            constructor(rateService) {
+                super('card-bill', 'summary-bill');
+                this.rateService = rateService;
 
-        const billSummaryOutput = document.getElementById('summary-bill');
-        const billSubtotalElement = document.getElementById('bill-subtotal');
-        const bill1Input = document.getElementById('bill-total1');
-        const bill2Input = document.getElementById('bill-total2');
-        const billPeopleInput = document.getElementById('bill-people');
-        const billPeopleMinusButton = document.getElementById('bill-people-minus');
-        const billPeoplePlusButton = document.getElementById('bill-people-plus');
-        const billTipButtons = document.getElementById('card-bill').querySelectorAll('.preset-btn');
-        const billTipCustomInput = document.getElementById('bill-tip-custom');
-        const billTip1Output = document.getElementById('bill-tip1');
-        const billTip2Output = document.getElementById('bill-tip2');
-        const billSub1Output = document.getElementById('bill-sub1');
-        const billSub2Output = document.getElementById('bill-sub2');
-        const billFinal1Output = document.getElementById('bill-final1');
-        const billFinal2Output = document.getElementById('bill-final2');
+                // binding
+                this.setActivePreset = this.setActivePreset.bind(this);
+                this.setActiveCustom = this.setActiveCustom.bind(this);
+                this.getTipPeople = this.getPeople.bind(this);
+                this.calcBill = this.update.bind(this);
 
-        let lastBillCurrency = 'mxn';
-        let lastBillPercent = null;
+                // elements
+                this.subtotalElement = document.getElementById('bill-subtotal');
+                this.total1FInput = document.getElementById('bill-total1');
+                this.totalLInput = document.getElementById('bill-total2');
+                this.peopleInput = document.getElementById('bill-people');
+                this.peopleMinusButton = document.getElementById('bill-people-minus');
+                this.peoplePlusButton = document.getElementById('bill-people-plus');
+                this.tipButtons = document.getElementById('card-bill').querySelectorAll('.preset-btn');
+                this.tipCustomInput = document.getElementById('bill-tip-custom');
+                this.tipFOutput = document.getElementById('bill-tip1');
+                this.tipLOutput = document.getElementById('bill-tip2');
+                this.subFOutput = document.getElementById('bill-sub1');
+                this.subLOutput = document.getElementById('bill-sub2');
+                this.finalFOutput = document.getElementById('bill-final1');
+                this.finalLOutput = document.getElementById('bill-final2');
 
-        // BILL
+                // listeners
+                this.total1FInput.addEventListener('input', () => { this.lastBillCurrency = 'foreign'; this.update(); });
+                this.totalLInput.addEventListener('input', () => { this.lastBillCurrency = 'local'; this.update(); });
+                this.peopleInput.addEventListener('input', this.update);
+                this.peopleMinusButton.addEventListener('click', () => {
+                    if (this.getPeople() > 1) { this.peopleInput.value = this.getPeople() - 1; this.update(); }
+                });
+                this.peoplePlusButton.addEventListener('click', () => {
+                    this.peopleInput.value = this.getPeople() + 1; this.update();
+                });
+                this.tipButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.lastBillPercent = parseFloat(btn.dataset.pct);
+                        this.tipCustomInput.value = '';
+                        this.setActivePreset(btn);
+                        this.update();
+                    });
+                });
+                this.tipCustomInput.addEventListener('input', () => {
+                    this.lastBillPercent = parseFloat(this.tipCustomInput.value) || null;
+                    this.setActiveCustom();
+                    this.update();
+                });
+                this.rateService.addEventListener('rateChanged', (e) => {
+                    this.update();
+                });
+            }
 
-        function setActivePreset(btn) {
-            billTipButtons.forEach(b => b.classList.remove('active'));
-            billTipCustomInput.classList.remove('active');
-            if (btn) btn.classList.add('active');
-        }
+            setActivePreset(btn) {
+                this.tipButtons.forEach(b => b.classList.remove('active'));
+                this.tipCustomInput.classList.remove('active');
+                if (btn) btn.classList.add('active');
+            }
 
-        function setActiveCustom() {
-            billTipButtons.forEach(b => b.classList.remove('active'));
-            billTipCustomInput.classList.add('active');
-        }
+            setActiveCustom() {
+                this.tipButtons.forEach(b => b.classList.remove('active'));
+                this.tipCustomInput.classList.add('active');
+            }
 
-        function getTipPeople() { return Math.max(1, parseInt(billPeopleInput.value) || 1); }
+            getPeople() { return Math.max(1, parseInt(this.peopleInput.value) || 1); }
 
-        function calcBill() {
-            const rate = getRate();
-            const people = getTipPeople();
-            const pct = lastBillPercent;
+            update() {
+                const people = this.getPeople();
+                const pct = this.lastBillPercent;
 
-            billSubtotalElement.style.display = people > 1 ? 'grid' : 'none';
+                this.subtotalElement.style.display = people > 1 ? 'grid' : 'none';
 
-            // sync bill fields
-            let total1, total2;
-            if (lastBillCurrency !== 'usd') {
-                total1 = parseFloat(bill1Input.value);
-                if (!isNaN(total1) && bill1Input.value !== '') {
-                    total2 = total1 / rate;
-                    bill2Input.value = format(total2).replace(/,/g, '');
+                // sync bill fields
+                let totalF, totalLocal;
+                if (this.lastBillCurrency === 'foreign') {
+                    totalF = parseFloat(this.total1FInput.value);
+                    if (!isNaN(totalF) && this.total1FInput.value !== '') {
+                        totalLocal = this.rateService.toLocal(totalF);
+                        this.totalLInput.value = this.rateService.formatLocalInput(totalLocal);
+                    } else {
+                        this.totalLInput.value = '';
+                    }
                 } else {
-                    bill2Input.value = '';
+                    totalLocal = parseFloat(this.totalLInput.value);
+                    if (!isNaN(totalLocal) && this.totalLInput.value !== '') {
+                        totalF = this.rateService.toForeign(totalLocal);
+                        this.total1FInput.value = this.rateService.formatForeignInput(totalF);
+                    } else {
+                        totalF = NaN;
+                        this.total1FInput.value = '';
+                    }
                 }
-            } else {
-                total2 = parseFloat(bill2Input.value);
-                if (!isNaN(total2) && bill2Input.value !== '') {
-                    total1 = total2 * rate;
-                    bill1Input.value = format(total1, 0).replace(/,/g, '');
+
+                // bail if we don't have what we need
+                if (isNaN(totalF) || totalF === '' || pct === null || isNaN(pct)) {
+                    this.tipFOutput.value = '';
+                    this.tipLOutput.value = '';
+                    this.subFOutput.value = '';
+                    this.subLOutput.value = '';
+                    this.finalFOutput.value = '';
+                    this.finalLOutput.value = '';
+                    this.updateSummary('');
+                    return;
+                }
+
+                const tipF = totalF * (pct / 100);
+                const tipL = this.rateService.toLocal(tipF);
+                const tipPerF = tipF / people;
+                const tipPerL = this.rateService.toLocal(tipPerF);
+                const subF = totalF / people;
+                const subL = this.rateService.toLocal(subF);
+                const finalF = subF + tipPerF;
+                const finalL = this.rateService.toLocal(finalF);
+
+                this.subFOutput.value = this.rateService.formatForeignSymbol(subF);
+                this.subLOutput.value = this.rateService.formatLocalSymbol(subL);
+                if (people > 1) {
+                    this.tipFOutput.value = `${this.rateService.formatForeignSymbol(tipPerF)} (${this.rateService.formatForeignSymbol(tipF)})`;
+                    this.tipLOutput.value = `${this.rateService.formatLocalSymbol(tipPerL)} (${this.rateService.formatLocalSymbol(tipL)})`;
+                    this.finalFOutput.value = `${this.rateService.formatForeignSymbol(finalF)} (${this.rateService.formatForeignSymbol(totalF + tipF)})`;
+                    this.finalLOutput.value = `${this.rateService.formatLocalSymbol(finalL)} (${this.rateService.formatLocalSymbol(totalLocal + tipL)})`;
+                    this.updateSummary(`${this.rateService.formatLocalFull(finalL)} / person`);
                 } else {
-                    total1 = NaN;
-                    bill1Input.value = '';
+                    this.tipFOutput.value = this.rateService.formatForeignSymbol(tipF);
+                    this.tipLOutput.value = this.rateService.formatLocalSymbol(tipL);
+                    this.finalFOutput.value = this.rateService.formatForeignSymbol(finalF);
+                    this.finalLOutput.value = this.rateService.formatLocalSymbol(finalL);
+                    this.updateSummary(this.rateService.formatLocalFull(finalL));
                 }
             }
-
-            // bail if we don't have what we need
-            if (isNaN(total1) || total1 === '' || pct === null || isNaN(pct)) {
-                billTip1Output.value = '';
-                billTip2Output.value = '';
-                billSub1Output.value = '';
-                billSub2Output.value = '';
-                billFinal1Output.value = '';
-                billFinal2Output.value = '';
-                updateSummary(billSummaryOutput, '');
-                return;
-            }
-
-            const tipTotal1 = total1 * (pct / 100);
-            const tipTotal2 = tipTotal1 / rate;
-            const tipPer1 = tipTotal1 / people;
-            const tipPer2 = tipPer1 / rate;
-            const sub1 = total1 / people;
-            const sub2 = sub1 / rate;
-            const final1 = sub1 + tipPer1;
-            const final2 = final1 / rate;
-
-            billSub1Output.value = '$' + format(sub1);
-            billSub2Output.value = '$' + format(sub2);
-            if (people > 1) {
-                billTip1Output.value = `$${format(tipPer1)} ($${format(tipTotal1)})`;
-                billTip2Output.value = `$${format(tipPer2)} ($${format(tipTotal2)})`;
-                billFinal1Output.value = `$${format(final1)} ($${format(total1 + tipTotal1)})`;
-                billFinal2Output.value = `$${format(final2)} ($${format(total2 + tipTotal2)})`;
-                updateSummary(billSummaryOutput, `$${format(final2)} USD /person`);
-            } else {
-                billTip1Output.value = `$${format(tipTotal1)}`;
-                billTip2Output.value = `$${format(tipTotal2)}`;
-                billFinal1Output.value = `$${format(final1)}`;
-                billFinal2Output.value = `$${format(final2)}`;
-                updateSummary(billSummaryOutput, `$${format(final2)} USD`);
-            }
         }
-
-        // GLOBAL
-        function getRate() {
-            return rateService.getRate();
-        }
-
-        function refresh() {
-            calcBill();
-        }
-
-        function format(n, decimals = 2) {
-            if (isNaN(n) || !isFinite(n)) return '—';
-            return n.toLocaleString('en-US', {
-                minimumFractionDigits: decimals,
-                maximumFractionDigits: decimals
-            });
-        }
-
-        function updateSummary(summaryEl, value) {
-            if (summaryEl) summaryEl.textContent = value;
-        }
-
-        // LISTENERS
-        bill1Input.addEventListener('input', () => { lastBillCurrency = 'mxn'; calcBill(); });
-        bill2Input.addEventListener('input', () => { lastBillCurrency = 'usd'; calcBill(); });
-        billPeopleInput.addEventListener('input', calcBill);
-        billPeopleMinusButton.addEventListener('click', () => {
-            if (getTipPeople() > 1) { billPeopleInput.value = getTipPeople() - 1; calcBill(); }
-        });
-        billPeoplePlusButton.addEventListener('click', () => {
-            billPeopleInput.value = getTipPeople() + 1; calcBill();
-        });
-        billTipButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                lastBillPercent = parseFloat(btn.dataset.pct);
-                billTipCustomInput.value = '';
-                setActivePreset(btn);
-                calcBill();
-            });
-        });
-        billTipCustomInput.addEventListener('input', () => {
-            lastBillPercent = parseFloat(billTipCustomInput.value) || null;
-            setActiveCustom();
-            calcBill();
-        });
 
         const rateService = new RateService();
         const rate = new RateCard(rateService);
         const referenceCard = new ReferenceCard(rateService);
         const costCard = new CostCard(rateService);
         const marketWeightCard = new MarketWeightCard(rateService);
-        rateService.addEventListener('rateChanged', () => refresh());
+        const billCard = new BillCard(rateService);
+        //rateService.addEventListener('rateChanged', () => refresh());
     </script>
 </body>
 
