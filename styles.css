@@ -148,6 +148,9 @@ button.wide {
     width: auto;
     padding: 8px 16px;
     letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 button:disabled {
@@ -156,7 +159,7 @@ button:disabled {
 }
 
 button svg {
-    width: 70%;
+    width: 20px;
     height: 100%;
     fill: var(--muted);
 }
@@ -215,6 +218,9 @@ header {
     text-align: center;
     margin-bottom: 16px;
     padding-top: 8px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 header h1 {
@@ -234,6 +240,9 @@ header p {
 
 header .buttons {
     margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
 }
 
 #install-banner {
