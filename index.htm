@@ -41,7 +41,7 @@
 
         body {
             font-family: 'Roboto Mono', monospace;
-            font-weight: 700;
+            font-weight: 400;
             font-size: 0.7rem;
             background: var(--bg);
             color: var(--text);
@@ -66,7 +66,8 @@
             -webkit-appearance: none;
         }
 
-        input {
+        input,
+        textarea {
             background: var(--input-bg);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -75,6 +76,7 @@
             outline: none;
             width: 100%;
             transition: border-color 0.2s;
+            transition: height 0.2s;
             -moz-appearance: textfield;
         }
 
@@ -110,8 +112,8 @@
             border: none;
             border-radius: 50%;
             text-transform: uppercase;
-            width: 36px;
-            height: 36px;
+            width: 30px;
+            height: 30px;
             cursor: pointer;
             color: var(--muted);
             transition: background 0.2s, color 0.2s, transform 0.3s;
@@ -442,6 +444,75 @@
             text-align: right;
         }
 
+        /* NOTES */
+
+        .note-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .note-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            background: var(--input-bg);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .note-toolbar.collapsed {
+            border-bottom: none;
+        }
+
+        .note-title {
+            border: none;
+        }
+
+        .note-title:focus {
+            border-color: transparent;
+        }
+
+        textarea.note-body {
+            border: none;
+            border-radius: 0;
+            resize: none;
+            padding-bottom: 40px;
+        }
+
+        textarea.note-body.collapsed {
+            display: none;
+        }
+
+        .note-chevron {
+            transition: transform 0.2s;
+        }
+
+        .note-chevron.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .note-body-wrap {
+            position: relative;
+            background: var(--input-bg);
+        }
+
+        .note-body-wrap.collapsed {
+            display: none;
+        }
+
+        .note-actions {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+        }
+
         /* FOOT */
         footer {
             text-align: center;
@@ -486,10 +557,9 @@
         </div>
     </header>
 
-
     <!-- EXCHANGE RATE -->
     <div class="card" id="card-rate">
-        <div class="card-header" data-target="card-rate">
+        <div class="card-header">
             <span class="dot"></span> Exchange Rate
             <span class="card-summary" id="summary-rate"></span>
             <button class="collapse-btn" title="Collapse">✕</button>
@@ -510,7 +580,7 @@
 
     <!-- QUICK REFERENCE -->
     <div class="card" id="card-reference">
-        <div class="card-header" data-target="card-reference">
+        <div class="card-header">
             <span class="dot"></span> Quick Reference
             <span class="card-summary" id="summary-reference"></span>
             <button class="collapse-btn" title="Collapse">✕</button>
@@ -522,9 +592,30 @@
         </div>
     </div>
 
+    <!-- NOTES -->
+    <div class="card" id="card-notes">
+        <div class="card-header">
+            <span class="dot"></span> Notes
+            <span class="card-summary" id="summary-notes"></span>
+            <button class="round collapse-btn" title="Collapse">✕</button>
+        </div>
+        <div class="card-body">
+            <div class="card-body-inner">
+                <div class="row-flex">
+                    <div></div>
+                    <div>
+                        <button id="notes-add" title="Add note">+</button>
+                        <button class="red" id="notes-clear" title="Clear all">✕</button>
+                    </div>
+                </div>
+                <div id="notes-list"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- COST -->
     <div class="card" id="card-cost">
-        <div class="card-header" data-target="card-cost">
+        <div class="card-header">
             <span class="dot"></span> Cost
             <span class="card-summary" id="summary-cost"></span>
             <button class="collapse-btn" title="Collapse">✕</button>
@@ -563,7 +654,7 @@
 
     <!-- MARKET WEIGHT -->
     <div class="card" id="card-market">
-        <div class="card-header" data-target="card-market">
+        <div class="card-header">
             <span class="dot"></span> Market Weight
             <span class="card-summary" id="summary-market"></span>
             <button class="collapse-btn" title="Collapse">✕</button>
@@ -598,7 +689,7 @@
 
     <!-- MARKET TALLY -->
     <div class="card" id="card-tally">
-        <div class="card-header" data-target="card-tally">
+        <div class="card-header">
             <span class="dot"></span> Market Tally
             <span class="card-summary" id="summary-tally"></span>
             <button class="collapse-btn" title="Collapse">✕</button>
@@ -639,7 +730,7 @@
 
     <!-- CHECK -->
     <div class="card" id="card-bill">
-        <div class="card-header" data-target="card-bill">
+        <div class="card-header">
             <span class="dot"></span> Bill Splitter
             <span class="card-summary" id="summary-bill"></span>
             <button class="collapse-btn" title="Collapse">✕</button>
@@ -1452,6 +1543,170 @@
             }
         }
 
+        class NotesCard extends Card {
+            #notes = [];
+            #nextId = 1;
+
+            constructor() {
+                super('card-notes', 'summary-notes');
+
+                // elements
+                this.listElement = document.getElementById('notes-list');
+                this.addButton = document.getElementById('notes-add');
+                this.clearButton = document.getElementById('notes-clear');
+
+                // init
+                this.#load();
+
+                // listeners
+                this.addButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.#addNote();
+                });
+
+                this.clearButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm('Clear all notes?')) {
+                        this.#notes = [];
+                        this.#nextId = 1;
+                        this.#save();
+                        this.render();
+                    }
+                });
+            }
+
+            #createNote(title = '', body = '', collapsed = false) {
+                return { id: this.#nextId++, title, body, collapsed };
+            }
+
+            #addNote() {
+                this.#notes.push(this.#createNote());
+                this.#save();
+                this.render();
+                // focus new note title
+                const titles = this.listElement.querySelectorAll('.note-title');
+                if (titles.length) titles[titles.length - 1].focus();
+            }
+
+            #removeNote(id) {
+                this.#notes = this.#notes.filter(n => n.id !== id);
+                this.#save();
+                this.render();
+            }
+
+            #toggleCollapse(id) {
+                const note = this.#notes.find(n => n.id === id);
+                if (note) note.collapsed = !note.collapsed;
+                this.#save();
+                this.render();
+            }
+
+            #autoResize(textarea) {
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+            }
+
+            #save() {
+                localStorage.setItem('notes', JSON.stringify(this.#notes));
+                localStorage.setItem('notesNextId', this.#nextId);
+            }
+
+            #load() {
+                const stored = localStorage.getItem('notes');
+                if (stored) {
+                    this.#notes = JSON.parse(stored);
+                    this.#nextId = parseInt(localStorage.getItem('notesNextId')) ||
+                        this.#notes.reduce((max, n) => Math.max(max, n.id), 0) + 1;
+                }
+                this.render();
+            }
+
+            render() {
+                this.listElement.innerHTML = this.#notes.map(note => `
+                    <div class="note-item" data-id="${note.id}">
+                        <div class="note-toolbar ${note.collapsed ? 'collapsed' : ''}">
+                            <button class="note-toggle" title="Toggle">
+                                <span class="note-chevron ${note.collapsed ? 'collapsed' : ''}">⯆</span>
+                            </button>
+                            <input type="text" 
+                                class="note-title" 
+                                value="${note.title}" 
+                                placeholder="Note title">
+                        </div>
+                        <div class="note-body-wrap ${note.collapsed ? 'collapsed' : ''}">
+                            <textarea class="note-body" 
+                                    placeholder="Type your note here…"
+                            >${note.body}</textarea>
+                            <div class="note-actions">
+                                <button class="note-copy" title="Copy">⧉</button>
+                                <button class="red note-delete" title="Delete">✕</button>
+                            </div>
+                        </div>
+                    </div>`).join('');
+
+                // wire up row listeners
+                this.listElement.querySelectorAll('.note-item').forEach(row => {
+                    const id = parseInt(row.dataset.id);
+                    const toggleBtn = row.querySelector('.note-toggle');
+                    const titleInput = row.querySelector('.note-title');
+                    const textarea = row.querySelector('.note-body');
+                    const deleteBtn = row.querySelector('.note-delete');
+                    const copyBtn = row.querySelector('.note-copy');
+
+                    // auto resize on load
+                    this.#autoResize(textarea);
+
+                    toggleBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.#toggleCollapse(id);
+                    });
+
+                    titleInput.addEventListener('input', () => {
+                        const note = this.#notes.find(n => n.id === id);
+                        if (note) { note.title = titleInput.value; this.#save(); }
+                    });
+
+                    textarea.addEventListener('input', () => {
+                        const note = this.#notes.find(n => n.id === id);
+                        if (note) {
+                            note.body = textarea.value;
+                            this.#save();
+                            this.#autoResize(textarea);
+                        }
+                    });
+
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const note = this.#notes.find(n => n.id === id);
+                        const label = note?.title || 'this note';
+                        if (confirm(`Delete "${label}"?`)) {
+                            this.#removeNote(id);
+                        }
+                    });
+
+                    copyBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const note = this.#notes.find(n => n.id === id);
+                        if (!note) return;
+                        const text = note.title
+                            ? `${note.title}\n\n${note.body}`
+                            : note.body;
+                        try {
+                            await navigator.clipboard.writeText(text);
+                            copyBtn.textContent = '✓';
+                            setTimeout(() => copyBtn.textContent = '⧉', 1500);
+                        } catch {
+                            console.warn('Copy failed');
+                        }
+                    });
+                });
+
+                // update summary — note count
+                const count = this.#notes.length;
+                this.updateSummary(count > 0 ? `${count} note${count > 1 ? 's' : ''}` : '');
+            }
+        }
+
         class App {
             #wakeLock = null;
             #installPrompt = null;
@@ -1463,12 +1718,13 @@
                 this.rateService = new RateService();
 
                 // cards
-                this.rateCard = new RateCard(this.rateService);
-                this.referenceCard = new ReferenceCard(this.rateService);
-                this.costCard = new CostCard(this.rateService);
-                this.marketWeightCard = new MarketWeightCard(this.rateService);
-                this.billCard = new BillCard(this.rateService);
-                this.tallyCard = new MarketTallyCard(this.rateService);
+                new RateCard(this.rateService);
+                new ReferenceCard(this.rateService);
+                new CostCard(this.rateService);
+                new MarketWeightCard(this.rateService);
+                new BillCard(this.rateService);
+                new MarketTallyCard(this.rateService);
+                new NotesCard(this.rateService);
 
                 // init
                 this.rateService.fetchRate();
@@ -1481,16 +1737,12 @@
                 });
             }
 
-            // ── Service Worker ────────────────────────────────
-
             #registerServiceWorker() {
                 if (!('serviceWorker' in navigator)) return;
                 navigator.serviceWorker.register('./service-worker.js')
                     .then(reg => console.log('SW registered:', reg.scope))
                     .catch(err => console.warn('SW registration failed:', err));
             }
-
-            // ── Install Prompt ────────────────────────────────
 
             #setupInstallPrompt() {
                 this.installBanner = document.getElementById('install-banner');
@@ -1517,8 +1769,6 @@
                     }
                 });
             }
-
-            // ── Wake Lock ─────────────────────────────────────
 
             #setupWakeLock() {
                 if (!('wakeLock' in navigator)) return;
