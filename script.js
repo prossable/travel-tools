@@ -76,7 +76,7 @@ class RateService extends EventTarget {
         if (!force && cached && cached.date === today && cached.currency === this.#foreignCurrency.code) {
             this.setRate(cached.rate);
             this.dispatchEvent(new CustomEvent('messageSent', {
-                detail: { msg: `Cached rate as of ${this.formatDate(cached.date)} · tap ↻ to refresh` }
+                detail: { msg: `Cached rate as of ${this.formatDate(cached.date)}` }
             }));
             return;
         }

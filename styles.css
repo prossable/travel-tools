@@ -1,4 +1,11 @@
 /* GLOBAL */
+@font-face {
+    font-display: swap;
+    font-family: 'Roboto Mono';
+    font-style: normal;
+    font-weight: 400;
+    src: url('./roboto-mono-v31-latin-regular.woff2') format('woff2');
+}
 
 :root {
     --bg: #0c0f14;
@@ -18,7 +25,7 @@
 }
 
 body {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'Roboto Mono', 'Courier New', monospace;
     font-weight: 400;
     font-size: 0.7rem;
     background: var(--bg);

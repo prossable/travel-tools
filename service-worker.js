@@ -13,6 +13,7 @@ const ASSETS = [
     '/travel-tools/android-chrome-192x192.png',
     '/travel-tools/android-chrome-512x512.png',
     '/travel-tools/android-chrome-maskable-512x512.png',
+    '/travel-tools/roboto-mono-v31-latin-regular.woff2'
 ];
 
 // install — cache all assets
