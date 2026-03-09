@@ -1113,20 +1113,23 @@ class App {
     #setupInstallPrompt() {
         this.installBanner = document.getElementById('install-banner');
 
-        // always show in browser, always hide in standalone
-        if (!this.#isInstalled) {
-            this.installBanner.innerHTML = '<svg><use href="#icon-install"/></svg>Install App';
-            this.installBanner.classList.add('visible');
+        if (this.#isInstalled) {
+            this.installBanner.classList.remove('visible');
+            return;
         }
+
+        this.installBanner.classList.add('visible');
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.#installPrompt = e;
+            this.installBanner.innerHTML = '<svg><use href="#icon-install"/></svg> Install App';
         });
 
         window.addEventListener('appinstalled', () => {
             this.#installPrompt = null;
             this.#isInstalled = true;
+            localStorage.setItem('appInstalled', 'true');
             this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg>App Installed';
             setTimeout(() => this.installBanner.classList.remove('visible'), 3000);
         });
@@ -1143,9 +1146,7 @@ class App {
                     setTimeout(() => this.installBanner.classList.remove('visible'), 3000);
                 }
             } else if (this.#isIOS()) {
-                alert('To install on iOS:\n\n1. Tap the Share button (□↑) at the bottom of Safari\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
-            } else {
-                alert('To install: tap the browser menu (⋮) and select "Add to Home Screen"');
+                alert('To install on iOS:\n\n1. Tap the Share button (□↑) at the bottom of Safari\n2. Tap "Add to Home Screen"\n3. Tap "Add"');
             }
         });
     }

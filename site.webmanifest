@@ -1,7 +1,7 @@
 {
     "name": "Travel Tools",
     "short_name": "Travel Tools",
-    "description": "Currency converter and travel calculator",
+    "description": "Travel Tools: Currency converter and travel calculator",
     "start_url": "/travel-tools/index.htm",
     "display": "standalone",
     "background_color": "#0c0f14",
