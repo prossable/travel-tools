@@ -576,7 +576,8 @@
                     apiTarget: 'USD',
                     defaultRate: 1,
                     flag: '🇺🇸',
-                    decimals: 2
+                    decimals: 2,
+                    locale: 'en-US'
                 },
                 MXN: {
                     code: 'MXN',
@@ -585,7 +586,8 @@
                     apiTarget: 'MXN',
                     defaultRate: 17.57,
                     flag: '🇲🇽',
-                    decimals: 2
+                    decimals: 2,
+                    locale: 'es-MX'
                 },
                 JPY: {
                     code: 'JPY',
@@ -594,7 +596,8 @@
                     apiTarget: 'JPY',
                     defaultRate: 149.50,
                     flag: '🇯🇵',
-                    decimals: 0
+                    decimals: 0,
+                    locale: 'ja-JP'
                 }
             };
 
@@ -608,11 +611,6 @@
             #localCurrency = Config.currencies['USD'];
             #foreignCurrency = Config.currencies['MXN'];
             #rate = null;
-
-            constructor() {
-                super();
-                this.fetchRate();
-            }
 
             getLocalCurrency() { return this.#localCurrency; }
             getForeignCurrency() { return this.#foreignCurrency; }
@@ -640,7 +638,19 @@
                 }
             }
 
-            fetchRate() {
+            fetchRate(force = false) {
+                // check cache
+                const cached = JSON.parse(localStorage.getItem('cachedRate'));
+                const today = new Date().toISOString().split('T')[0];
+                if (!force && cached && cached.date === today && cached.currency === this.#foreignCurrency.code) {
+                    this.setRate(cached.rate);
+                    this.dispatchEvent(new CustomEvent('messageSent', {
+                        detail: { msg: `Cached rate as of ${this.formatDate(cached.date)} · tap ↻ to refresh` }
+                    }));
+                    return;
+                }
+
+                // notify
                 this.dispatchEvent(new CustomEvent('stateChanged', {
                     detail: { busy: true }
                 }));
@@ -657,14 +667,14 @@
                     .then(data => {
                         clearTimeout(timeout);
                         const val = data.rates[this.#foreignCurrency.apiTarget];
-                        const date = new Date(data.date).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                        });
+                        localStorage.setItem('cachedRate', JSON.stringify({
+                            rate: val,
+                            date: today,
+                            currency: this.#foreignCurrency.code
+                        }));
                         this.setRate(val);
                         this.dispatchEvent(new CustomEvent('messageSent', {
-                            detail: { msg: `Live rate as of ${date} · European Central Bank` }
+                            detail: { msg: `Live rate as of ${this.formatDate(today)} · European Central Bank` }
                         }));
                     })
                     .catch(err => {
@@ -689,7 +699,7 @@
 
             #format(value, currency) {
                 if (isNaN(value) || !isFinite(value)) return '—';
-                return value.toLocaleString('en-US', {
+                return value.toLocaleString(this.#localCurrency.locale, {
                     minimumFractionDigits: currency.decimals,
                     maximumFractionDigits: currency.decimals
                 });
@@ -729,6 +739,15 @@
 
             formatForeignFull(value) {
                 return this.#formatFull(value, this.#foreignCurrency);
+            }
+
+            formatDate(dateString) {
+                return new Date(dateString).toLocaleDateString(
+                    this.#localCurrency.locale, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
             }
         }
 
@@ -796,7 +815,7 @@
                     this.rateHintOutput.textContent = "Manually set rate";
                     this.rateService.setRate(parseFloat(this.rateInput.value));
                 });
-                this.rateRefreshButton.addEventListener('click', () => this.rateService.fetchRate());
+                this.rateRefreshButton.addEventListener('click', () => this.rateService.fetchRate(true));
                 this.rateService.addEventListener('rateChanged', (e) => {
                     if (document.activeElement !== this.rateInput) {
                         this.rateInput.value = e.detail.rate;
@@ -1086,6 +1105,7 @@
                 this.costCard = new CostCard(this.rateService);
                 this.marketWeightCard = new MarketWeightCard(this.rateService);
                 this.billCard = new BillCard(this.rateService);
+                this.rateService.fetchRate();
             }
         }
 
