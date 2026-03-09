@@ -8,8 +8,13 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap"
         rel="stylesheet">
+    <meta name="theme-color" content="#0c0f14">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Travel Tools">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
     <meta name="theme-color" content="#0c0f14">
@@ -435,6 +440,47 @@
                 padding: 6px;
             }
         }
+
+        /* PWA */
+        body {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        input {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* install banner */
+        #install-banner {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+            white-space: nowrap;
+        }
+
+        #install-banner.visible {
+            display: block;
+        }
     </style>
 </head>
 
@@ -689,6 +735,7 @@
     <footer>
         Prices are approximate · Always verify before purchasing
     </footer>
+    <button id="install-banner">⬇ Add to Home Screen</button>
 
     <script>
         class Config {
@@ -1410,15 +1457,94 @@
         }
 
         class App {
+            #wakeLock = null;
+            #installPrompt = null;
+            #isInstalled = window.matchMedia('(display-mode: standalone)').matches
+                || window.navigator.standalone === true;
+
             constructor() {
+                // services
                 this.rateService = new RateService();
+
+                // cards
                 this.rateCard = new RateCard(this.rateService);
                 this.referenceCard = new ReferenceCard(this.rateService);
                 this.costCard = new CostCard(this.rateService);
                 this.marketWeightCard = new MarketWeightCard(this.rateService);
-                this.marketTallyCard = new MarketTallyCard(this.rateService);
                 this.billCard = new BillCard(this.rateService);
+                this.tallyCard = new MarketTallyCard(this.rateService);
+
+                // init
                 this.rateService.fetchRate();
+                this.#registerServiceWorker();
+                this.#setupInstallPrompt();
+                this.#setupWakeLock();
+            }
+
+            // ── Service Worker ────────────────────────────────
+
+            #registerServiceWorker() {
+                if (!('serviceWorker' in navigator)) return;
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.warn('SW registration failed:', err));
+            }
+
+            // ── Install Prompt ────────────────────────────────
+
+            #setupInstallPrompt() {
+                this.installBanner = document.getElementById('install-banner');
+
+                // intercept browser install prompt
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    e.preventDefault();
+                    this.#installPrompt = e;
+                    if (!this.#isInstalled) {
+                        this.installBanner.classList.add('visible');
+                    }
+                });
+
+                // hide banner once installed
+                window.addEventListener('appinstalled', () => {
+                    this.installBanner.classList.remove('visible');
+                    this.#installPrompt = null;
+                    this.#isInstalled = true;
+                });
+
+                // banner click triggers native install dialog
+                this.installBanner.addEventListener('click', async () => {
+                    if (!this.#installPrompt) return;
+                    this.#installPrompt.prompt();
+                    const { outcome } = await this.#installPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        this.installBanner.classList.remove('visible');
+                        this.#installPrompt = null;
+                    }
+                });
+            }
+
+            // ── Wake Lock ─────────────────────────────────────
+
+            #setupWakeLock() {
+                if (!('wakeLock' in navigator)) return;
+
+                // request wake lock when app is visible
+                const requestWakeLock = async () => {
+                    try {
+                        this.#wakeLock = await navigator.wakeLock.request('screen');
+                    } catch (err) {
+                        console.warn('Wake lock failed:', err);
+                    }
+                };
+
+                // re-request when tab becomes visible again — wake lock releases on tab switch
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        requestWakeLock();
+                    }
+                });
+
+                requestWakeLock();
             }
         }
 

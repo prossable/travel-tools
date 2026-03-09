@@ -1,8 +1,11 @@
 {
     "name": "Travel Tools",
-    "short_name": "Travel Tools",
+    "short_name": "Travel",
     "description": "Currency converter and travel calculator",
-    "start_url": "index.html",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#0c0f14",
+    "theme_color": "#0c0f14",
     "orientation": "portrait",
     "icons": [
         {
@@ -15,8 +18,5 @@
             "sizes": "512x512",
             "type": "image/png"
         }
-    ],
-    "theme_color": "#0c0f14",
-    "background_color": "#0c0f14",
-    "display": "standalone"
+    ]
 }
