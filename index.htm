@@ -131,6 +131,13 @@
             color: var(--bg);
         }
 
+        button.wide {
+            border-radius: 10px;
+            width: auto;
+            padding: 8px 16px;
+            letter-spacing: 0.08em;
+        }
+
         button:disabled {
             opacity: 0.4;
             cursor: default;
@@ -184,7 +191,7 @@
 
         header {
             text-align: center;
-            margin-bottom: 36px;
+            margin-bottom: 16px;
             padding-top: 8px;
         }
 
@@ -205,6 +212,18 @@
             margin-top: 4px;
             letter-spacing: 0.08em;
             text-transform: uppercase;
+        }
+
+        header .buttons {
+            margin-top: 10px;
+        }
+
+        #install-banner {
+            display: none;
+        }
+
+        #install-banner.visible {
+            display: block;
         }
 
         /* CARD */
@@ -426,8 +445,6 @@
         footer {
             text-align: center;
             margin-top: 28px;
-            color: #1e2e3e;
-            letter-spacing: 0.06em;
             max-width: 480px;
             margin-left: auto;
             margin-right: auto;
@@ -454,33 +471,6 @@
             -webkit-user-select: text;
             user-select: text;
         }
-
-        /* install banner */
-        #install-banner {
-            display: none;
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: var(--bg);
-            border: none;
-            border-radius: 12px;
-            padding: 12px 24px;
-            font-family: 'Roboto Mono', monospace;
-            font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            cursor: pointer;
-            z-index: 100;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-            white-space: nowrap;
-        }
-
-        #install-banner.visible {
-            display: block;
-        }
     </style>
 </head>
 
@@ -489,7 +479,12 @@
     <header>
         <h1>Travel <span>Tools</span></h1>
         <p>Travel calculator · MXN / USD</p>
+        <div class="buttons">
+            <button class="wide" id="install-banner">Add to Home Screen</button>
+            <button class="wide" id="share-btn">Share App</button>
+        </div>
     </header>
+
 
     <!-- EXCHANGE RATE -->
     <div class="card" id="card-rate">
@@ -735,7 +730,6 @@
     <footer>
         Prices are approximate · Always verify before purchasing
     </footer>
-    <button id="install-banner">⬇ Add to Home Screen</button>
 
     <script>
         class Config {
@@ -1479,6 +1473,7 @@
                 this.#registerServiceWorker();
                 this.#setupInstallPrompt();
                 this.#setupWakeLock();
+                this.#setupShareButton();
             }
 
             // ── Service Worker ────────────────────────────────
@@ -1545,6 +1540,31 @@
                 });
 
                 requestWakeLock();
+            }
+
+            #setupShareButton() {
+                const shareBtn = document.getElementById('share-btn');
+
+                // hide if Web Share API not supported
+                if (!navigator.share) {
+                    shareBtn.style.display = 'none';
+                    return;
+                }
+
+                shareBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.share({
+                            title: 'Travel Tools',
+                            text: 'Currency converter and travel calculator',
+                            url: 'https://prossable.github.io/travel-tools/'
+                        });
+                    } catch (err) {
+                        // user cancelled or share failed — fail silently
+                        if (err.name !== 'AbortError') {
+                            console.warn('Share failed:', err);
+                        }
+                    }
+                });
             }
         }
 
