@@ -480,7 +480,7 @@
         <h1>Travel <span>Tools</span></h1>
         <p>Travel calculator · MXN / USD</p>
         <div class="buttons">
-            <button class="wide" id="install-banner">Add to Home Screen</button>
+            <button class="wide" id="install-banner">Install App</button>
             <button class="wide" id="share-btn">Share App</button>
         </div>
     </header>
@@ -1490,29 +1490,24 @@
             #setupInstallPrompt() {
                 this.installBanner = document.getElementById('install-banner');
 
-                // intercept browser install prompt
                 window.addEventListener('beforeinstallprompt', (e) => {
                     e.preventDefault();
                     this.#installPrompt = e;
-                    if (!this.#isInstalled) {
-                        this.installBanner.classList.add('visible');
-                    }
+                    this.installBanner.textContent = 'Install App';
+                    this.installBanner.classList.add('visible');
                 });
 
-                // hide banner once installed
                 window.addEventListener('appinstalled', () => {
-                    this.installBanner.classList.remove('visible');
                     this.#installPrompt = null;
                     this.#isInstalled = true;
+                    this.installBanner.textContent = 'App Installed';
                 });
 
-                // banner click triggers native install dialog
                 this.installBanner.addEventListener('click', async () => {
                     if (!this.#installPrompt) return;
                     this.#installPrompt.prompt();
                     const { outcome } = await this.#installPrompt.userChoice;
                     if (outcome === 'accepted') {
-                        this.installBanner.classList.remove('visible');
                         this.#installPrompt = null;
                     }
                 });
