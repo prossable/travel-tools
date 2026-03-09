@@ -1109,25 +1109,33 @@ class App {
     #setupInstallPrompt() {
         this.installBanner = document.getElementById('install-banner');
 
+        // always show in browser, always hide in standalone
+        if (!this.#isInstalled) {
+            this.installBanner.innerHTML = '<svg><use href="#icon-install"/></svg>Install App';
+            this.installBanner.classList.add('visible');
+        }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.#installPrompt = e;
-            this.installBanner.innerHTML = '<svg><use href="#icon-install"/></svg>Install App';
-            this.installBanner.classList.add('visible');
         });
 
         window.addEventListener('appinstalled', () => {
             this.#installPrompt = null;
             this.#isInstalled = true;
             this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg>App Installed';
+            setTimeout(() => this.installBanner.classList.remove('visible'), 3000);
         });
 
         this.installBanner.addEventListener('click', async () => {
-            if (!this.#installPrompt) return;
-            this.#installPrompt.prompt();
-            const { outcome } = await this.#installPrompt.userChoice;
-            if (outcome === 'accepted') {
-                this.#installPrompt = null;
+            if (this.#installPrompt) {
+                // native prompt available
+                this.#installPrompt.prompt();
+                const { outcome } = await this.#installPrompt.userChoice;
+                if (outcome === 'accepted') this.#installPrompt = null;
+            } else {
+                // no prompt available — show manual instructions
+                alert('To install: tap the browser menu (⋮) and select "Add to Home Screen"');
             }
         });
     }
