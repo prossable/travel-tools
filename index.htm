@@ -9,6 +9,8 @@
         href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Roboto+Mono:wght@400;700&display=swap"
         rel="stylesheet">
     <style>
+        /* GLOBAL */
+
         :root {
             --bg: #0c0f14;
             --card: #131820;
@@ -37,6 +39,139 @@
             color: var(--muted);
         }
 
+        /* INPUT */
+
+        input,
+        button,
+        textarea,
+        select {
+            font-family: inherit;
+            font-size: inherit;
+            font-weight: inherit;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+        }
+
+        input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            padding: 10px;
+            outline: none;
+            width: 100%;
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        input.inner {
+            border: none;
+            border-left: 1px solid var(--border);
+            border-right: 1px solid var(--border);
+            border-radius: 0;
+            text-align: center;
+        }
+
+        input.output {
+            color: var(--accent2);
+            background: rgba(58, 155, 213, 0.05);
+            cursor: default;
+            border: 1px solid rgba(58, 155, 213, 0.15);
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        button {
+            background: var(--border);
+            border: none;
+            border-radius: 50%;
+            text-transform: uppercase;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            color: var(--muted);
+            transition: background 0.2s, color 0.2s, transform 0.3s;
+            flex-shrink: 0;
+        }
+
+        button:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        button:active {
+            background: #2a7aaa;
+        }
+
+        button.red:hover {
+            background: #e05555;
+            color: var(--bg);
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        div.tab {
+            display: flex;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        div.tab button {
+            color: var(--muted);
+            padding: 8px 16px;
+            letter-spacing: 0.08em;
+            width: fit-content;
+            height: auto;
+            border-radius: 0;
+        }
+
+        div.tab button.active {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        div.options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr) 1fr;
+            gap: 8px;
+            width: 100%;
+        }
+
+        div.options button {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+
+        div.options button.active {
+            border-color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        div.options input.active {
+            border-color: var(--accent);
+        }
+
+        /* HEAD */
+
         header {
             text-align: center;
             margin-bottom: 36px;
@@ -61,6 +196,8 @@
             letter-spacing: 0.08em;
             text-transform: uppercase;
         }
+
+        /* CARD */
 
         .card {
             background: var(--card);
@@ -130,7 +267,7 @@
             pointer-events: none;
         }*/
 
-        .content-row {
+        .row-flex {
             display: flex;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
@@ -139,7 +276,23 @@
             justify-content: space-between;
         }
 
-        .input-row {
+        .row-full {
+            display: block;
+            align-items: center;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .row-2col {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .row-3col {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .row-equation {
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
@@ -147,89 +300,22 @@
             margin-top: 14px;
         }
 
-        .input-group {
+        .label-group {
             display: flex;
             flex-direction: column;
             gap: 6px;
             align-items: start;
         }
 
-        .input-group label {
+        .label-group label {
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
 
-        .big-input {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text);
-            font-size: 1.1rem;
-            font-weight: 700;
-            padding: 10px;
-            width: 100%;
-            outline: none;
-            transition: border-color 0.2s;
-            -moz-appearance: textfield;
-        }
+        /* GENERIC */
 
-        .big-input-inner {
-            border: none;
-            border-left: 1px solid var(--border);
-            border-right: 1px solid var(--border);
-            border-radius: 0;
-            text-align: center;
-        }
-
-        .big-input::-webkit-outer-spin-button,
-        .big-input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-        }
-
-        .big-input:focus {
-            border-color: var(--accent);
-        }
-
-        .big-input.output {
-            color: var(--accent2);
-            background: rgba(58, 155, 213, 0.05);
-            cursor: default;
-            border: 1px solid rgba(58, 155, 213, 0.15);
-        }
-
-        .checkbox {
-            width: 20px;
-            height: 20px;
-            accent-color: var(--accent);
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .round-btn {
-            background: var(--border);
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            cursor: pointer;
-            color: var(--muted);
-            transition: background 0.2s, color 0.2s, transform 0.3s;
-            flex-shrink: 0;
-        }
-
-        .round-btn:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        .round-btn.red:hover {
-            background: #e05555;
-            color: var(--bg);
-        }
-
-        .round-btn:disabled {
-            opacity: 0.4;
-            cursor: default;
+        .big {
+            font-size: 1.3rem;
         }
 
         .arrow-label {
@@ -240,75 +326,13 @@
             flex-shrink: 0;
         }
 
-        .qty-controls {
-            display: flex;
-            align-items: center;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .qty-btn {
-            background: none;
-            border: none;
-            color: var(--accent);
-            font-size: 1.3rem;
-            width: 42px;
-            height: 44px;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .qty-btn:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        .qty-btn:active {
-            background: #2a7aaa;
-        }
-
-        .presets {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr) 1fr;
-            gap: 8px;
-            margin-top: 14px;
-        }
-
-        .preset-btn {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--muted);
-            font-family: 'Roboto Mono', monospace;
-            font-size: 0.9rem;
-            font-weight: 700;
-            padding: 10px;
-            cursor: pointer;
-            transition: border-color 0.2s, color 0.2s;
-        }
-
-        .preset-btn.active {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-
-        .preset-custom.active {
-            border-color: var(--accent);
-        }
+        /* Table */
 
         .ref-table {
             margin-top: 14px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 2px;
-            border-radius: 10px;
-            overflow: hidden;
         }
 
         .ref-row {
@@ -353,56 +377,19 @@
             letter-spacing: 0.1em;
         }
 
-
-
         /* Tally toolbar */
-        .tally-toolbar {
-            margin-bottom: 4px;
+
+        .tally-price {
+            width: 90px;
+            text-align: right;
+            display: none;
         }
 
-        .tally-mode {
-            display: flex;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .tally-mode-btn {
-            background: none;
-            border: none;
-            color: var(--muted);
-            font-family: 'Roboto Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 8px 16px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            transition: background 0.2s, color 0.2s;
-        }
-
-        .tally-mode-btn.active {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        .tally-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        /* Tally rows */
         .tally-item {
             display: flex;
-            grid-template-columns: auto 1fr auto auto auto;
             align-items: center;
             gap: 8px;
-            margin-top: 10px;
-        }
-
-        .tally-item.shop-mode {
-            grid-template-columns: auto 1fr auto auto auto auto;
+            margin: 10px 0;
         }
 
         .tally-check {
@@ -414,50 +401,6 @@
             display: block;
         }
 
-        .tally-label {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: 'Roboto Mono', monospace;
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 8px 10px;
-            outline: none;
-            width: 100%;
-            transition: border-color 0.2s;
-        }
-
-        .tally-label:focus {
-            border-color: var(--accent);
-        }
-
-        .tally-price {
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text);
-            font-family: 'Roboto Mono', monospace;
-            font-size: 0.85rem;
-            font-weight: 700;
-            padding: 8px 10px;
-            outline: none;
-            width: 90px;
-            transition: border-color 0.2s;
-            -moz-appearance: textfield;
-            text-align: right;
-            display: none;
-        }
-
-        .tally-price::-webkit-outer-spin-button,
-        .tally-price::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-        }
-
-        .tally-price:focus {
-            border-color: var(--accent);
-        }
-
         .tally-item.checked .tally-label {
             text-decoration: line-through;
             opacity: 0.4;
@@ -467,36 +410,17 @@
             opacity: 0.4;
         }
 
-        /* Totals */
-        .tally-totals {
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .tally-total-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-        }
-
-        .tally-total-row span:nth-child(2) {
+        .row-3col.tally span:nth-child(2) {
             color: var(--accent2);
             text-align: right;
         }
 
-        .tally-total-row span:nth-child(3) {
+        .row-3col.tally span:nth-child(3) {
             color: var(--accent);
             text-align: right;
         }
 
-
-
-
-
-
+        /* FOOT */
         footer {
             text-align: center;
             margin-top: 28px;
@@ -507,8 +431,9 @@
             margin-right: auto;
         }
 
+        /* RESPONSIVE */
         @media (max-width: 360px) {
-            .big-input {
+            .big {
                 font-size: 0.95rem;
                 padding: 6px;
             }
@@ -528,15 +453,15 @@
         <div class="card-header" data-target="card-rate">
             <span class="dot"></span> Exchange Rate
             <span class="card-summary" id="summary-rate"></span>
-            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
+            <button class="collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
-                <div class="input-row input-group">
+                <div class="row-full label-group">
                     <label>MXN per $1 USD</label>
-                    <input type="number" class="big-input" id="rate" step="0.01" min="1">
+                    <input type="number" class="big" id="rate" step="0.01" min="1">
                 </div>
-                <div class="content-row">
+                <div class="row-flex">
                     <div class="rate-hint" id="rate-hint">Fetching live rate…</div>
                     <button class="round-btn" id="rate-refresh" title="Refresh rate">↻</button>
                 </div>
@@ -549,7 +474,7 @@
         <div class="card-header" data-target="card-reference">
             <span class="dot"></span> Quick Reference
             <span class="card-summary" id="summary-reference"></span>
-            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
+            <button class="collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
@@ -563,34 +488,34 @@
         <div class="card-header" data-target="card-cost">
             <span class="dot"></span> Cost
             <span class="card-summary" id="summary-cost"></span>
-            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
+            <button class="collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label id="from-label">Pesos (MXN)</label>
-                        <input type="number" class="big-input" id="cost-from-val" placeholder="0" min="0" step="any">
+                        <input type="number" class="big" id="cost-from-val" placeholder="0" min="0" step="any">
                     </div>
                     <div class="arrow-label">→</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label id="to-label">Dollars (USD)</label>
-                        <input class="big-input output" id="cost-to-val" placeholder="—" readonly>
+                        <input class="big output" id="cost-to-val" placeholder="—" readonly>
                     </div>
                 </div>
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label>Quantity</label>
-                        <div class="qty-controls">
-                            <button class="qty-btn" id="cost-qty-minus">−</button>
-                            <input type="number" class="big-input big-input-inner" id="cost-qty" value="1" min="1">
-                            <button class="qty-btn" id="cost-qty-plus">+</button>
+                        <div class="tab big">
+                            <button id="cost-qty-minus">−</button>
+                            <input type="number" class="inner" id="cost-qty" value="1" min="1">
+                            <button id="cost-qty-plus">+</button>
                         </div>
                     </div>
                     <div class="arrow-label">×</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label>Total (USD)</label>
-                        <input class="big-input output" id="cost-total" placeholder="—" readonly>
+                        <input class="big output" id="cost-total" placeholder="—" readonly>
                     </div>
                 </div>
             </div>
@@ -602,30 +527,30 @@
         <div class="card-header" data-target="card-market">
             <span class="dot"></span> Market Weight
             <span class="card-summary" id="summary-market"></span>
-            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
+            <button class="collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label>Pesos / kg</label>
-                        <input type="number" class="big-input" id="market-rate" placeholder="0" min="0" step="any">
+                        <input type="number" class="big" id="market-rate" placeholder="0" min="0" step="any">
                     </div>
                     <div class="arrow-label">×</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label>Kilograms</label>
-                        <input type="number" class="big-input" id="market-kg" placeholder="0" min="0" step="any">
+                        <input type="number" class="big" id="market-kg" placeholder="0" min="0" step="any">
                     </div>
                 </div>
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label>Total (MXN)</label>
-                        <input class="big-input output" id="market-total1" placeholder="—" readonly>
+                        <input class="big output" id="market-total1" placeholder="—" readonly>
                     </div>
                     <div class="arrow-label">→</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label>Total (USD)</label>
-                        <input class="big-input output" id="market-total2" placeholder="—" readonly>
+                        <input class="big output" id="market-total2" placeholder="—" readonly>
                     </div>
                 </div>
             </div>
@@ -637,20 +562,20 @@
         <div class="card-header" data-target="card-tally">
             <span class="dot"></span> Market Tally
             <span class="card-summary" id="summary-tally"></span>
-            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
+            <button class="collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
 
                 <!-- Toolbar -->
-                <div class="content-row tally-toolbar">
-                    <div class="tally-mode">
+                <div class="row-flex">
+                    <div class="tab">
                         <button class="tally-mode-btn active" data-mode="plan">Plan</button>
                         <button class="tally-mode-btn" data-mode="shop">Shop</button>
                     </div>
-                    <div class="tally-actions">
+                    <div>
                         <button class="round-btn" id="tally-add" title="Add item">+</button>
-                        <button class="round-btn red" id="tally-clear" title="Clear all">✕</button>
+                        <button class="red" id="tally-clear" title="Clear all">✕</button>
                     </div>
                 </div>
 
@@ -658,17 +583,15 @@
                 <div id="tally-list"></div>
 
                 <!-- Totals -->
-                <div class="tally-totals" id="tally-totals">
-                    <div class="tally-total-row">
-                        <span>Remaining</span>
-                        <span id="tally-remaining-foreign">—</span>
-                        <span id="tally-remaining-local">—</span>
-                    </div>
-                    <div class="tally-total-row">
-                        <span>Spent</span>
-                        <span id="tally-spent-foreign">—</span>
-                        <span id="tally-spent-local">—</span>
-                    </div>
+                <div class="row-3col tally">
+                    <span>Remaining</span>
+                    <span id="tally-remaining-foreign">—</span>
+                    <span id="tally-remaining-local">—</span>
+                </div>
+                <div class="row-3col tally">
+                    <span>Spent</span>
+                    <span id="tally-spent-foreign">—</span>
+                    <span id="tally-spent-local">—</span>
                 </div>
 
             </div>
@@ -680,81 +603,85 @@
         <div class="card-header" data-target="card-bill">
             <span class="dot"></span> Restaurant Bill
             <span class="card-summary" id="summary-bill"></span>
-            <button class="round-btn collapse-btn" title="Collapse">⯆</button>
+            <button class="collapse-btn" title="Collapse">⯆</button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
 
                 <!-- Bill amount -->
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label>Bill (MXN)</label>
-                        <input type="number" class="big-input" id="bill-total1" placeholder="0" min="0" step="any">
+                        <input type="number" class="big" id="bill-total1" placeholder="0" min="0" step="any">
                     </div>
                     <div class="arrow-label">⇄</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label>Bill (USD)</label>
-                        <input type="number" class="big-input" id="bill-total2" placeholder="0" min="0" step="any">
+                        <input type="number" class="big" id="bill-total2" placeholder="0" min="0" step="any">
                     </div>
                 </div>
 
                 <!-- People -->
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label>Split between</label>
-                        <div class="qty-controls">
-                            <button class="qty-btn" id="bill-people-minus">−</button>
-                            <input type="number" class="big-input big-input-inner" id="bill-people" value="1" min="1">
-                            <button class="qty-btn" id="bill-people-plus">+</button>
+                        <div class="tab big">
+                            <button id="bill-people-minus">−</button>
+                            <input type="number" class="inner" id="bill-people" value="1" min="1">
+                            <button id="bill-people-plus">+</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Tip presets -->
-                <div class="presets">
-                    <button class="preset-btn" data-pct="10">10%</button>
-                    <button class="preset-btn" data-pct="15">15%</button>
-                    <button class="preset-btn" data-pct="20">20%</button>
-                    <input type="number" class="big-input preset-custom" id="bill-tip-custom" placeholder="%" min="0"
-                        max="100">
+                <div class="row-full" id="tip-options">
+                    <div class="label-group">
+                        <label>Tip</label>
+                        <div class="options big">
+                            <button data-pct="10">10%</button>
+                            <button data-pct="15">15%</button>
+                            <button data-pct="20">20%</button>
+                            <input type="number" id="bill-tip-custom" placeholder="%" min="0" max="100">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tip -->
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label>Tip (MXN)</label>
-                        <input class="big-input output" id="bill-tip1" placeholder="—" readonly>
+                        <input class="output" id="bill-tip1" placeholder="—" readonly>
                     </div>
                     <div class="arrow-label">→</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label>Tip (USD)</label>
-                        <input class="big-input output" id="bill-tip2" placeholder="—" readonly>
+                        <input class="output" id="bill-tip2" placeholder="—" readonly>
                     </div>
                 </div>
 
                 <!-- Subtotal -->
-                <div class="input-row" id="bill-subtotal">
-                    <div class="input-group">
+                <div class="row-equation" id="bill-subtotal">
+                    <div class="label-group">
                         <label>Subtotal (MXN)</label>
-                        <input class="big-input output" id="bill-sub1" placeholder="—" readonly>
+                        <input class="output" id="bill-sub1" placeholder="—" readonly>
                     </div>
                     <div class="arrow-label">→</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label>Subtotal (USD)</label>
-                        <input class="big-input output" id="bill-sub2" placeholder="—" readonly>
+                        <input class="output" id="bill-sub2" placeholder="—" readonly>
                     </div>
                 </div>
 
                 <!-- total -->
-                <div class="input-row">
-                    <div class="input-group">
+                <div class="row-equation">
+                    <div class="label-group">
                         <label>Total (MXN)</label>
-                        <input class="big-input output" id="bill-final1" placeholder="—" readonly>
+                        <input class="output" id="bill-final1" placeholder="—" readonly>
                     </div>
                     <div class="arrow-label">→</div>
-                    <div class="input-group">
+                    <div class="label-group">
                         <label>Total (USD)</label>
-                        <input class="big-input output" id="bill-final2" placeholder="—" readonly>
+                        <input class="output" id="bill-final2" placeholder="—" readonly>
                     </div>
                 </div>
 
@@ -957,7 +884,7 @@
                 this.cardBody = this.cardElement.querySelector('.card-body');
                 this.cardHeader = this.cardElement.querySelector('.card-header');
                 this.summaryOutput = document.getElementById(summaryId);
-                this.collapseButton = this.cardHeader.querySelector('.round-btn');
+                this.collapseButton = this.cardHeader.querySelector('.collapse-btn');
                 this.collapseButton.style.display = 'none';
 
                 // bindings
@@ -1181,7 +1108,7 @@
                 this.peopleInput = document.getElementById('bill-people');
                 this.peopleMinusButton = document.getElementById('bill-people-minus');
                 this.peoplePlusButton = document.getElementById('bill-people-plus');
-                this.tipButtons = document.getElementById('card-bill').querySelectorAll('.preset-btn');
+                this.tipButtons = document.getElementById('tip-options').querySelectorAll('button');
                 this.tipCustomInput = document.getElementById('bill-tip-custom');
                 this.tipFOutput = document.getElementById('bill-tip1');
                 this.tipLOutput = document.getElementById('bill-tip2');
@@ -1410,7 +1337,7 @@
                 this.listElement.innerHTML = this.#items.map(item => `
             <div class="tally-item ${this.#mode === 'shop' ? 'shop-mode' : ''} ${item.checked ? 'checked' : ''}" 
                  data-id="${item.id}">
-                <input type="checkbox" class="checkbox tally-check" ${item.checked ? 'checked' : ''}>
+                <input type="checkbox" class="tally-check" ${item.checked ? 'checked' : ''}>
                 <input type="text" 
                        class="tally-label" 
                        value="${item.label}" 
@@ -1421,8 +1348,8 @@
                        placeholder="$0"
                        min="0" 
                        step="any">
-                <button class="round-btn duplicate" title="Duplicate">⧉</button>
-                <button class="round-btn red delete" title="Delete">✕</button>
+                <button class="duplicate" title="Duplicate">⧉</button>
+                <button class="red delete" title="Delete">✕</button>
             </div>
         `).join('');
 
@@ -1476,10 +1403,10 @@
                 const spentForeign = checked.reduce((sum, i) => sum + i.price, 0);
                 const remainingForeign = unchecked.reduce((sum, i) => sum + i.price, 0);
 
-                this.spentForeignOutput.textContent = this.rateService.formatForeignSymbol(spentForeign);
-                this.spentLocalOutput.textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(spentForeign));
-                this.remainingForeignOutput.textContent = this.rateService.formatForeignSymbol(remainingForeign);
-                this.remainingLocalOutput.textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(remainingForeign));
+                this.spentForeignOutput.textContent = this.rateService.formatForeignFull(spentForeign);
+                this.spentLocalOutput.textContent = this.rateService.formatLocalFull(this.rateService.toLocal(spentForeign));
+                this.remainingForeignOutput.textContent = this.rateService.formatForeignFull(remainingForeign);
+                this.remainingLocalOutput.textContent = this.rateService.formatLocalFull(this.rateService.toLocal(remainingForeign));
 
                 this.updateSummary(this.rateService.formatLocalFull(this.rateService.toLocal(totalForeign)));
             }
