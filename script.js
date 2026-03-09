@@ -1112,14 +1112,14 @@ class App {
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.#installPrompt = e;
-            this.installBanner.textContent = '<svg><use href="#icon-check" /></svg>App Installed';
+            this.installBanner.innerHTML = '<svg><use href="#icon-install"/></svg>Install App';
             this.installBanner.classList.add('visible');
         });
 
         window.addEventListener('appinstalled', () => {
             this.#installPrompt = null;
             this.#isInstalled = true;
-            this.installBanner.innerHTML = '<svg><use href="#icon-check" /></svg>App Installed';
+            this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg>App Installed';
         });
 
         this.installBanner.addEventListener('click', async () => {
