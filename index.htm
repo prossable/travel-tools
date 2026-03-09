@@ -728,7 +728,7 @@
     </div>
 
     <footer>
-        Prices are approximate · Always verify before purchasing
+        Prices are approximate · Always verify before purchasing · <div id="footer-version"></div>
     </footer>
 
     <script>
@@ -1474,6 +1474,9 @@
                 this.#setupInstallPrompt();
                 this.#setupWakeLock();
                 this.#setupShareButton();
+                this.#getVersion().then(v => {
+                    document.getElementById('footer-version').textContent = `v${v}`;
+                });
             }
 
             // ── Service Worker ────────────────────────────────
@@ -1560,6 +1563,24 @@
                         }
                     }
                 });
+            }
+
+            async #getVersion() {
+                console.log("getVersion");
+                if (!('caches' in window)) return 'unknown';
+                console.log("good");
+
+                // wait for service worker to be ready before reading cache
+                if ('serviceWorker' in navigator) {
+                    await navigator.serviceWorker.ready;
+                }
+                console.log("done");
+
+                const keys = await caches.keys();
+                console.log(keys);
+                console.log('cache keys:', keys); // debug — what's actually there?
+                const cache = keys.find(k => k.startsWith('travel-tools-'));
+                return cache ? cache.replace('travel-tools-', '') : 'unknown';
             }
         }
 
