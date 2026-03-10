@@ -114,7 +114,10 @@
     <div class="card" id="card-rate">
         <div class="card-header">
             <span class="dot"></span> Exchange Rate
-            <span class="card-summary" id="summary-rate"></span>
+            <span class="summary"></span>
+            <button id="rate-refresh" title="Refresh rate"><svg>
+                    <use href="#icon-refresh" />
+                </svg></button>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -133,9 +136,6 @@
                         <input type="checkbox" id="rate-auto-fetch" checked>
                         <label> Auto-fetch daily rate </label>
                     </div>
-                    <button id="rate-refresh" title="Refresh rate"><svg>
-                            <use href="#icon-refresh" />
-                        </svg></button>
                 </div>
             </div>
         </div>
@@ -145,7 +145,7 @@
     <div class="card" id="card-reference">
         <div class="card-header">
             <span class="dot"></span> Quick Reference
-            <span class="card-summary" id="summary-reference"></span>
+            <span class="summary"></span>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -161,21 +161,19 @@
     <div class="card" id="card-notes">
         <div class="card-header">
             <span class="dot"></span> Notes
-            <span class="card-summary" id="summary-notes"></span>
+            <span class="summary"></span>
+            <button id="notes-add" title="Add note"><svg>
+                    <use href="#icon-add" />
+                </svg></button>
+            <button class="red" id="notes-clear" title="Clear all"><svg>
+                    <use href="#icon-delete" />
+                </svg></button>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
         </div>
         <div class="card-body">
             <div class="card-body-inner">
-                <div class="row-right">
-                    <button id="notes-add" title="Add note"><svg>
-                            <use href="#icon-add" />
-                        </svg></button>
-                    <button class="red" id="notes-clear" title="Clear all"><svg>
-                            <use href="#icon-delete" />
-                        </svg></button>
-                </div>
                 <div id="notes-list"></div>
             </div>
         </div>
@@ -185,7 +183,7 @@
     <div class="card" id="card-cost">
         <div class="card-header">
             <span class="dot"></span> Cost
-            <span class="card-summary" id="summary-cost"></span>
+            <span class="summary"></span>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -230,7 +228,7 @@
     <div class="card" id="card-market">
         <div class="card-header">
             <span class="dot"></span> Market Weight
-            <span class="card-summary" id="summary-market"></span>
+            <span class="summary"></span>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -271,7 +269,7 @@
     <div class="card" id="card-tally">
         <div class="card-header">
             <span class="dot"></span> Market Tally
-            <span class="card-summary" id="summary-tally"></span>
+            <span class="summary"></span>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -318,7 +316,7 @@
     <div class="card" id="card-bill">
         <div class="card-header">
             <span class="dot"></span> Bill Splitter
-            <span class="card-summary" id="summary-bill"></span>
+            <span class="summary"></span>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -419,7 +417,10 @@
     <div class="card" id="card-debt">
         <div class="card-header">
             <span class="dot"></span> Debt Tracker
-            <span class="card-summary" id="summary-debt"></span>
+            <span class="summary"></span>
+            <button class="red" id="debt-clear" title="Clear all"><svg>
+                    <use href="#icon-delete" />
+                </svg></button>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -462,11 +463,8 @@
                     <div class="label-group">
                         <label class="row-right">&nbsp;</label>
                         <div class="row-right">
-                            <button id="debt-add" title="Add "><svg>
+                            <button id="debt-add"><svg>
                                     <use href="#icon-add" />
-                                </svg></button>
-                            <button class="red" id="debt-clear" title="Clear all"><svg>
-                                    <use href="#icon-delete" />
                                 </svg></button>
                         </div>
                     </div>

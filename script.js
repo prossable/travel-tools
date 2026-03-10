@@ -196,13 +196,12 @@ class RateService extends EventTarget {
 }
 
 class Card {
-    constructor(cardId, summaryId) {
+    constructor(cardId) {
         this.cardElement = document.getElementById(cardId);
         this.cardBody = this.cardElement.querySelector('.card-body');
         this.cardHeader = this.cardElement.querySelector('.card-header');
-        this.summaryOutput = document.getElementById(summaryId);
+        this.summaryOutput = this.cardHeader.querySelector('.summary');
         this.collapseButton = this.cardHeader.querySelector('.collapse-btn');
-        this.collapseButton.style.display = 'none';
 
         // bindings
         this.collapse = this.collapse.bind(this);
@@ -218,21 +217,12 @@ class Card {
 
     expand() {
         if (this.isOpen()) return;
-        // collapse all
         document.querySelectorAll('.card').forEach(b => b.classList.remove('open'));
-        document.querySelectorAll('.card-body').forEach(b => b.classList.remove('open'));
-        document.querySelectorAll('.collapse-btn').forEach(b => b.style.display = 'none');
-
-        // open this one
         this.cardElement.classList.add('open');
-        this.cardBody.classList.add('open');
-        this.collapseButton.style.display = 'block';
     }
 
     collapse() {
         this.cardElement.classList.remove('open');
-        this.cardBody.classList.remove('open');
-        this.collapseButton.style.display = 'none';
     }
 
     isOpen() {
@@ -246,7 +236,7 @@ class Card {
 
 class RateCard extends Card {
     constructor(rateService) {
-        super('card-rate', 'summary-rate');
+        super('card-rate');
         this.rateService = rateService;
 
         // elements
@@ -290,7 +280,7 @@ class ReferenceCard extends Card {
     static referenceAmounts = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000];
 
     constructor(rateService) {
-        super('card-reference', 'summary-reference');
+        super('card-reference');
         this.rateService = rateService;
 
         // init
@@ -320,7 +310,7 @@ class CostCard extends Card {
     lastCost = null;
 
     constructor(rateService) {
-        super('card-cost', 'summary-cost');
+        super('card-cost');
         this.rateService = rateService;
 
         // binding
@@ -382,7 +372,7 @@ class MarketWeightCard extends Card {
     lastCost = null;
 
     constructor(rateService) {
-        super('card-market', 'summary-market');
+        super('card-market');
         this.rateService = rateService;
 
         // binding
@@ -424,7 +414,7 @@ class BillCard extends Card {
     lastBillPercent = null;
 
     constructor(rateService) {
-        super('card-bill', 'summary-bill');
+        super('card-bill');
         this.rateService = rateService;
 
         // binding
@@ -562,7 +552,7 @@ class MarketTallyCard extends Card {
     #mode = 'plan'; // 'plan' | 'shop'
 
     constructor(rateService) {
-        super('card-tally', 'summary-tally');
+        super('card-tally');
         this.rateService = rateService;
 
         // bindings
@@ -745,7 +735,7 @@ class NotesCard extends Card {
     #nextId = 1;
 
     constructor() {
-        super('card-notes', 'summary-notes');
+        super('card-notes');
 
         // elements
         this.listElement = document.getElementById('notes-list');
@@ -911,7 +901,7 @@ class DebtCard extends Card {
     #lastAmountCurrency = 'foreign';
 
     constructor(rateService) {
-        super('card-debt', 'summary-debt');
+        super('card-debt');
         this.rateService = rateService;
 
         // bindings

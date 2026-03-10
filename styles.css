@@ -33,6 +33,9 @@ body {
     min-height: 100vh;
     padding: 24px 16px 48px;
     color: var(--muted);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior: none;
 }
 
 /* INPUT */
@@ -63,6 +66,8 @@ textarea {
     transition: border-color 0.2s;
     transition: height 0.2s;
     -moz-appearance: textfield;
+    -webkit-user-select: text;
+    user-select: text;
 }
 
 input:focus {
@@ -127,6 +132,8 @@ button {
     color: var(--muted);
     transition: background 0.2s, color 0.2s, transform 0.3s;
     flex-shrink: 0;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 button:hover {
@@ -285,6 +292,8 @@ header .buttons {
     display: flex;
     align-items: center;
     gap: 8px;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .card-header .dot {
@@ -296,12 +305,20 @@ header .buttons {
     background: var(--accent);
 }
 
-.card-summary {
+.card-header .summary {
     margin-left: auto;
     margin-right: 8px;
     opacity: 1;
     transition: opacity 0.2s;
     color: var(--accent);
+}
+
+.card-header button {
+    display: none;
+}
+
+.card.open .card-header button {
+    display: inline;
 }
 
 .card-body {
@@ -313,7 +330,7 @@ header .buttons {
     transition: border-top-width 0.2s, grid-template-rows 0.3s ease;
 }
 
-.card-body.open {
+.card.open .card-body {
     border-top-width: 1px;
     grid-template-rows: 1fr;
     margin-top: 10px;
@@ -579,17 +596,3 @@ footer {
 
 /* RESPONSIVE */
 @media (max-width: 360px) {}
-
-/* PWA */
-body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    overscroll-behavior: none;
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-input {
-    -webkit-user-select: text;
-    user-select: text;
-}
