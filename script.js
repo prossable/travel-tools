@@ -926,6 +926,7 @@ class DebtCard extends Card {
         this.amountLocalInput = document.getElementById('debt-amount-local');
         this.dirButtons = document.querySelectorAll('.debt-dir-btn');
         this.addButton = document.getElementById('debt-add');
+        this.clearButton = document.getElementById('debt-clear');
 
         // init
         this.#load();
@@ -963,10 +964,19 @@ class DebtCard extends Card {
             }
         });
 
-        // add button
         this.addButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.#addDebt();
+        }); 
+        
+        this.clearButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm('Clear all debts?')) {
+                this.#debts = [];
+                this.#nextId = 1;
+                this.#save();
+                this.render();
+            }
         });
 
         // rate changes
@@ -1057,7 +1067,7 @@ class DebtCard extends Card {
                     <span class="highlight">${this.rateService.formatLocalFull(debt.amount)}</span> 
                     ${debt.note ? `for <span class="highlight">${debt.note}</span>` : ''}
                 </div>
-                <button class="red debt-delete" title="Delete">✕</button>
+                <button class="red debt-delete" title="Delete"><svg><use href="#icon-close" /></svg></button>
             </div>
         `).join('');
 
