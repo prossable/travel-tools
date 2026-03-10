@@ -963,7 +963,7 @@ class DebtCard extends Card {
         this.#debts.push({
             id: this.#nextId++,
             person,
-            amount: foreignVal,
+            amount: this.rateService.toLocal(foreignVal),
             direction: this.#direction,
             note,
             settled: false
@@ -1026,7 +1026,7 @@ class DebtCard extends Card {
                 <div>
                     ${debt.person}
                     <span class="debt-entry-direction ${debt.direction}">${debt.direction === 'owe' ? 'is owed' : 'owes me'}</span>
-                    <span class="highlight">${this.rateService.formatLocalFull(this.rateService.toLocal(debt.amount))}</span> 
+                    <span class="highlight">${this.rateService.formatLocalFull(debt.amount)}</span> 
                     ${debt.note ? `for <span class="highlight">${debt.note}</span>` : ''}
                 </div>
                 <button class="red debt-delete" title="Delete">✕</button>
