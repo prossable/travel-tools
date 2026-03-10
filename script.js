@@ -1110,12 +1110,17 @@ class App {
     }
 
     #setupInstallPrompt() {
+        console.log("mode: " + window.matchMedia('(display-mode: standalone)').matches);
+        console.log("standalone: " + (window.navigator.standalone === true));
+        console.log("isInstalled: " + this.#isInstalled);
         this.installBanner = document.getElementById('install-banner');
-        this.installBanner.classList.add('visible');
 
         if (this.#isInstalled) {
-            this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg>App Installed';
+            this.installBanner.classList.remove('visible');
+            return;
         }
+
+        this.installBanner.classList.add('visible');
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -1125,24 +1130,23 @@ class App {
         window.addEventListener('appinstalled', () => {
             this.#installPrompt = null;
             this.#isInstalled = true;
-            this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg>App Installed';
+            this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg> Installed';
         });
 
         this.installBanner.addEventListener('click', async () => {
-            if (this.#isInstalled) {
-                return; // already installed, do nothing
-            } else if (this.#installPrompt) {
+            if (this.#installPrompt) {
                 this.#installPrompt.prompt();
                 const { outcome } = await this.#installPrompt.userChoice;
                 if (outcome === 'accepted') {
                     this.#installPrompt = null;
                     this.#isInstalled = true;
-                    this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg>App Installed';
+                    this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg> Installed';
                 }
             } else if (this.#isIOS()) {
                 alert('To install on iOS:\n\n1. Tap the Share button (□↑) at the bottom of Safari\n2. Tap "Add to Home Screen"\n3. Tap "Add"');
             } else {
-                alert('To install: tap the browser menu (⋮) and select "Add to Home Screen"');
+                this.installBanner.innerHTML = '<svg><use href="#icon-check"/></svg> Installed';
+                this.installBanner.style.pointerEvents = 'none';
             }
         });
     }
@@ -1195,19 +1199,14 @@ class App {
     }
 
     async #getVersion() {
-        console.log("getVersion");
         if (!('caches' in window)) return 'unknown';
-        console.log("good");
 
         // wait for service worker to be ready before reading cache
         if ('serviceWorker' in navigator) {
             await navigator.serviceWorker.ready;
         }
-        console.log("done");
 
         const keys = await caches.keys();
-        console.log(keys);
-        console.log('cache keys:', keys); // debug — what's actually there?
         const cache = keys.find(k => k.startsWith('travel-tools-'));
         return cache ? cache.replace('travel-tools-', '') : 'unknown';
     }

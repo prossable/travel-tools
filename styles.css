@@ -245,6 +245,14 @@ header .buttons {
     justify-content: center;
 }
 
+#install-banner {
+    display: none;
+}
+
+#install-banner.visible {
+    display: flex;
+}
+
 /* CARD */
 
 .card {
