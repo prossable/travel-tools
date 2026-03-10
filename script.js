@@ -1148,7 +1148,12 @@ class App {
     #registerServiceWorker() {
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('SW registered:', reg.scope))
+            .then(reg => {
+                // when a new service worker takes control, reload the page
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    window.location.reload();
+                });
+            })
             .catch(err => console.warn('SW registration failed:', err));
     }
 
