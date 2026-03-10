@@ -198,8 +198,8 @@ class RateService extends EventTarget {
 class Card {
     constructor(cardId) {
         this.cardElement = document.getElementById(cardId);
-        this.cardBody = this.cardElement.querySelector('.card-body');
-        this.cardHeader = this.cardElement.querySelector('.card-header');
+        this.cardHeader = this.cardElement.querySelector('.header');
+        this.cardBody = this.cardElement.querySelector('.body');
         this.summaryOutput = this.cardHeader.querySelector('.summary');
         this.collapseButton = this.cardHeader.querySelector('.collapse-btn');
 
