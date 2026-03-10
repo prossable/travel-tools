@@ -303,7 +303,16 @@ header {
     margin-right: auto;
 
     h1 {
-        font-size: 2rem;
+        font-size: 2.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        img {
+            width: 35px;
+            height: 35px;
+        }
 
         span {
             color: var(--accent);
