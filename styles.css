@@ -491,7 +491,7 @@ header .buttons {
 
 /* NOTES */
 
-.note-item {
+.note {
     display: flex;
     flex-direction: column;
     gap: 0;
@@ -499,63 +499,69 @@ header .buttons {
     border: 1px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
-}
 
-.note-toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 8px;
-    background: var(--input-bg);
-    border-bottom: 1px solid var(--border);
-}
+    .header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        background: var(--input-bg);
+        border-bottom: none;
 
-.note-toolbar.collapsed {
-    border-bottom: none;
-}
+        .toggle {
+            transition: transform 0.2s;
+            transform: rotate(-90deg);
+        }
 
-.note-title {
-    border: none;
-}
+        .title {
+            border: none;
+        }
 
-.note-title:focus {
-    border-color: transparent;
-}
+        .title:focus {
+            border-color: transparent;
+        }
+    }
 
-textarea.note-body {
-    border: none;
-    border-radius: 0;
-    resize: none;
-    padding-bottom: 40px;
-}
+    .body {
+        display: none;
+        position: relative;
+        background: var(--input-bg);
 
-textarea.note-body.collapsed {
-    display: none;
-}
+        textarea {
+            border: none;
+            border-radius: 0;
+            resize: none;
+            padding-bottom: 40px;
+            overflow: hidden;
+            display: none;
+        }
 
-.note-chevron {
-    transition: transform 0.2s;
-}
+        .actions {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            display: flex;
+            gap: 6px;
+        }
+    }
 
-.note-chevron.collapsed {
-    transform: rotate(-90deg);
-}
+    &.open {
+        .header {
+            border-bottom: 1px solid var(--border);
 
-.note-body-wrap {
-    position: relative;
-    background: var(--input-bg);
-}
+            .toggle {
+                transform: rotate(0deg);
+            }
+        }
 
-.note-body-wrap.collapsed {
-    display: none;
-}
+        .body {
+            display: block;
 
-.note-actions {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    display: flex;
-    gap: 6px;
+            textarea {
+                display: block;
+            }
+        }
+    }
 }
 
 /* DEBT */

@@ -733,6 +733,7 @@ class MarketTallyCard extends Card {
 class NotesCard extends Card {
     #notes = [];
     #nextId = 1;
+    #activeNoteId = null;
 
     constructor() {
         super('card-notes');
@@ -742,8 +743,14 @@ class NotesCard extends Card {
         this.addButton = document.getElementById('notes-add');
         this.clearButton = document.getElementById('notes-clear');
 
-        // init
-        this.#load();
+        // init        
+        const stored = localStorage.getItem('notes');
+        if (stored) {
+            this.#notes = JSON.parse(stored);
+            this.#nextId = parseInt(localStorage.getItem('notesNextId')) ||
+                this.#notes.reduce((max, n) => Math.max(max, n.id), 0) + 1;
+        }
+        this.#renderAll();
 
         // listeners
         this.addButton.addEventListener('click', (e) => {
@@ -756,36 +763,56 @@ class NotesCard extends Card {
             if (confirm('Clear all notes?')) {
                 this.#notes = [];
                 this.#nextId = 1;
+                this.#activeNoteId = null;
                 this.#save();
-                this.render();
+                this.#renderAll();
             }
         });
     }
 
-    #createNote(title = '', body = '', collapsed = false) {
-        return { id: this.#nextId++, title, body, collapsed };
+    #createNote(title = '', body = '') {
+        return { id: this.#nextId++, title, body };
     }
 
     #addNote() {
-        this.#notes.push(this.#createNote());
+        const note = this.#createNote();
+        this.#notes.push(note);
+        this.#activeNoteId = note.id;
         this.#save();
-        this.render();
-        // focus new note title
-        const titles = this.listElement.querySelectorAll('.note-title');
-        if (titles.length) titles[titles.length - 1].focus();
+
+        const el = document.createElement('div');
+        el.innerHTML = this.#noteHTML(note);
+        const noteEl = el.firstElementChild;
+        this.listElement.appendChild(noteEl);
+        this.#wireListeners(noteEl, note.id);
+        this.#updateCollapseState();
+        this.#updateSummaryCount();
+
+        noteEl.querySelector('.title').focus();
     }
 
     #removeNote(id) {
         this.#notes = this.#notes.filter(n => n.id !== id);
+        if (this.#activeNoteId === id) this.#activeNoteId = null;
+        document.getElementById(`note-${id}`).remove();
         this.#save();
-        this.render();
+        this.#updateSummaryCount();
     }
 
     #toggleCollapse(id) {
-        const note = this.#notes.find(n => n.id === id);
-        if (note) note.collapsed = !note.collapsed;
+        this.#activeNoteId = this.#activeNoteId === id ? null : id;
+        this.#updateCollapseState();
         this.#save();
-        this.render();
+    }
+
+    #updateCollapseState() {
+        this.listElement.querySelectorAll('.note').forEach(b => b.classList.remove('open'));
+        if (this.#activeNoteId !== null) {
+            const noteElement = document.getElementById(`note-${this.#activeNoteId}`);
+            noteElement.classList.add('open');
+            const textarea = noteElement.querySelector('textarea');
+            this.#autoResize(textarea);
+        }
     }
 
     #autoResize(textarea) {
@@ -793,104 +820,92 @@ class NotesCard extends Card {
         textarea.style.height = textarea.scrollHeight + 'px';
     }
 
+    #updateSummaryCount() {
+        const count = this.#notes.length;
+        this.updateSummary(count > 0 ? `${count} note${count > 1 ? 's' : ''}` : '');
+    }
+
     #save() {
         localStorage.setItem('notes', JSON.stringify(this.#notes));
         localStorage.setItem('notesNextId', this.#nextId);
     }
 
-    #load() {
-        const stored = localStorage.getItem('notes');
-        if (stored) {
-            this.#notes = JSON.parse(stored);
-            this.#nextId = parseInt(localStorage.getItem('notesNextId')) ||
-                this.#notes.reduce((max, n) => Math.max(max, n.id), 0) + 1;
-        }
-        this.render();
+    #noteHTML(note) {
+        return `
+            <div class="note" id="note-${note.id}" data-id="${note.id}">
+                <div class="header">
+                    <button class="toggle" title="Toggle"><svg><use href="#icon-collapse"/></svg></button>
+                    <input type="text" class="title" value="${note.title}" placeholder="Note title">
+                </div>
+                <div class="body">
+                    <textarea placeholder="Type your note here…">${note.body}</textarea>
+                    <div class="actions">
+                        <button class="note-copy" title="Copy"><svg><use href="#icon-clipboard"/></svg></button>
+                        <button class="red note-delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
+                    </div>
+                </div>
+            </div>`;
     }
 
-    render() {
-        this.listElement.innerHTML = this.#notes.map(note => `
-                    <div class="note-item" data-id="${note.id}">
-                        <div class="note-toolbar ${note.collapsed ? 'collapsed' : ''}">
-                            <button class="note-toggle" title="Toggle">
-                                <svg class="note-chevron ${note.collapsed ? 'collapsed' : ''}"><use href="#icon-collapse" /></svg>
-                            </button>
-                            <input type="text" 
-                                class="note-title" 
-                                value="${note.title}" 
-                                placeholder="Note title">
-                        </div>
-                        <div class="note-body-wrap ${note.collapsed ? 'collapsed' : ''}">
-                            <textarea class="note-body" 
-                                    placeholder="Type your note here…"
-                            >${note.body}</textarea>
-                            <div class="note-actions">
-                                <button class="note-copy" title="Copy"><svg><use href="#icon-clipboard" /></svg></button>
-                                <button class="red note-delete" title="Delete"><svg><use href="#icon-delete" /></svg></button>
-                            </div>
-                        </div>
-                    </div>`).join('');
+    #wireListeners(row, id) {
+        const toggleBtn = row.querySelector('.toggle');
+        const titleInput = row.querySelector('.title');
+        const textarea = row.querySelector('textarea');
+        const deleteBtn = row.querySelector('.note-delete');
+        const copyBtn = row.querySelector('.note-copy');
 
-        // wire up row listeners
-        this.listElement.querySelectorAll('.note-item').forEach(row => {
-            const id = parseInt(row.dataset.id);
-            const toggleBtn = row.querySelector('.note-toggle');
-            const titleInput = row.querySelector('.note-title');
-            const textarea = row.querySelector('.note-body');
-            const deleteBtn = row.querySelector('.note-delete');
-            const copyBtn = row.querySelector('.note-copy');
+        this.#autoResize(textarea);
 
-            // auto resize on load
-            this.#autoResize(textarea);
-
-            toggleBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.#toggleCollapse(id);
-            });
-
-            titleInput.addEventListener('input', () => {
-                const note = this.#notes.find(n => n.id === id);
-                if (note) { note.title = titleInput.value; this.#save(); }
-            });
-
-            textarea.addEventListener('input', () => {
-                const note = this.#notes.find(n => n.id === id);
-                if (note) {
-                    note.body = textarea.value;
-                    this.#save();
-                    this.#autoResize(textarea);
-                }
-            });
-
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const note = this.#notes.find(n => n.id === id);
-                const label = note?.title || 'this note';
-                if (confirm(`Delete "${label}"?`)) {
-                    this.#removeNote(id);
-                }
-            });
-
-            copyBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const note = this.#notes.find(n => n.id === id);
-                if (!note) return;
-                const text = note.title
-                    ? `${note.title}\n\n${note.body}`
-                    : note.body;
-                try {
-                    await navigator.clipboard.writeText(text);
-                    copyBtn.innerHTML = '<svg><use href="#icon-check" /></svg>';
-                    setTimeout(() => copyBtn.innerHTML = '<svg><use href="#icon-clipboard" /></svg>', 1500);
-                } catch {
-                    console.warn('Copy failed');
-                }
-            });
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#toggleCollapse(id);
         });
 
-        // update summary — note count
-        const count = this.#notes.length;
-        this.updateSummary(count > 0 ? `${count} note${count > 1 ? 's' : ''}` : '');
+        titleInput.addEventListener('input', () => {
+            const note = this.#notes.find(n => n.id === id);
+            if (note) { note.title = titleInput.value; this.#save(); }
+        });
+
+        textarea.addEventListener('input', () => {
+            const note = this.#notes.find(n => n.id === id);
+            if (note) {
+                note.body = textarea.value;
+                this.#save();
+                this.#autoResize(textarea);
+            }
+        });
+
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const note = this.#notes.find(n => n.id === id);
+            if (confirm(`Delete "${note?.title || 'this note'}"?`)) {
+                this.#removeNote(id);
+            }
+        });
+
+        copyBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const note = this.#notes.find(n => n.id === id);
+            if (!note) return;
+            const text = note.title ? `${note.title}\n\n${note.body}` : note.body;
+            try {
+                await navigator.clipboard.writeText(text);
+                copyBtn.innerHTML = '<svg><use href="#icon-check"/></svg>';
+                setTimeout(() => copyBtn.innerHTML = '<svg><use href="#icon-clipboard"/></svg>', 1500);
+            } catch {
+                console.warn('Copy failed');
+            }
+        });
+    }
+
+    #renderAll() {
+        this.listElement.innerHTML = this.#notes.map(n => this.#noteHTML(n)).join('');
+        this.listElement.querySelectorAll('.note').forEach(row => {
+            this.#wireListeners(row, parseInt(row.dataset.id));
+            this.#autoResize(row.querySelector('textarea'));
+        });
+        this.#updateCollapseState();
+        this.#updateSummaryCount();
     }
 }
 
@@ -957,8 +972,8 @@ class DebtCard extends Card {
         this.addButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.#addDebt();
-        }); 
-        
+        });
+
         this.clearButton.addEventListener('click', (e) => {
             e.stopPropagation();
             if (confirm('Clear all debts?')) {
