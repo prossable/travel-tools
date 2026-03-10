@@ -70,9 +70,20 @@ class RateService extends EventTarget {
     }
 
     fetchRate(force = false) {
+        const today = this.getLocalDate();
+
+        // fetch rate
+        const custom = localStorage.getItem('customRate');
+        if (custom && !force) {
+            this.setRate(parseFloat(custom));
+            this.dispatchEvent(new CustomEvent('messageSent', {
+                detail: { msg: 'Using a custom rate' }
+            }));
+            return;
+        }
+
         // check cache
         const cached = JSON.parse(localStorage.getItem('cachedRate'));
-        const today = new Date().toISOString().split('T')[0];
         if (!force && cached && cached.date === today && cached.currency === this.#foreignCurrency.code) {
             this.setRate(cached.rate);
             this.dispatchEvent(new CustomEvent('messageSent', {
@@ -81,13 +92,10 @@ class RateService extends EventTarget {
             return;
         }
 
-        // notify
-        this.dispatchEvent(new CustomEvent('stateChanged', {
-            detail: { busy: true }
-        }));
-        this.dispatchEvent(new CustomEvent('messageSent', {
-            detail: { msg: 'Fetching live rate…' }
-        }));
+        console.log("==== FETCH RATE ===");
+        // fetch live
+        this.dispatchEvent(new CustomEvent('stateChanged', { detail: { busy: true } }));
+        this.dispatchEvent(new CustomEvent('messageSent', { detail: { msg: 'Fetching live rate…' } }));
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), RateService.API_TIMEOUT);
@@ -114,14 +122,10 @@ class RateService extends EventTarget {
                 const msg = err.name === 'AbortError' ?
                     'Request timed out · using fallback' :
                     'Could not fetch live rate · using fallback';
-                this.dispatchEvent(new CustomEvent('messageSent', {
-                    detail: { msg: msg }
-                }));
+                this.dispatchEvent(new CustomEvent('messageSent', { detail: { msg: msg } }));
             })
             .finally(() => {
-                this.dispatchEvent(new CustomEvent('stateChanged', {
-                    detail: { busy: false }
-                }));
+                this.dispatchEvent(new CustomEvent('stateChanged', { detail: { busy: false } }));
             });
     }
 
@@ -172,8 +176,17 @@ class RateService extends EventTarget {
         return this.#formatFull(value, this.#foreignCurrency);
     }
 
+    getLocalDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
     formatDate(dateString) {
-        return new Date(dateString).toLocaleDateString(
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day).toLocaleDateString(
             this.#localCurrency.locale, {
             month: 'short',
             day: 'numeric',
@@ -238,23 +251,38 @@ class RateCard extends Card {
 
         // elements
         this.rateInput = document.getElementById('rate');
-        this.rateHintOutput = document.getElementById('rate-hint');
-        this.rateRefreshButton = document.getElementById('rate-refresh');
+        this.hintOutput = document.getElementById('rate-hint');
+        this.autoFetchCheckbox = document.getElementById('rate-auto-fetch');
+        this.refreshButton = document.getElementById('rate-refresh');
+
+        // settings
+        const saved = localStorage.getItem('autoFetchRate');
+        this.autoFetchCheckbox.checked = saved === null ? true : saved === 'true';
 
         // listeners
         this.rateInput.addEventListener('input', () => {
-            this.rateHintOutput.textContent = "Manually set rate";
-            this.rateService.setRate(parseFloat(this.rateInput.value));
+            this.hintOutput.textContent = 'Using a custom rate';
+            const val = parseFloat(this.rateInput.value);
+            localStorage.setItem('customRate', val);
+            this.rateService.setRate(val);
+            this.autoFetchCheckbox.checked = false;
+            localStorage.setItem('autoFetchRate', false);
         });
-        this.rateRefreshButton.addEventListener('click', () => this.rateService.fetchRate(true));
+        this.autoFetchCheckbox.addEventListener('change', () => {
+            localStorage.setItem('autoFetchRate', this.autoFetchCheckbox.checked);
+        });
+        this.refreshButton.addEventListener('click', () => {
+            localStorage.removeItem('customRate');
+            this.rateService.fetchRate(true);
+        });
         this.rateService.addEventListener('rateChanged', (e) => {
             if (document.activeElement !== this.rateInput) {
                 this.rateInput.value = e.detail.rate;
             }
             this.updateSummary(this.rateService.formatForeignFull(e.detail.rate));
         });
-        this.rateService.addEventListener('stateChanged', (e) => this.rateRefreshButton.disabled = e.detail.busy);
-        this.rateService.addEventListener('messageSent', (e) => this.rateHintOutput.textContent = e.detail.msg);
+        this.rateService.addEventListener('stateChanged', (e) => this.refreshButton.disabled = e.detail.busy);
+        this.rateService.addEventListener('messageSent', (e) => this.hintOutput.textContent = e.detail.msg);
     }
 }
 
@@ -1110,9 +1138,6 @@ class App {
     }
 
     #setupInstallPrompt() {
-        console.log("mode: " + window.matchMedia('(display-mode: standalone)').matches);
-        console.log("standalone: " + (window.navigator.standalone === true));
-        console.log("isInstalled: " + this.#isInstalled);
         this.installBanner = document.getElementById('install-banner');
 
         if (this.#isInstalled) {

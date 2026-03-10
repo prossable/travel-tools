@@ -325,17 +325,14 @@ header .buttons {
     overflow: hidden;
 }
 
-/*.card-body.open~.card-header .card-summary,
-        .card.open .card-summary {
-            opacity: 0;
-            pointer-events: none;
-        }*/
+.card-body-inner>div {
+    margin-top: 14px;
+}
 
 .row-flex {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 14px;
     justify-content: space-between;
 }
 
@@ -350,7 +347,6 @@ header .buttons {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-    margin-top: 14px;
 }
 
 .row-3col {
@@ -363,7 +359,6 @@ header .buttons {
     grid-template-columns: 1fr auto 1fr;
     align-items: center;
     gap: 12px;
-    margin-top: 14px;
 }
 
 .label-group {
@@ -568,7 +563,7 @@ textarea.note-body.collapsed {
 
 footer {
     text-align: center;
-    margin-top: 28px;
+    margin: 20px 0;
     max-width: 480px;
     margin-left: auto;
     margin-right: auto;

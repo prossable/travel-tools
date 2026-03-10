@@ -126,7 +126,13 @@
                     <input type="number" id="rate" step="0.01" min="1">
                 </div>
                 <div class="row-flex">
-                    <div class="rate-hint" id="rate-hint">Fetching live rate…</div>
+                    <div id="rate-hint">Fetching live rate…</div>
+                </div>
+                <div class="row-flex">
+                    <div class="row-flex">
+                        <input type="checkbox" id="rate-auto-fetch" checked>
+                        <label> Auto-fetch daily rate </label>
+                    </div>
                     <button id="rate-refresh" title="Refresh rate"><svg>
                             <use href="#icon-refresh" />
                         </svg></button>
