@@ -618,8 +618,9 @@ header {
 
 /* DEBT */
 
-#debt-list {
-    border-top: 1px solid var(--border);
+#debt-form {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
 }
 
 .debt-entry {
@@ -627,19 +628,22 @@ header {
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 10px;
-    padding: 10px 0;
-}
 
-.debt-entry-direction.owe {
-    color: #e05555;
-}
+    &:not(:last-child) {
+        padding: 0 0 10px;
+    }
 
-.debt-entry-direction.owedBy {
-    color: #73d780;
-}
+    &.settled .info {
+        opacity: 0.4;
+    }
 
-.debt-entry.settled {
-    opacity: 0.4;
+    .direction.owe {
+        color: #e05555;
+    }
+
+    .direction.owedBy {
+        color: #73d780;
+    }
 }
 
 /* FOOT */

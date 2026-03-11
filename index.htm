@@ -227,7 +227,7 @@
     <!-- MARKET WEIGHT -->
     <div class="card" id="card-market">
         <div class="header">
-            <span class="dot"></span> Price
+            <span class="dot"></span> Weight
             <span class="summary"></span>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
@@ -418,6 +418,9 @@
         <div class="header">
             <span class="dot"></span> Debts
             <span class="summary"></span>
+            <button id="debt-toggle" title="Clear all"><svg>
+                    <use href="#icon-add" />
+                </svg></button>
             <button class="red" id="debt-clear" title="Clear all"><svg>
                     <use href="#icon-delete" />
                 </svg></button>
@@ -429,43 +432,45 @@
             <div class="body-inner">
 
                 <!-- Add form -->
-                <div class="row-2col">
-                    <div class="label-group">
-                        <label>Person</label>
-                        <input type="text" id="debt-person" placeholder="Name">
-                    </div>
-                    <div class="label-group">
-                        <label>Note</label>
-                        <input type="text" id="debt-note" placeholder="Lunch, taxi…">
-                    </div>
-                </div>
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label>Amount (MXN)</label>
-                        <input type="number" id="debt-amount-foreign" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-sync" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label>Amount (USD)</label>
-                        <input type="number" id="debt-amount-local" placeholder="0" min="0" step="any">
-                    </div>
-                </div>
-                <div class="row-2col">
-                    <div class="label-group">
-                        <label>Direction</label>
-                        <div class="options row-2col">
-                            <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
-                            <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
+                <div id="debt-form">
+                    <div class="row-2col">
+                        <div class="label-group">
+                            <label>Person</label>
+                            <input type="text" id="debt-person" placeholder="Name">
+                        </div>
+                        <div class="label-group">
+                            <label>Note</label>
+                            <input type="text" id="debt-note" placeholder="Lunch, taxi…">
                         </div>
                     </div>
-                    <div class="label-group">
-                        <label class="row-right">&nbsp;</label>
-                        <div class="row-right">
-                            <button id="debt-add"><svg>
-                                    <use href="#icon-add" />
-                                </svg></button>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label>Amount (MXN)</label>
+                            <input type="number" id="debt-amount-foreign" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-sync" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label>Amount (USD)</label>
+                            <input type="number" id="debt-amount-local" placeholder="0" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="row-2col">
+                        <div class="label-group">
+                            <label>Direction</label>
+                            <div class="options row-2col">
+                                <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
+                                <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
+                            </div>
+                        </div>
+                        <div class="label-group">
+                            <label class="row-right">&nbsp;</label>
+                            <div class="row-right">
+                                <button id="debt-add"><svg>
+                                        <use href="#icon-add" />
+                                    </svg></button>
+                            </div>
                         </div>
                     </div>
                 </div>

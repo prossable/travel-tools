@@ -852,8 +852,8 @@ class NotesCard extends Card {
                 <div class="body">
                     <textarea placeholder="Type your note here…">${note.body}</textarea>
                     <div class="actions">
-                        <button class="note-copy" title="Copy"><svg><use href="#icon-clipboard"/></svg></button>
-                        <button class="red note-delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
+                        <button class="copy" title="Copy"><svg><use href="#icon-clipboard"/></svg></button>
+                        <button class="red delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
                     </div>
                 </div>
             </div>`;
@@ -863,8 +863,8 @@ class NotesCard extends Card {
         const toggleBtn = row.querySelector('.toggle');
         const titleInput = row.querySelector('.title');
         const textarea = row.querySelector('textarea');
-        const deleteBtn = row.querySelector('.note-delete');
-        const copyBtn = row.querySelector('.note-copy');
+        const deleteBtn = row.querySelector('.delete');
+        const copyBtn = row.querySelector('.copy');
 
         this.#autoResize(textarea);
 
@@ -925,18 +925,15 @@ class DebtCard extends Card {
     #debts = [];
     #nextId = 1;
     #direction = 'owe';
-    #lastAmountCurrency = 'foreign';
+    #formVisible = false;
 
     constructor(rateService) {
         super('card-debt');
         this.rateService = rateService;
 
-        // bindings
-        this.render = this.render.bind(this);
-        this.update = this.update.bind(this);
-
         // elements
         this.listElement = document.getElementById('debt-list');
+        this.formElement = document.getElementById('debt-form');
         this.personInput = document.getElementById('debt-person');
         this.noteInput = document.getElementById('debt-note');
         this.amountForeignInput = document.getElementById('debt-amount-foreign');
@@ -944,9 +941,19 @@ class DebtCard extends Card {
         this.dirButtons = document.querySelectorAll('.debt-dir-btn');
         this.addButton = document.getElementById('debt-add');
         this.clearButton = document.getElementById('debt-clear');
+        this.toggleButton = document.getElementById('debt-toggle');
 
-        // init
+        // init — form hidden by default
+        this.formElement.style.display = 'none';
+
+        // load
         this.#load();
+
+        // toggle form
+        this.toggleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#setFormVisible(!this.#formVisible);
+        });
 
         // direction buttons
         this.dirButtons.forEach(btn => {
@@ -960,7 +967,6 @@ class DebtCard extends Card {
 
         // bidirectional amount
         this.amountForeignInput.addEventListener('input', () => {
-            this.#lastAmountCurrency = 'foreign';
             const val = parseFloat(this.amountForeignInput.value);
             if (!isNaN(val) && this.amountForeignInput.value !== '') {
                 this.amountLocalInput.value =
@@ -971,7 +977,6 @@ class DebtCard extends Card {
         });
 
         this.amountLocalInput.addEventListener('input', () => {
-            this.#lastAmountCurrency = 'local';
             const val = parseFloat(this.amountLocalInput.value);
             if (!isNaN(val) && this.amountLocalInput.value !== '') {
                 this.amountForeignInput.value =
@@ -992,41 +997,48 @@ class DebtCard extends Card {
                 this.#debts = [];
                 this.#nextId = 1;
                 this.#save();
-                this.render();
+                this.#renderAll();
             }
         });
+    }
 
-        // rate changes
-        this.rateService.addEventListener('rateChanged', () => this.update());
+    #setFormVisible(visible) {
+        this.#formVisible = visible;
+        this.formElement.style.display = visible ? '' : 'none';
+        if (visible) this.personInput.focus();
     }
 
     #addDebt() {
         const person = this.personInput.value.trim();
         const note = this.noteInput.value.trim();
 
-        if (!person) {
-            this.personInput.focus();
-            return;
-        }
+        if (!person) { this.personInput.focus(); return; }
 
         const foreignVal = parseFloat(this.amountForeignInput.value);
-        if (isNaN(foreignVal) || foreignVal <= 0) {
-            this.amountForeignInput.focus();
-            return;
-        }
+        if (isNaN(foreignVal) || foreignVal <= 0) { this.amountForeignInput.focus(); return; }
 
-        this.#debts.push({
+        const debt = {
             id: this.#nextId++,
             person,
             amount: this.rateService.toLocal(foreignVal),
             direction: this.#direction,
             note,
             settled: false
-        });
+        };
 
+        this.#debts.push(debt);
         this.#save();
-        this.render();
+
+        // append single element
+        const el = document.createElement('div');
+        el.innerHTML = this.#debtHTML(debt);
+        const debtEl = el.firstElementChild;
+        this.listElement.appendChild(debtEl);
+        this.#wireListeners(debtEl, debt.id);
+
         this.#clearForm();
+        this.#setFormVisible(false);
+        this.update();
     }
 
     #clearForm() {
@@ -1037,20 +1049,22 @@ class DebtCard extends Card {
         this.dirButtons.forEach(b => b.classList.remove('active'));
         this.dirButtons[0].classList.add('active');
         this.#direction = 'owe';
-        this.personInput.focus();
     }
 
     #removeDebt(id) {
         this.#debts = this.#debts.filter(d => d.id !== id);
+        document.getElementById(`debt-${id}`).remove();
         this.#save();
-        this.render();
+        this.update();
     }
 
     #toggleSettled(id) {
         const debt = this.#debts.find(d => d.id === id);
-        if (debt) debt.settled = !debt.settled;
+        if (!debt) return;
+        debt.settled = !debt.settled;
+        document.getElementById(`debt-${id}`).classList.toggle('settled', debt.settled);
         this.#save();
-        this.render();
+        this.update();
     }
 
     #save() {
@@ -1065,49 +1079,46 @@ class DebtCard extends Card {
             this.#nextId = parseInt(localStorage.getItem('debtsNextId')) ||
                 this.#debts.reduce((max, d) => Math.max(max, d.id), 0) + 1;
         }
-        this.render();
+        this.#renderAll();
     }
 
-    render() {
-        if (this.#debts.length === 0) {
-            this.listElement.innerHTML = '';
-            this.update();
-            return;
-        }
-
-        this.listElement.innerHTML = this.#debts.map(debt => `
-            <div class="debt-entry ${debt.settled ? 'settled' : ''}" data-id="${debt.id}">
-                <input type="checkbox" class="debt-settled" title="Mark settled" ${debt.settled ? 'checked' : ''}>
-                <div>
-                    ${debt.person}
-                    <span class="debt-entry-direction ${debt.direction}">${debt.direction === 'owe' ? 'is owed' : 'owes me'}</span>
-                    <span class="highlight">${this.rateService.formatLocalFull(debt.amount)}</span> 
-                    ${debt.note ? `for <span class="highlight">${debt.note}</span>` : ''}
+    #debtHTML(debt) {
+        return `
+            <div class="debt-entry ${debt.settled ? 'settled' : ''}" id="debt-${debt.id}" data-id="${debt.id}">
+                <input type="checkbox" class="settled" title="Mark settled" ${debt.settled ? 'checked' : ''}>
+                <div class="info">
+                    <span>${debt.person}</span>
+                    <span class="direction ${debt.direction}">${debt.direction === 'owe' ? 'is owed' : 'owes me'}</span>
+                    <span class="highlight">${this.rateService.formatLocalFull(debt.amount)}</span>
+                    ${debt.note ? ` for ${debt.note}` : ''}
                 </div>
-                <button class="red debt-delete" title="Delete"><svg><use href="#icon-close" /></svg></button>
-            </div>
-        `).join('');
+                <button class="red delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
+            </div>`;
+    }
 
-        // wire up row listeners
-        this.listElement.querySelectorAll('.debt-entry').forEach(row => {
-            const id = parseInt(row.dataset.id);
-            const checkbox = row.querySelector('.debt-settled');
-            const deleteBtn = row.querySelector('.debt-delete');
+    #wireListeners(row, id) {
+        const checkbox = row.querySelector('.settled');
+        const deleteBtn = row.querySelector('.delete');
 
-            checkbox.addEventListener('change', (e) => {
-                e.stopPropagation();
-                this.#toggleSettled(id);
-            });
-
-            deleteBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const debt = this.#debts.find(d => d.id === id);
-                if (confirm(`Delete debt with ${debt?.person || 'this person'}?`)) {
-                    this.#removeDebt(id);
-                }
-            });
+        checkbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.#toggleSettled(id);
         });
 
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const debt = this.#debts.find(d => d.id === id);
+            if (confirm(`Delete debt with ${debt?.person || 'this person'}?`)) {
+                this.#removeDebt(id);
+            }
+        });
+    }
+
+    #renderAll() {
+        this.listElement.innerHTML = this.#debts.map(d => this.#debtHTML(d)).join('');
+        this.listElement.querySelectorAll('.debt-entry').forEach(row => {
+            this.#wireListeners(row, parseInt(row.dataset.id));
+        });
         this.update();
     }
 
@@ -1115,7 +1126,10 @@ class DebtCard extends Card {
         const active = this.#debts.filter(d => !d.settled);
         const oweCount = active.filter(d => d.direction === 'owe').length;
         const owedCount = active.filter(d => d.direction === 'owedBy').length;
-        if (oweCount === 0 && owedCount === 0) {
+
+        if (this.#debts.length === 0) {
+            this.updateSummary('');
+        } else if (oweCount === 0 && owedCount === 0) {
             this.updateSummary('All settled');
         } else {
             this.updateSummary(`Owe ${oweCount} · Owed ${owedCount}`);
