@@ -33,7 +33,6 @@ body {
     color: var(--text);
     min-height: 100vh;
     padding: 24px 16px 48px;
-    color: var(--muted);
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     overscroll-behavior: none;
@@ -350,7 +349,6 @@ header {
     }
 
     p {
-        color: var(--muted);
         margin-top: 4px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -404,15 +402,6 @@ header {
             width: 20px;
             height: 20px;
             fill: var(--accent);
-        }
-
-        .dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            display: inline-block;
-            flex-shrink: 0;
-            background: var(--accent);
         }
 
         .summary {
