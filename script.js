@@ -1137,6 +1137,99 @@ class DebtCard extends Card {
     }
 }
 
+class ConversionsCard extends Card {
+    static #conversions = [
+        {
+            id: 'temp',
+            labelA: '°C',
+            labelB: '°F',
+            toB: c => (c * 9 / 5) + 32,
+            toA: f => (f - 32) * 5 / 9,
+            decimals: 1
+        },
+        {
+            id: 'weight',
+            labelA: 'kg',
+            labelB: 'lbs',
+            toB: kg => kg * 2.20462,
+            toA: lbs => lbs / 2.20462,
+            decimals: 2
+        },
+        {
+            id: 'volume',
+            labelA: 'Liter',
+            labelB: 'fl oz',
+            toB: l => l * 33.814,
+            toA: oz => oz / 33.814,
+            decimals: 2
+        },
+        {
+            id: 'distance',
+            labelA: 'km',
+            labelB: 'mile',
+            toB: km => km * 0.621371,
+            toA: mi => mi / 0.621371,
+            decimals: 2
+        },
+        {
+            id: 'length',
+            labelA: 'cm',
+            labelB: 'inch',
+            toB: cm => cm * 0.393701,
+            toA: inches => inches / 0.393701,
+            decimals: 2
+        }
+    ];
+
+    constructor() {
+        super('card-conversions');
+        this.listElement = document.getElementById('conversions-list');
+        this.#build();
+    }
+
+    #build() {
+        this.listElement.innerHTML = ConversionsCard.#conversions.map(conv => `
+            <div class="row-equation conversion-row" data-id="${conv.id}">
+                <div class="label-group">
+                    <label>${conv.labelA}</label>
+                    <input type="number" class="conv-a" placeholder="0" step="any">
+                </div>
+                <div class="arrow-label">
+                    <svg><use href="#icon-sync"/></svg>
+                </div>
+                <div class="label-group">
+                    <label>${conv.labelB}</label>
+                    <input type="number" class="conv-b" placeholder="0" step="any">
+                </div>
+            </div>
+        `).join('');
+
+        this.listElement.querySelectorAll('.conversion-row').forEach(row => {
+            const id = row.dataset.id;
+            const conv = ConversionsCard.#conversions.find(c => c.id === id);
+            const convA = row.querySelector('.conv-a');
+            const convB = row.querySelector('.conv-b');
+
+            convA.addEventListener('input', () => {
+                if (convA.value === '') { convB.value = ''; return; }
+                const result = conv.toB(parseFloat(convA.value));
+                convB.value = this.#format(result, conv.decimals);
+            });
+
+            convB.addEventListener('input', () => {
+                if (convB.value === '') { convA.value = ''; return; }
+                const result = conv.toA(parseFloat(convB.value));
+                convA.value = this.#format(result, conv.decimals);
+            });
+        });
+    }
+
+    #format(value, decimals) {
+        if (isNaN(value) || !isFinite(value)) return '';
+        return parseFloat(value.toFixed(decimals));
+    }
+}
+
 class App {
     #wakeLock = null;
     #installPrompt = null;
@@ -1159,6 +1252,7 @@ class App {
         new MarketTallyCard(this.rateService);
         new NotesCard(this.rateService);
         new DebtCard(this.rateService);
+        new ConversionsCard(this.rateService);
 
         // init
         this.rateService.fetchRate();
