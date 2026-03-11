@@ -649,6 +649,88 @@ header {
     }
 }
 
+/* TIME */
+
+#card-timezones {
+    .tz-form {
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 4px;
+        display: none;
+
+        &.visible {
+            display: block;
+        }
+    }
+
+    .tz-result {
+        margin-top: 10px;
+        font-size: 0.75rem;
+        color: var(--muted);
+        min-height: 1.2em;
+
+        &.error {
+            color: #e05555;
+        }
+
+        &.success {
+            color: var(--accent2);
+        }
+
+    >div {
+        margin-top: 14px;
+    }
+    }
+
+    .tz-entry {
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        align-items: center;
+        gap: 12px;
+        margin: 10px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border);
+
+        &:last-child {
+            border-bottom: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .tz-entry-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+
+            .tz-entry-label {
+                color: var(--text);
+                font-size: 0.85rem;
+            }
+
+            .tz-entry-tz {
+                color: var(--muted);
+                font-size: 0.65rem;
+                text-transform: none;
+                letter-spacing: 0;
+            }
+        }
+
+        .tz-entry-time {
+            font-size: 1.1rem;
+            color: var(--accent2);
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tz-entry-offset {
+            font-size: 0.65rem;
+            color: var(--accent);
+            text-align: right;
+        }
+    }
+
+}
+
 /* FOOT */
 
 footer {

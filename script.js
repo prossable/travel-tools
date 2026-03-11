@@ -1230,6 +1230,287 @@ class ConversionsCard extends Card {
     }
 }
 
+class TimezonesCard extends Card {
+    #zones = [];
+    #nextId = 1;
+    #interval = null;
+    #pendingZone = null; // { tz, displayName } waiting for label confirmation
+
+    constructor() {
+        super('card-timezones');
+
+        // elements
+        this.listElement = document.getElementById('tz-list');
+        this.formElement = document.getElementById('tz-form');
+        this.addBtn = document.getElementById('tz-add-btn');
+        this.searchInput = document.getElementById('tz-search');
+        this.searchBtn = document.getElementById('tz-search-btn');
+        this.resultEl = document.getElementById('tz-result');
+        this.labelRow = document.getElementById('tz-label-row');
+        this.labelInput = document.getElementById('tz-label');
+        this.confirmBtn = document.getElementById('tz-confirm-btn');
+
+        // init
+        this.#load();
+        this.#startClock();
+
+        // toggle form
+        this.addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#toggleForm();
+        });
+
+        // search
+        this.searchBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#search();
+        });
+
+        this.searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.stopPropagation(); this.#search(); }
+        });
+
+        // confirm add
+        this.confirmBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#confirmAdd();
+        });
+
+        this.labelInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.stopPropagation(); this.#confirmAdd(); }
+        });
+    }
+
+    #toggleForm() {
+        const visible = this.formElement.classList.toggle('visible');
+        if (visible) {
+            this.searchInput.focus();
+        } else {
+            this.#resetForm();
+        }
+    }
+
+    #resetForm() {
+        this.searchInput.value = '';
+        this.labelInput.value = '';
+        this.resultEl.textContent = '';
+        this.resultEl.className = 'tz-result';
+        this.labelRow.style.display = 'none';
+        this.#pendingZone = null;
+    }
+
+    async #search() {
+        const query = this.searchInput.value.trim();
+        if (!query) { this.searchInput.focus(); return; }
+
+        this.resultEl.className = 'tz-result';
+        this.resultEl.textContent = 'Searching…';
+        this.labelRow.style.display = 'none';
+        this.searchBtn.disabled = true;
+
+        const result = await this.#lookupTimezone(query);
+        this.searchBtn.disabled = false;
+
+        if (result.error) {
+            this.resultEl.className = 'tz-result error';
+            this.resultEl.textContent = result.error === 'timeout' ? 'Request timed out — internet required for timezone lookup' :
+                result.error === 'notfound' ? `No results found for "${query}"` :
+                    'Could not connect — internet required for timezone lookup';
+            return;
+        }
+
+        this.#pendingZone = result;
+        this.resultEl.className = 'tz-result success';
+        this.resultEl.textContent = `Found: ${result.tz} · ${result.displayName}`;
+        this.labelRow.style.display = '';
+        this.labelInput.value = result.displayName.split(',')[0].trim();
+        this.labelInput.focus();
+        this.labelInput.select();
+    }
+
+    async #lookupTimezone(city) {
+        try {
+            const signal = AbortSignal.timeout(5000);
+
+            const geoRes = await fetch(
+                `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`,
+                { signal }
+            );
+            const geoData = await geoRes.json();
+            if (!geoData.length) return { error: 'notfound' };
+
+            const { lat, lon, display_name } = geoData[0];
+
+            const tzRes = await fetch(
+                `https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lon}`,
+                { signal }
+            );
+            const tzData = await tzRes.json();
+
+            return {
+                tz: tzData.timeZone,
+                displayName: display_name.split(',').slice(0, 2).join(',').trim()
+            };
+        } catch (err) {
+            return { error: err.name === 'AbortError' ? 'timeout' : 'offline' };
+        }
+    }
+
+    #confirmAdd() {
+        if (!this.#pendingZone) return;
+        const label = this.labelInput.value.trim() || this.#pendingZone.displayName;
+
+        const zone = {
+            id: this.#nextId++,
+            label,
+            tz: this.#pendingZone.tz
+        };
+
+        this.#zones.push(zone);
+        this.#save();
+
+        // append single element
+        const el = document.createElement('div');
+        el.innerHTML = this.#zoneHTML(zone);
+        const zoneEl = el.firstElementChild;
+        this.listElement.appendChild(zoneEl);
+        this.#wireListeners(zoneEl, zone.id);
+        this.#updateTime(zoneEl, zone.tz);
+
+        this.#resetForm();
+        this.formElement.classList.remove('visible');
+        this.#updateSummary();
+    }
+
+    #removeZone(id) {
+        this.#zones = this.#zones.filter(z => z.id !== id);
+        document.getElementById(`tz-${id}`).remove();
+        this.#save();
+        this.#updateSummary();
+    }
+
+    #startClock() {
+        this.#updateAllTimes();
+        this.#interval = setInterval(() => this.#updateAllTimes(), 1000);
+    }
+
+    #updateAllTimes() {
+        this.listElement.querySelectorAll('.tz-entry').forEach(row => {
+            const id = parseInt(row.dataset.id);
+            const zone = row.dataset.local === 'true'
+                ? { tz: Intl.DateTimeFormat().resolvedOptions().timeZone }
+                : this.#zones.find(z => z.id === id);
+            if (zone) this.#updateTime(row, zone.tz);
+        });
+    }
+
+    #updateTime(row, tz) {
+        const now = new Date();
+
+        const timeStr = now.toLocaleTimeString('en-US', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+        });
+
+        const offsetStr = now.toLocaleDateString('en-US', {
+            timeZone: tz,
+            timeZoneName: 'short'
+        }).split(', ')[1] || '';
+
+        const dateStr = now.toLocaleDateString('en-US', {
+            timeZone: tz,
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric'
+        });
+
+        const timeEl = row.querySelector('.tz-entry-time');
+        const offsetEl = row.querySelector('.tz-entry-offset');
+
+        if (timeEl) timeEl.textContent = timeStr;
+        if (offsetEl) offsetEl.textContent = `${offsetStr} · ${dateStr}`;
+    }
+
+    #save() {
+        localStorage.setItem('timezones', JSON.stringify(this.#zones));
+        localStorage.setItem('timezonesNextId', this.#nextId);
+    }
+
+    #load() {
+        const stored = localStorage.getItem('timezones');
+        if (stored) {
+            this.#zones = JSON.parse(stored);
+            this.#nextId = parseInt(localStorage.getItem('timezonesNextId')) ||
+                this.#zones.reduce((max, z) => Math.max(max, z.id), 0) + 1;
+        }
+        this.#renderAll();
+    }
+
+    #localZoneHTML() {
+        const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        return `
+            <div class="tz-entry local" data-id="0" data-local="true">
+                <div class="tz-entry-info">
+                    <span class="tz-entry-label">Local</span>
+                    <span class="tz-entry-tz">${localTz}</span>
+                </div>
+                <div>
+                    <div class="tz-entry-time">—</div>
+                    <div class="tz-entry-offset">—</div>
+                </div>
+            </div>`;
+    }
+
+    #zoneHTML(zone) {
+        return `
+            <div class="tz-entry" id="tz-${zone.id}" data-id="${zone.id}">
+                <div class="tz-entry-info">
+                    <span class="tz-entry-label">${zone.label}</span>
+                    <span class="tz-entry-tz">${zone.tz}</span>
+                </div>
+                <div>
+                    <div class="tz-entry-time">—</div>
+                    <div class="tz-entry-offset">—</div>
+                </div>
+                <button class="red tz-delete" title="Delete">
+                    <svg><use href="#icon-delete"/></svg>
+                </button>
+            </div>`;
+    }
+
+    #wireListeners(row, id) {
+        const deleteBtn = row.querySelector('.tz-delete');
+        if (!deleteBtn) return; // local entry has no delete
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const zone = this.#zones.find(z => z.id === id);
+            if (confirm(`Remove ${zone?.label || 'this timezone'}?`)) {
+                this.#removeZone(id);
+            }
+        });
+    }
+
+    #renderAll() {
+        this.listElement.innerHTML = this.#localZoneHTML() +
+            this.#zones.map(z => this.#zoneHTML(z)).join('');
+
+        this.listElement.querySelectorAll('.tz-entry:not(.local)').forEach(row => {
+            this.#wireListeners(row, parseInt(row.dataset.id));
+        });
+
+        this.#updateAllTimes();
+        this.#updateSummary();
+    }
+
+    #updateSummary() {
+        const count = this.#zones.length;
+        this.updateSummary(count > 0 ? `+${count}` : '');
+    }
+}
+
 class App {
     #wakeLock = null;
     #installPrompt = null;
@@ -1253,6 +1534,7 @@ class App {
         new NotesCard(this.rateService);
         new DebtCard(this.rateService);
         new ConversionsCard(this.rateService);
+        new TimezonesCard(this.rateService);
 
         // init
         this.rateService.fetchRate();
