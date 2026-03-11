@@ -78,6 +78,9 @@ class Config {
         }
     ];
 
+    static referenceAmounts = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000];
+
+
     static currencies = {
         USD: {
             code: 'USD',
@@ -356,8 +359,6 @@ class RateCard extends Card {
 }
 
 class ReferenceCard extends Card {
-    static referenceAmounts = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000];
-
     constructor(rateService) {
         super('card-reference');
         this.rateService = rateService;
@@ -373,7 +374,7 @@ class ReferenceCard extends Card {
         const localCurrency = this.rateService.getLocalCurrency();
         const foreignCurrency = this.rateService.getForeignCurrency();
         const table = document.getElementById('reference-table');
-        const rows = ReferenceCard.referenceAmounts.map(amount => `<div class="ref-row"><span>${this.rateService.formatForeignSymbol(amount)}</span><span class="ref-local highlight" data-foreign="${amount}">—</span></div>`).join('');
+        const rows = Config.referenceAmounts.map(amount => `<div class="ref-row"><span>${this.rateService.formatForeignSymbol(amount)}</span><span class="ref-local highlight" data-foreign="${amount}">—</span></div>`).join('');
         table.innerHTML = `<div class="ref-row ref-header"><span>${foreignCurrency.code}</span><span class="highlight">${localCurrency.code}</span></div>${rows}`;
     }
 
