@@ -1,4 +1,5 @@
-const CACHE = 'travel-tools-1.20';
+const VERSION = '1.20';
+const CACHE = `travel-tools-${VERSION}`;
 
 const ASSETS = [
     '/travel-tools/',
@@ -16,7 +17,6 @@ const ASSETS = [
     '/travel-tools/roboto-mono-v31-latin-regular.woff2'
 ];
 
-// install — cache all assets
 self.addEventListener('install', e => {
     e.waitUntil(
         caches.open(CACHE)
@@ -25,7 +25,6 @@ self.addEventListener('install', e => {
     );
 });
 
-// activate — delete old caches
 self.addEventListener('activate', e => {
     e.waitUntil(
         caches.keys()
@@ -34,10 +33,13 @@ self.addEventListener('activate', e => {
                     .map(key => caches.delete(key))
             ))
             .then(() => self.clients.claim())
+            .then(() => self.clients.matchAll())
+            .then(clients => clients.forEach(client =>
+                client.postMessage({ type: 'SW_UPDATED', version: VERSION })
+            ))
     );
 });
 
-// fetch — network first, fall back to cache
 self.addEventListener('fetch', e => {
     e.respondWith(
         fetch(e.request)

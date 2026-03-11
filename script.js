@@ -1386,7 +1386,7 @@ class TimezonesCard extends Card {
         } else {
             this.#pendingZone = result;
             this.resultEl.className = 'tz-result';
-            this.resultEl.textContent = `Found: ${result.displayName} · ${result.tz}`; 
+            this.resultEl.textContent = `Found: ${result.displayName} · ${result.tz}`;
             this.labelRow.style.display = '';
             this.labelInput.value = result.displayName.split(',')[0].trim();
             this.labelInput.focus();
@@ -1616,10 +1616,11 @@ class App {
     #registerServiceWorker() {
         if (!('serviceWorker' in navigator)) return;
         navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => {
-                // when a new service worker takes control, reload the page
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    window.location.reload();
+            .then(() => {
+                navigator.serviceWorker.addEventListener('message', (e) => {
+                    if (e.data?.type === 'SW_UPDATED') {
+                        document.getElementById('footer-version').textContent = `v${e.data.version}`;
+                    }
                 });
             })
             .catch(err => console.warn('SW registration failed:', err));
