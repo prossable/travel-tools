@@ -89,6 +89,39 @@ textarea {
     }
 }
 
+select {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 10px;
+    outline: none;
+    scrollbar-color: var(--accent) var(--input-bg);
+    scrollbar-width: thin;
+
+    &:focus {
+        border-color: var(--accent);
+    }
+
+    option {
+        background: var(--input-bg);
+        color: var(--text);
+    }
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--input-bg);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--accent);
+        border-radius: 3px;
+    }
+}
+
 input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
@@ -661,25 +694,21 @@ header {
         &.visible {
             display: block;
         }
+
+        >div {
+            margin-top: 14px;
+        }
     }
 
     .tz-result {
         margin-top: 10px;
         font-size: 0.75rem;
-        color: var(--muted);
+        color: var(--accent2);
         min-height: 1.2em;
 
         &.error {
             color: #e05555;
         }
-
-        &.success {
-            color: var(--accent2);
-        }
-
-    >div {
-        margin-top: 14px;
-    }
     }
 
     .tz-entry {

@@ -1,4 +1,83 @@
 class Config {
+    static timeZones = [
+        { label: 'Honolulu', tz: 'Pacific/Honolulu' },
+        { label: 'Anchorage', tz: 'America/Anchorage' },
+        { label: 'Los Angeles', tz: 'America/Los_Angeles' },
+        { label: 'Phoenix', tz: 'America/Phoenix' },
+        { label: 'Denver', tz: 'America/Denver' },
+        { label: 'Chicago', tz: 'America/Chicago' },
+        { label: 'New York', tz: 'America/New_York' },
+        { label: 'Toronto', tz: 'America/Toronto' },
+        { label: 'São Paulo', tz: 'America/Sao_Paulo' },
+        { label: 'London', tz: 'Europe/London' },
+        { label: 'Lisbon', tz: 'Europe/Lisbon' },
+        { label: 'Paris', tz: 'Europe/Paris' },
+        { label: 'Berlin', tz: 'Europe/Berlin' },
+        { label: 'Rome', tz: 'Europe/Rome' },
+        { label: 'Athens', tz: 'Europe/Athens' },
+        { label: 'Moscow', tz: 'Europe/Moscow' },
+        { label: 'Dubai', tz: 'Asia/Dubai' },
+        { label: 'Bangkok', tz: 'Asia/Bangkok' },
+        { label: 'Singapore', tz: 'Asia/Singapore' },
+        { label: 'Hong Kong', tz: 'Asia/Hong_Kong' },
+        { label: 'Shanghai', tz: 'Asia/Shanghai' },
+        { label: 'Tokyo', tz: 'Asia/Tokyo' },
+        { label: 'Seoul', tz: 'Asia/Seoul' },
+        { label: 'Sydney', tz: 'Australia/Sydney' },
+        { label: 'Melbourne', tz: 'Australia/Melbourne' },
+        { label: 'Auckland', tz: 'Pacific/Auckland' },
+        { label: 'Mexico City', tz: 'America/Mexico_City' },
+        { label: 'Cancún', tz: 'America/Cancun' },
+        { label: 'Bogotá', tz: 'America/Bogota' },
+        { label: 'Lima', tz: 'America/Lima' },
+        { label: 'Buenos Aires', tz: 'America/Argentina/Buenos_Aires' },
+        { label: 'Casablanca', tz: 'Africa/Casablanca' },
+        { label: 'Cairo', tz: 'Africa/Cairo' },
+    ];
+
+    static conversions = [
+        {
+            id: 'temp',
+            labelA: '°C',
+            labelB: '°F',
+            toB: c => (c * 9 / 5) + 32,
+            toA: f => (f - 32) * 5 / 9,
+            decimals: 1
+        },
+        {
+            id: 'weight',
+            labelA: 'kg',
+            labelB: 'lbs',
+            toB: kg => kg * 2.20462,
+            toA: lbs => lbs / 2.20462,
+            decimals: 2
+        },
+        {
+            id: 'volume',
+            labelA: 'Liter',
+            labelB: 'fl oz',
+            toB: l => l * 33.814,
+            toA: oz => oz / 33.814,
+            decimals: 2
+        },
+        {
+            id: 'distance',
+            labelA: 'km',
+            labelB: 'mile',
+            toB: km => km * 0.621371,
+            toA: mi => mi / 0.621371,
+            decimals: 2
+        },
+        {
+            id: 'length',
+            labelA: 'cm',
+            labelB: 'inch',
+            toB: cm => cm * 0.393701,
+            toA: inches => inches / 0.393701,
+            decimals: 2
+        }
+    ];
+
     static currencies = {
         USD: {
             code: 'USD',
@@ -1138,49 +1217,6 @@ class DebtCard extends Card {
 }
 
 class ConversionsCard extends Card {
-    static #conversions = [
-        {
-            id: 'temp',
-            labelA: '°C',
-            labelB: '°F',
-            toB: c => (c * 9 / 5) + 32,
-            toA: f => (f - 32) * 5 / 9,
-            decimals: 1
-        },
-        {
-            id: 'weight',
-            labelA: 'kg',
-            labelB: 'lbs',
-            toB: kg => kg * 2.20462,
-            toA: lbs => lbs / 2.20462,
-            decimals: 2
-        },
-        {
-            id: 'volume',
-            labelA: 'Liter',
-            labelB: 'fl oz',
-            toB: l => l * 33.814,
-            toA: oz => oz / 33.814,
-            decimals: 2
-        },
-        {
-            id: 'distance',
-            labelA: 'km',
-            labelB: 'mile',
-            toB: km => km * 0.621371,
-            toA: mi => mi / 0.621371,
-            decimals: 2
-        },
-        {
-            id: 'length',
-            labelA: 'cm',
-            labelB: 'inch',
-            toB: cm => cm * 0.393701,
-            toA: inches => inches / 0.393701,
-            decimals: 2
-        }
-    ];
-
     constructor() {
         super('card-conversions');
         this.listElement = document.getElementById('conversions-list');
@@ -1188,7 +1224,7 @@ class ConversionsCard extends Card {
     }
 
     #build() {
-        this.listElement.innerHTML = ConversionsCard.#conversions.map(conv => `
+        this.listElement.innerHTML = Config.conversions.map(conv => `
             <div class="row-equation conversion-row" data-id="${conv.id}">
                 <div class="label-group">
                     <label>${conv.labelA}</label>
@@ -1206,7 +1242,7 @@ class ConversionsCard extends Card {
 
         this.listElement.querySelectorAll('.conversion-row').forEach(row => {
             const id = row.dataset.id;
-            const conv = ConversionsCard.#conversions.find(c => c.id === id);
+            const conv = Config.conversions.find(c => c.id === id);
             const convA = row.querySelector('.conv-a');
             const convB = row.querySelector('.conv-b');
 
@@ -1249,6 +1285,8 @@ class TimezonesCard extends Card {
         this.labelRow = document.getElementById('tz-label-row');
         this.labelInput = document.getElementById('tz-label');
         this.confirmBtn = document.getElementById('tz-confirm-btn');
+        this.curatedEl = document.getElementById('tz-curated');
+        this.curatedSelect = document.getElementById('tz-curated-select');
 
         // init
         this.#load();
@@ -1268,6 +1306,16 @@ class TimezonesCard extends Card {
 
         this.searchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') { e.stopPropagation(); this.#search(); }
+        });
+        this.curatedSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const selected = Config.timeZones.find(z => z.tz === e.target.value);
+            if (!selected) return;
+            this.#pendingZone = { tz: selected.tz, displayName: selected.label };
+            this.labelRow.style.display = '';
+            this.labelInput.value = selected.label;
+            this.labelInput.focus();
+            this.labelInput.select();
         });
 
         // confirm add
@@ -1293,10 +1341,20 @@ class TimezonesCard extends Card {
     #resetForm() {
         this.searchInput.value = '';
         this.labelInput.value = '';
-        this.resultEl.textContent = '';
+        this.resultEl.textContent = 'Enter a city, region, or landmark';
         this.resultEl.className = 'tz-result';
         this.labelRow.style.display = 'none';
+        this.curatedEl.style.display = 'none';
+        this.curatedSelect.innerHTML = '<option value="">— select —</option>';
         this.#pendingZone = null;
+    }
+
+    #searchCurated(query) {
+        const q = query.toLowerCase();
+        return Config.timeZones.filter(z =>
+            z.label.toLowerCase().includes(q) ||
+            z.tz.toLowerCase().includes(q)
+        );
     }
 
     async #search() {
@@ -1306,6 +1364,7 @@ class TimezonesCard extends Card {
         this.resultEl.className = 'tz-result';
         this.resultEl.textContent = 'Searching…';
         this.labelRow.style.display = 'none';
+        this.curatedEl.style.display = 'none';
         this.searchBtn.disabled = true;
 
         const result = await this.#lookupTimezone(query);
@@ -1313,19 +1372,26 @@ class TimezonesCard extends Card {
 
         if (result.error) {
             this.resultEl.className = 'tz-result error';
-            this.resultEl.textContent = result.error === 'timeout' ? 'Request timed out — internet required for timezone lookup' :
-                result.error === 'notfound' ? `No results found for "${query}"` :
-                    'Could not connect — internet required for timezone lookup';
-            return;
-        }
+            this.resultEl.textContent = result.error === 'timeout' ? 'Request timed out · select from list below' :
+                result.error === 'notfound' ? `No results found · select from list below` :
+                    'Web call failed · select from list below';
 
-        this.#pendingZone = result;
-        this.resultEl.className = 'tz-result success';
-        this.resultEl.textContent = `Found: ${result.tz} · ${result.displayName}`;
-        this.labelRow.style.display = '';
-        this.labelInput.value = result.displayName.split(',')[0].trim();
-        this.labelInput.focus();
-        this.labelInput.select();
+            const matches = this.#searchCurated(query);
+            const list = matches.length ? matches : Config.timeZones;
+
+            this.curatedSelect.innerHTML = '<option value="">— select —</option>' +
+                list.map(z => `<option value="${z.tz}">${z.label} · ${z.tz}</option>`).join('');
+
+            this.curatedEl.style.display = '';
+        } else {
+            this.#pendingZone = result;
+            this.resultEl.className = 'tz-result';
+            this.resultEl.textContent = `Found: ${result.displayName} · ${result.tz}`; 
+            this.labelRow.style.display = '';
+            this.labelInput.value = result.displayName.split(',')[0].trim();
+            this.labelInput.focus();
+            this.labelInput.select();
+        }
     }
 
     async #lookupTimezone(city) {

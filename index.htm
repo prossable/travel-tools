@@ -297,7 +297,7 @@
                     <div class="row-equation">
                         <div class="label-group">
                             <label>City or Region</label>
-                            <input type="text" id="tz-search" placeholder="Austin, Tokyo, London…">
+                            <input type="text" id="tz-search" placeholder="Austin TX, Tokyo, London…">
                         </div>
                         <div class="arrow-label"></div>
                         <div class="label-group">
@@ -309,7 +309,16 @@
                     </div>
 
                     <!-- Result confirmation -->
-                    <div id="tz-result" class="tz-result"></div>
+                    <div id="tz-result" class="tz-result">Enter a city, region, or landmark</div>
+
+                    <div id="tz-curated" class="tz-curated" style="display:none">
+                        <div class="label-group">
+                            <label>Choose a Time Zone</label>
+                            <select id="tz-curated-select">
+                                <option value="">— select —</option>
+                            </select>
+                        </div>
+                    </div>
 
                     <!-- Custom label -->
                     <div id="tz-label-row" class="row-equation" style="display:none">
