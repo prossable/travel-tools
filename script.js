@@ -37,6 +37,37 @@ class Config {
     }
 }
 
+class EventService {
+    static #ADD_TO_BASKET = 'addToBasket';
+    static #ADD_TO_DEBT = 'addToDebt';
+
+    constructor() { throw new Error('EventService is static'); }
+
+    static #dispatch(name, detail = {}) {
+        document.dispatchEvent(new CustomEvent(name, { detail }));
+    }
+
+    static #listen(name, handler) {
+        document.addEventListener(name, handler);
+    }
+
+    static addToBasket(amount, label = '') {
+        EventService.#dispatch(EventService.#ADD_TO_BASKET, { amount, label });
+    }
+
+    static onAddToBasket(handler) {
+        EventService.#listen(EventService.#ADD_TO_BASKET, handler);
+    }
+
+    static addToDebt(amount, person = '', note = '') {
+        EventService.#dispatch(EventService.#ADD_TO_DEBT, { amount, person, note });
+    }
+
+    static onAddToDebt(handler) {
+        EventService.#listen(EventService.#ADD_TO_DEBT, handler);
+    }
+}
+
 class RateService extends EventTarget {
     static API_TIMEOUT = 5000;
     #localCurrency = Config.currencies['USD'];
