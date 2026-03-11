@@ -284,6 +284,12 @@ button {
     gap: 12px;
 }
 
+.row-5col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    gap: 12px;
+}
+
 .row-equation {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
