@@ -223,6 +223,7 @@ button {
     border: 1px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
+    flex: auto;
 
     >button {
         color: var(--muted);
@@ -269,9 +270,11 @@ button {
 
     >button {
         width: 100%;
-        height: auto;
+        height: stretch;
         border-radius: 10px;
+        border: 1px solid var(--border);
         background: var(--border);
+        flex: 1;
 
         &.active {
             border-color: var(--accent);
@@ -289,9 +292,13 @@ button {
         }
     }
 
-    >input.active {
-        background: var(--dark);
-        border-color: var(--accent);
+    >input {
+        flex: 1;
+
+        &.active {
+            background: var(--dark);
+            border-color: var(--accent);
+        }
     }
 }
 
@@ -322,18 +329,6 @@ button {
     gap: 12px;
 }
 
-.row-4col {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 12px;
-}
-
-.row-5col {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    gap: 12px;
-}
-
 .row-equation {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -351,11 +346,16 @@ button {
     flex-direction: column;
     gap: 6px;
     align-items: start;
-}
+    width: stretch;
 
-.label-group label {
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    label {
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+    >*:not(button, input) {
+        width: stretch;
+    }
 }
 
 /* GENERIC */
