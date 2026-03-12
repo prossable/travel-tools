@@ -212,15 +212,15 @@
                     </select>
                 </div>
                 <div class="row-full label-group">
-                    <label id="rate-label">MXN per $1 USD</label>
-                    <input type="number" id="rate" step="0.01" min="1">
+                    <label id="rate-label">X</label>
+                    <input id="rate" type="number" step="0.01" min="1">
                 </div>
                 <div class="row-flex">
                     <div id="rate-hint">Fetching live rate…</div>
                 </div>
                 <div class="row-flex">
                     <div class="row-flex">
-                        <input type="checkbox" id="rate-auto-fetch" checked>
+                        <input id="rate-auto-fetch" type="checkbox" checked>
                         <label> Auto-fetch daily rate </label>
                     </div>
                 </div>
@@ -242,13 +242,13 @@
         </div>
         <div class="body">
             <div class="body-inner">
-                <div class="tab row-flex" id="reference-multiplier">
+                <div id="reference-multiplier" class="tab row-flex">
                     <button class="ref-mult-btn" data-mult="1">1×</button>
                     <button class="ref-mult-btn" data-mult="10">10×</button>
                     <button class="ref-mult-btn" data-mult="100">100×</button>
                     <button class="ref-mult-btn" data-mult="1000">1000×</button>
                 </div>
-                <div class="ref-table" id="reference-table"></div>
+                <div id="reference-table" class="ref-table"></div>
             </div>
         </div>
     </div>
@@ -266,7 +266,7 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner" id="conversions-list"></div>
+            <div id="conversions-list" class="body-inner"></div>
         </div>
     </div>
 
@@ -281,7 +281,7 @@
             <button id="notes-add" title="Add note"><svg>
                     <use href="#icon-add" />
                 </svg></button>
-            <button class="red" id="notes-clear" title="Clear all"><svg>
+            <button id="notes-clear" class="red" title="Clear all"><svg>
                     <use href="#icon-delete" />
                 </svg></button>
             <button class="collapse-btn" title="Collapse"><svg>
@@ -318,7 +318,7 @@
                     <div class="row-equation">
                         <div class="label-group">
                             <label>City or Region</label>
-                            <input type="text" id="tz-search" placeholder="Austin TX, Tokyo, London…">
+                            <input id="tz-search" type="text" placeholder="Austin TX, Tokyo, London…">
                         </div>
                         <div class="arrow-label"></div>
                         <div class="label-group">
@@ -345,7 +345,7 @@
                     <div id="tz-label-row" class="row-equation" style="display:none">
                         <div class="label-group">
                             <label>Label</label>
-                            <input type="text" id="tz-label" placeholder="Home, Maria, Tokyo Office…">
+                            <input id="tz-label" type="text" placeholder="Home, Maria, Tokyo Office…">
                         </div>
                         <div class="arrow-label"></div>
                         <div class="label-group">
@@ -380,26 +380,26 @@
             <div class="body-inner">
                 <div class="row-equation">
                     <div class="label-group">
-                        <label id="from-label">Pesos (MXN)</label>
-                        <input type="number" id="cost-from-val" placeholder="0" min="0" step="any">
+                        <label id="cost-foreign-label">X</label>
+                        <input id="cost-foreign-val" type="number" placeholder="0" min="0" step="any">
                     </div>
                     <div class="arrow-label"><svg>
                             <use href="#icon-arrow-forward" />
                         </svg></div>
                     <div class="label-group">
-                        <label id="to-label">Dollars (USD)</label>
-                        <input class="output" id="cost-to-val" placeholder="—" readonly>
+                        <label id="cost-local-label">X</label>
+                        <input id="cost-local-val" placeholder="0">
                     </div>
                 </div>
                 <div class="row-equation">
                     <div class="label-group">
                         <label>Quantity</label>
                         <div class="tab">
-                            <button class="narrow" id="cost-qty-minus"><svg>
+                            <button id="cost-qty-minus" class="narrow"><svg>
                                     <use href="#icon-minus" />
                                 </svg></button>
-                            <input type="number" class="inner" id="cost-qty" value="1" min="1">
-                            <button class="narrow" id="cost-qty-plus"><svg>
+                            <input id="cost-qty" type="number" class="inner" value="1" min="1">
+                            <button id="cost-qty-plus" class="narrow"><svg>
                                     <use href="#icon-add" />
                                 </svg></button>
                         </div>
@@ -408,8 +408,8 @@
                             <use href="#icon-close" />
                         </svg></div>
                     <div class="label-group">
-                        <label>Total (USD)</label>
-                        <input class="output" id="cost-total" placeholder="—" readonly>
+                        <label id="cost-total-label">X</label>
+                        <input id="cost-total-val" class="output" placeholder="—" readonly>
                     </div>
                 </div>
             </div>
@@ -432,28 +432,28 @@
             <div class="body-inner">
                 <div class="row-equation">
                     <div class="label-group">
-                        <label>Pesos / kg</label>
-                        <input type="number" id="market-rate" placeholder="0" min="0" step="any">
+                        <label id="market-rate-label">Pesos / kg</label>
+                        <input id="market-rate-val" type="number" placeholder="0" min="0" step="any">
                     </div>
                     <div class="arrow-label"><svg>
                             <use href="#icon-close" />
                         </svg></div>
                     <div class="label-group">
-                        <label>Kilograms</label>
-                        <input type="number" id="market-kg" placeholder="0" min="0" step="any">
+                        <label id="market-weight-label">Kilograms</label>
+                        <input id="market-weight-val" type="number" placeholder="0" min="0" step="any">
                     </div>
                 </div>
                 <div class="row-equation">
                     <div class="label-group">
-                        <label>Total (MXN)</label>
-                        <input class="output" id="market-total1" placeholder="—" readonly>
+                        <label id="market-foreign-label">Total (MXN)</label>
+                        <input id="market-foreign-val" class="output" placeholder="—" readonly>
                     </div>
                     <div class="arrow-label"><svg>
                             <use href="#icon-arrow-forward" />
                         </svg></div>
                     <div class="label-group">
-                        <label>Total (USD)</label>
-                        <input class="output" id="market-total2" placeholder="—" readonly>
+                        <label id="market-local-label">Total (USD)</label>
+                        <input id="market-local-val" class="output" placeholder="—" readonly>
                     </div>
                 </div>
             </div>

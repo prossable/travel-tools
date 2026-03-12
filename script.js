@@ -84,76 +84,20 @@ class Config {
     static referenceAmounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 50, 75, 100];
 
     static currencies = {
-        USD: {
-            code: 'USD',
-            name: 'US Dollar',
-            symbol: '$',
-            apiTarget: 'USD',
-            defaultRate: 1,
-            flag: '🇺🇸',
-            decimals: 2,
-            locale: 'en-US', referenceMultiplier: 1
-        },
-        MXN: {
-            code: 'MXN',
-            name: 'Mexican Peso',
-            symbol: '$',
-            apiTarget: 'MXN',
-            defaultRate: 17.57,
-            flag: '🇲🇽',
-            decimals: 2,
-            locale: 'es-MX', referenceMultiplier: 10
-        },
-        JPY: {
-            code: 'JPY',
-            name: 'Japanese Yen',
-            symbol: '¥',
-            apiTarget: 'JPY',
-            defaultRate: 149.50,
-            flag: '🇯🇵',
-            decimals: 0,
-            locale: 'ja-JP', referenceMultiplier: 100
-        },
-        CNY: {
-            code: 'CNY',
-            name: 'Chinese Yuan',
-            symbol: '¥',
-            apiTarget: 'CNY',
-            defaultRate: 7.24,
-            flag: '🇨🇳',
-            decimals: 2,
-            locale: 'zh-CN', referenceMultiplier: 10
-        },
-        CAD: {
-            code: 'CAD',
-            name: 'Canadian Dollar',
-            symbol: '$',
-            apiTarget: 'CAD',
-            defaultRate: 1.36,
-            flag: '🇨🇦',
-            decimals: 2,
-            locale: 'en-CA', referenceMultiplier: 1
-        },
-        EUR: {
-            code: 'EUR',
-            name: 'Euro',
-            symbol: '€',
-            apiTarget: 'EUR',
-            defaultRate: 0.92,
-            flag: '🇪🇺',
-            decimals: 2,
-            locale: 'de-DE', referenceMultiplier: 1
-        },
-        GBP: {
-            code: 'GBP',
-            name: 'British Pound',
-            symbol: '£',
-            apiTarget: 'GBP',
-            defaultRate: 0.79,
-            flag: '🇬🇧',
-            decimals: 2,
-            locale: 'en-GB', referenceMultiplier: 1
-        }
+        AUD: { code: 'AUD', locale: 'en-AU', symbol: '$', name: 'Dollar', region: 'Australia', default: 1.53, decimals: 2, multiplier: 1 },
+        BRL: { code: 'BRL', locale: 'pt-BR', symbol: 'R$', name: 'Real', region: 'Brazil', default: 4.97, decimals: 2, multiplier: 10 },
+        CAD: { code: 'CAD', locale: 'en-CA', symbol: '$', name: 'Dollar', region: 'Canada', default: 1.36, decimals: 2, multiplier: 1 },
+        CNY: { code: 'CNY', locale: 'zh-CN', symbol: '¥', name: 'Yuan', region: 'China', default: 7.24, decimals: 2, multiplier: 10 },
+        EUR: { code: 'EUR', locale: 'de-DE', symbol: '€', name: 'Euro', region: 'European Union', default: 0.92, decimals: 2, multiplier: 1 },
+        GBP: { code: 'GBP', locale: 'en-GB', symbol: '£', name: 'Pound', region: 'United Kingdom', default: 0.79, decimals: 2, multiplier: 1 },
+        HKD: { code: 'HKD', locale: 'zh-HK', symbol: '$', name: 'Dollar', region: 'Hong Kong', default: 7.82, decimals: 2, multiplier: 10 },
+        INR: { code: 'INR', locale: 'en-IN', symbol: '₹', name: 'Rupee', region: 'India', default: 83.12, decimals: 2, multiplier: 10 },
+        JPY: { code: 'JPY', locale: 'ja-JP', symbol: '¥', name: 'Yen', region: 'Japan', default: 149.50, decimals: 0, multiplier: 100 },
+        MXN: { code: 'MXN', locale: 'es-MX', symbol: '$', name: 'Peso', region: 'Mexico', default: 17.57, decimals: 2, multiplier: 1 },
+        PHP: { code: 'PHP', locale: 'en-PH', symbol: '₱', name: 'Peso', region: 'Philippines', default: 56.50, decimals: 2, multiplier: 10 },
+        SGD: { code: 'SGD', locale: 'en-SG', symbol: '$', name: 'Dollar', region: 'Singapore', default: 1.34, decimals: 2, multiplier: 1 },
+        THB: { code: 'THB', locale: 'th-TH', symbol: '฿', name: 'Baht', region: 'Thailand', default: 35.10, decimals: 2, multiplier: 10 },
+        USD: { code: 'USD', locale: 'en-US', symbol: '$', name: 'Dollar', region: 'United States', default: 1, decimals: 2, multiplier: 1 },
     };
 
     static getCurrency(code) {
@@ -179,7 +123,7 @@ class RateService extends EventTarget {
     }
 
     getRate() {
-        return this.#rate ?? this.#foreignCurrency.defaultRate;
+        return this.#rate ?? this.#foreignCurrency.rate;
     }
 
     setRate(value) {
@@ -222,13 +166,13 @@ class RateService extends EventTarget {
 
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), RateService.API_TIMEOUT);
-        const url = `https://api.frankfurter.app/latest?from=${this.#localCurrency.apiTarget}&to=${this.#foreignCurrency.apiTarget}`;
+        const url = `https://api.frankfurter.app/latest?from=${this.#localCurrency.code}&to=${this.#foreignCurrency.code}`;
 
         fetch(url, { signal: controller.signal })
             .then(r => r.json())
             .then(data => {
                 clearTimeout(timeout);
-                const val = data.rates[this.#foreignCurrency.apiTarget];
+                const val = data.rates[this.#foreignCurrency.code];
                 localStorage.setItem('cachedRate', JSON.stringify({
                     rate: val,
                     date: today,
@@ -376,7 +320,7 @@ class RateCard extends Card {
             .forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c.code;
-                opt.textContent = `${c.flag} ${c.name} (${c.code})`;
+                opt.textContent = `${c.code} > ${c.region} ${c.name}`;
                 this.currencySelect.appendChild(opt);
             });
 
@@ -430,7 +374,7 @@ class RateCard extends Card {
 
     #updateLabel(code) {
         const currency = Config.getCurrency(code);
-        this.rateLabel.textContent = `${currency.name} per $1 USD`;
+        this.rateLabel.textContent = `${currency.symbol} ${currency.code} per $1 USD`;
     }
 }
 
@@ -445,7 +389,7 @@ class ReferenceCard extends Card {
         this.multBtns = document.querySelectorAll('.ref-mult-btn');
 
         // set default multiplier from currency
-        this.#multiplier = this.rateService.getForeignCurrency().referenceMultiplier ?? 1;
+        this.#multiplier = this.rateService.getForeignCurrency().multiplier ?? 1;
         this.#syncMultiplierButtons();
 
         // build initial table
@@ -454,7 +398,7 @@ class ReferenceCard extends Card {
         // listeners
         this.rateService.addEventListener('rateChanged', () => this.#updateValues());
         this.rateService.addEventListener('currencyChanged', () => {
-            this.#multiplier = this.rateService.getForeignCurrency().referenceMultiplier ?? 1;
+            this.#multiplier = this.rateService.getForeignCurrency().multiplier ?? 1;
             this.#syncMultiplierButtons();
             this.#updateValues();
         });
@@ -501,8 +445,8 @@ class ReferenceCard extends Card {
         const foreign = this.rateService.getForeignCurrency();
 
         // update headers
-        this.headerForeign.textContent = `${foreign.flag} ${foreign.code}`;
-        this.headerLocal.textContent = `${local.flag} ${local.code}`;
+        this.headerForeign.textContent = foreign.code;
+        this.headerLocal.textContent = local.code;
 
         // update rows
         this.tableEl.querySelectorAll('.ref-row[data-amount]').forEach(row => {
@@ -510,110 +454,176 @@ class ReferenceCard extends Card {
             row.querySelector('.ref-foreign').textContent = this.rateService.formatForeignSymbol(scaled);
             row.querySelector('.ref-local').textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(scaled));
         });
-
-        this.updateSummary(`${foreign.flag} ${foreign.code}`);
     }
 }
 
 class CostCard extends Card {
-    lastCost = null;
+    #lastForeign = null;
+    #lastEdited = 'foreign'; // track which side was last edited for rate updates
 
     constructor(rateService) {
         super('card-cost');
         this.rateService = rateService;
 
-        // binding
-        this.calculate = this.calculate.bind(this);
-        this.update = this.update.bind(this);
-        this.getQuantity = this.getQuantity.bind(this);
-
         // elements
-        this.costInput = document.getElementById('cost-from-val');
-        this.costOutput = document.getElementById('cost-to-val');
+        this.costForeignLabel = document.getElementById('cost-foreign-label');
+        this.costLocalLabel = document.getElementById('cost-local-label');
+        this.costForeignInput = document.getElementById('cost-foreign-val');
+        this.costLocalInput = document.getElementById('cost-local-val');
         this.costQuantityInput = document.getElementById('cost-qty');
         this.costQuantityMinusButton = document.getElementById('cost-qty-minus');
         this.costQuantityPlusButton = document.getElementById('cost-qty-plus');
-        this.costTotalOutput = document.getElementById('cost-total');
+        this.costTotalLabel = document.getElementById('cost-total-label');
+        this.costTotalOutput = document.getElementById('cost-total-val');
 
-        // listeners
-        this.costQuantityMinusButton.addEventListener('click', () => {
-            if (this.getQuantity() > 1) { this.costQuantityInput.value = this.getQuantity() - 1; this.update(); }
+        // quantity buttons
+        this.costQuantityMinusButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.#getQuantity() > 1) {
+                this.costQuantityInput.value = this.#getQuantity() - 1;
+                this.#updateTotal();
+            }
         });
-        this.costQuantityPlusButton.addEventListener('click', () => {
-            this.costQuantityInput.value = this.getQuantity() + 1; this.update();
+        this.costQuantityPlusButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.costQuantityInput.value = this.#getQuantity() + 1;
+            this.#updateTotal();
         });
-        this.costQuantityInput.addEventListener('input', this.update);
-        this.costInput.addEventListener('input', this.calculate);
-        this.rateService.addEventListener('rateChanged', (e) => {
-            this.calculate();
+        this.costQuantityInput.addEventListener('input', () => this.#updateTotal());
+
+        // bidirectional inputs
+        this.costForeignInput.addEventListener('input', () => {
+            this.#lastEdited = 'foreign';
+            const val = parseFloat(this.costForeignInput.value);
+            if (isNaN(val) || this.costForeignInput.value === '') {
+                this.#lastForeign = null;
+                this.costLocalInput.value = '';
+                this.#updateTotal();
+                return;
+            }
+            this.#lastForeign = val;
+            this.costLocalInput.value = this.rateService.formatLocalInput(
+                this.rateService.toLocal(val)
+            );
+            this.#updateTotal();
         });
+
+        this.costLocalInput.addEventListener('input', () => {
+            this.#lastEdited = 'local';
+            const val = parseFloat(this.costLocalInput.value);
+            if (isNaN(val) || this.costLocalInput.value === '') {
+                this.#lastForeign = null;
+                this.costForeignInput.value = '';
+                this.#updateTotal();
+                return;
+            }
+            this.#lastForeign = this.rateService.toForeign(val);
+            this.costForeignInput.value = this.rateService.formatForeignInput(this.#lastForeign);
+            this.#updateTotal();
+        });
+
+        // rate changed — recalculate from whichever side was last edited
+        this.rateService.addEventListener('rateChanged', () => {
+            if (this.#lastForeign === null) return;
+            if (this.#lastEdited === 'foreign') {
+                this.costLocalInput.value = this.rateService.formatLocalInput(
+                    this.rateService.toLocal(this.#lastForeign)
+                );
+            } else {
+                // local was last edited — keep local value, update foreign
+                const localVal = parseFloat(this.costLocalInput.value);
+                if (!isNaN(localVal)) {
+                    this.#lastForeign = this.rateService.toForeign(localVal);
+                    this.costForeignInput.value = this.rateService.formatForeignInput(this.#lastForeign);
+                }
+            }
+            this.#updateTotal();
+        });
+
+        this.rateService.addEventListener('currencyChanged', () => {
+            this.#updateLabels();
+            // clear on currency change — stale values would be misleading
+            this.#lastForeign = null;
+            this.costForeignInput.value = '';
+            this.costLocalInput.value = '';
+            this.#updateTotal();
+        });
+
+        // init
+        this.#updateLabels();
     }
 
-    calculate() {
-        const val = parseFloat(this.costInput.value);
-        if (isNaN(val) || this.costInput.value === '') {
-            this.lastCost = null;
-            this.update();
-            return;
-        }
-        this.lastCost = this.rateService.toLocal(val);
-        this.update();
+    #updateLabels() {
+        const local = this.rateService.getLocalCurrency();
+        const foreign = this.rateService.getForeignCurrency();
+        this.costForeignLabel.textContent = `${foreign.name} (${foreign.code})`;
+        this.costLocalLabel.textContent = `${local.name} (${local.code})`;
+        this.costTotalLabel.textContent = `Total (${local.code})`;
     }
 
-    update() {
-        if (this.lastCost === null) {
-            this.costOutput.value = '';
+    #updateTotal() {
+        if (this.#lastForeign === null) {
             this.costTotalOutput.value = '';
+            this.updateSummary('');
             return;
         }
-        const total = this.lastCost * this.getQuantity();
-        this.costOutput.value = this.rateService.formatLocalSymbol(this.lastCost);
+        const localPerUnit = this.rateService.toLocal(this.#lastForeign);
+        const total = localPerUnit * this.#getQuantity();
         this.costTotalOutput.value = this.rateService.formatLocalSymbol(total);
         this.updateSummary(this.rateService.formatLocalFull(total));
     }
 
-    getQuantity() {
+    #getQuantity() {
         return Math.max(1, parseInt(this.costQuantityInput.value) || 1);
     }
 }
 
 class MarketWeightCard extends Card {
-    lastCost = null;
-
     constructor(rateService) {
         super('card-market');
         this.rateService = rateService;
 
-        // binding
-        this.update = this.update.bind(this);
-
         // elements
-        this.rateInput = document.getElementById('market-rate');
-        this.weightInput = document.getElementById('market-kg');
-        this.total1Output = document.getElementById('market-total1');
-        this.total2Output = document.getElementById('market-total2');
+        this.ratelabel = document.getElementById('market-rate-label');
+        this.rateInput = document.getElementById('market-rate-val');
+        this.weightlabel = document.getElementById('market-weight-label');
+        this.weightInput = document.getElementById('market-weight-val');
+        this.foreignlabel = document.getElementById('market-foreign-label');
+        this.foreignOutput = document.getElementById('market-foreign-val');
+        this.locallabel = document.getElementById('market-local-label');
+        this.localOutput = document.getElementById('market-local-val');
 
         // listeners
-        this.rateInput.addEventListener('input', this.update);
-        this.weightInput.addEventListener('input', this.update);
-        this.rateService.addEventListener('rateChanged', (e) => {
-            this.update();
-        });
+        this.rateInput.addEventListener('input', (e) => { this.#updateValues(); });
+        this.weightInput.addEventListener('input', (e) => { this.#updateValues(); });
+        this.rateService.addEventListener('rateChanged', (e) => { this.#updateValues(); });
+        this.rateService.addEventListener('currencyChanged', () => { this.#updateLabels() });
+
+        // init
+        this.#updateLabels();
     }
 
-    update() {
+    #updateLabels() {
+        const foreign = this.rateService.getForeignCurrency();
+        const local = this.rateService.getLocalCurrency();
+        this.ratelabel.textContent = `${foreign.name} / KG`;
+        this.foreignlabel.textContent = `Total (${foreign.code})`;
+        this.locallabel.textContent = `Total (${local.code})`;
+    }
+
+    #updateValues() {
         const rate = parseFloat(this.rateInput.value);
         const weight = parseFloat(this.weightInput.value);
         if (isNaN(rate) || isNaN(weight) || this.rateInput.value === '' || this.weightInput.value === '') {
-            this.total1Output.value = '';
-            this.total2Output.value = '';
+            this.foreignOutput.value = '';
+            this.localOutput.value = '';
             this.updateSummary('');
             return;
         }
         const totalForeign = rate * weight;
         const totalLocal = this.rateService.toLocal(totalForeign);
-        this.total1Output.value = this.rateService.formatForeignSymbol(totalForeign);
-        this.total2Output.value = this.rateService.formatLocalSymbol(totalLocal);
+        this.foreignOutput.value = this.rateService.formatForeignSymbol(totalForeign);
+        this.localOutput.value = this.rateService.formatLocalSymbol(totalLocal);
         this.updateSummary(this.rateService.formatLocalFull(totalLocal));
     }
 }
@@ -1749,7 +1759,7 @@ class App {
         const subtitle = document.getElementById('subtitle');
         const local = this.rateService.getLocalCurrency();
         const foreign = this.rateService.getForeignCurrency();
-        subtitle.innerHTML = `Travel Tools · ${foreign.flag} ${foreign.code} / ${local.flag} ${local.code}`;
+        subtitle.innerHTML = `Travel Tools · ${foreign.code} / ${local.code}`;
     }
 
     #registerServiceWorker() {
