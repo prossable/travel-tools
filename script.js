@@ -111,6 +111,46 @@ class Config {
             flag: '🇯🇵',
             decimals: 0,
             locale: 'ja-JP'
+        },
+        CNY: {
+            code: 'CNY',
+            name: 'Chinese Yuan',
+            symbol: '¥',
+            apiTarget: 'CNY',
+            defaultRate: 7.24,
+            flag: '🇨🇳',
+            decimals: 2,
+            locale: 'zh-CN'
+        },
+        CAD: {
+            code: 'CAD',
+            name: 'Canadian Dollar',
+            symbol: '$',
+            apiTarget: 'CAD',
+            defaultRate: 1.36,
+            flag: '🇨🇦',
+            decimals: 2,
+            locale: 'en-CA'
+        },
+        EUR: {
+            code: 'EUR',
+            name: 'Euro',
+            symbol: '€',
+            apiTarget: 'EUR',
+            defaultRate: 0.92,
+            flag: '🇪🇺',
+            decimals: 2,
+            locale: 'de-DE'
+        },
+        GBP: {
+            code: 'GBP',
+            name: 'British Pound',
+            symbol: '£',
+            apiTarget: 'GBP',
+            defaultRate: 0.79,
+            flag: '🇬🇧',
+            decimals: 2,
+            locale: 'en-GB'
         }
     };
 
@@ -129,12 +169,11 @@ class RateService extends EventTarget {
     getForeignCurrency() { return this.#foreignCurrency; }
     setForeignCurrency(code) {
         const currency = Config.getCurrency(code);
-        if (currency === null) {
-            throw new Error(`Unknown currency code: ${code}`);
-        }
+        if (!currency) return;
         this.#foreignCurrency = currency;
         this.#rate = null;
-        this.fetchRate();
+        localStorage.removeItem('cachedRate');
+        this.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency } }));
     }
 
     getRate() {
@@ -323,15 +362,40 @@ class RateCard extends Card {
 
         // elements
         this.rateInput = document.getElementById('rate');
+        this.rateLabel = document.getElementById('rate-label');
         this.hintOutput = document.getElementById('rate-hint');
         this.autoFetchCheckbox = document.getElementById('rate-auto-fetch');
         this.refreshButton = document.getElementById('rate-refresh');
+        this.currencySelect = document.getElementById('rate-currency');
+
+        // populate currency select — exclude USD (local currency)
+        Object.values(Config.currencies)
+            .filter(c => c.code !== 'USD')
+            .forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.code;
+                opt.textContent = `${c.flag} ${c.name} (${c.code})`;
+                this.currencySelect.appendChild(opt);
+            });
 
         // settings
+        const savedCurrency = localStorage.getItem('foreignCurrency') || 'MXN';
+        this.currencySelect.value = savedCurrency;
+        this.rateService.setForeignCurrency(savedCurrency);
+        this.#updateLabel(savedCurrency);
         const saved = localStorage.getItem('autoFetchRate');
         this.autoFetchCheckbox.checked = saved === null ? true : saved === 'true';
 
         // listeners
+        this.currencySelect.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const code = e.target.value;
+            localStorage.setItem('foreignCurrency', code);
+            localStorage.removeItem('customRate');
+            this.rateService.setForeignCurrency(code);
+            this.#updateLabel(code);
+            this.rateService.fetchRate(true);
+        });
         this.rateInput.addEventListener('input', () => {
             this.hintOutput.textContent = 'Using a custom rate';
             const val = parseFloat(this.rateInput.value);
@@ -343,7 +407,8 @@ class RateCard extends Card {
         this.autoFetchCheckbox.addEventListener('change', () => {
             localStorage.setItem('autoFetchRate', this.autoFetchCheckbox.checked);
         });
-        this.refreshButton.addEventListener('click', () => {
+        this.refreshButton.addEventListener('click', (e) => {
+            e.stopPropagation();
             localStorage.removeItem('customRate');
             this.rateService.fetchRate(true);
         });
@@ -353,8 +418,17 @@ class RateCard extends Card {
             }
             this.updateSummary(this.rateService.formatForeignFull(e.detail.rate));
         });
-        this.rateService.addEventListener('stateChanged', (e) => this.refreshButton.disabled = e.detail.busy);
-        this.rateService.addEventListener('messageSent', (e) => this.hintOutput.textContent = e.detail.msg);
+        this.rateService.addEventListener('stateChanged', (e) => {
+            this.refreshButton.disabled = e.detail.busy;
+        });
+        this.rateService.addEventListener('messageSent', (e) => {
+            this.hintOutput.textContent = e.detail.msg;
+        });
+    }
+
+    #updateLabel(code) {
+        const currency = Config.getCurrency(code);
+        this.rateLabel.textContent = `${currency.name} per $1 USD`;
     }
 }
 
