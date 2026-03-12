@@ -105,83 +105,85 @@ class Config {
     }
 }
 
-class RateService extends EventTarget {
-    static API_TIMEOUT = 5000;
-    #localCurrency = Config.currencies['USD'];
-    #foreignCurrency = Config.currencies['MXN'];
-    #rate = null;
+class RateService {
+    static #ON_RATE_CHANGED = 'rateChanged';
+    static #ON_STATE_CHANGED = 'stateChanged';
+    static #ON_CURRENCY_CHANGED = 'currencyChanged';
+    static #ON_MESSAGE_SENT = 'messageSent';
+    static #API_TIMEOUT = 5000;
 
-    getLocalCurrency() { return this.#localCurrency; }
-    getForeignCurrency() { return this.#foreignCurrency; }
-    setForeignCurrency(code) {
+    static #localCurrency = Config.currencies['USD'];
+    static #foreignCurrency = Config.currencies['MXN'];
+    static #rate = null;
+
+    constructor() { throw new Error('EventService is static'); }
+
+    // ── CURRENCY ────────────────────────────────────────
+
+    static getLocalCurrency() { return RateService.#localCurrency; }
+    static getForeignCurrency() { return RateService.#foreignCurrency; }
+    static setForeignCurrency(code) {
         const currency = Config.getCurrency(code);
         if (!currency) return;
-        this.#foreignCurrency = currency;
-        this.#rate = null;
+        RateService.#foreignCurrency = currency;
+        RateService.#rate = null;
         localStorage.removeItem('cachedRate');
-        this.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency } }));
+        RateService.#dispatch(RateService.#ON_CURRENCY_CHANGED, { currency });
     }
 
-    getRate() {
-        return this.#rate ?? this.#foreignCurrency.rate;
+    // ── RATE ────────────────────────────────────────
+
+    static getRate() {
+        return RateService.#rate ?? RateService.#foreignCurrency.rate;
     }
 
-    setRate(value) {
-        const changed = this.#rate !== parseFloat(value);
-        this.#rate = parseFloat(value);
+    static setRate(value) {
+        const changed = RateService.#rate !== parseFloat(value);
+        RateService.#rate = parseFloat(value);
         if (changed) {
-            this.dispatchEvent(new CustomEvent('rateChanged', {
-                detail: { rate: this.#rate }
-            }));
+            RateService.#dispatch(RateService.#ON_RATE_CHANGED, { rate: RateService.#rate });
         }
     }
 
-    fetchRate(force = false) {
-        const today = this.getLocalDate();
+    static fetchRate(force = false) {
+        const today = RateService.getLocalDate();
 
         // fetch rate
         const custom = localStorage.getItem('customRate');
         if (custom && !force) {
-            this.setRate(parseFloat(custom));
-            this.dispatchEvent(new CustomEvent('messageSent', {
-                detail: { msg: 'Using a custom rate' }
-            }));
+            RateService.setRate(parseFloat(custom));
+            RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: 'Using a custom rate' });
             return;
         }
 
         // check cache
         const cached = JSON.parse(localStorage.getItem('cachedRate'));
-        if (!force && cached && cached.date === today && cached.currency === this.#foreignCurrency.code) {
-            this.setRate(cached.rate);
-            this.dispatchEvent(new CustomEvent('messageSent', {
-                detail: { msg: `Cached rate as of ${this.formatDate(cached.date)}` }
-            }));
+        if (!force && cached && cached.date === today && cached.currency === RateService.#foreignCurrency.code) {
+            RateService.setRate(cached.rate);
+            RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: `Cached rate as of ${RateService.formatDate(cached.date)}` });
             return;
         }
 
         console.log("==== FETCH RATE ===");
         // fetch live
-        this.dispatchEvent(new CustomEvent('stateChanged', { detail: { busy: true } }));
-        this.dispatchEvent(new CustomEvent('messageSent', { detail: { msg: 'Fetching live rate…' } }));
-
+        RateService.#dispatch(RateService.#ON_STATE_CHANGED, { busy: true });
+        RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: 'Fetching live rate…' });
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), RateService.API_TIMEOUT);
-        const url = `https://api.frankfurter.app/latest?from=${this.#localCurrency.code}&to=${this.#foreignCurrency.code}`;
+        const timeout = setTimeout(() => controller.abort(), RateService.#API_TIMEOUT);
+        const url = `https://api.frankfurter.app/latest?from=${RateService.#localCurrency.code}&to=${RateService.#foreignCurrency.code}`;
 
         fetch(url, { signal: controller.signal })
             .then(r => r.json())
             .then(data => {
                 clearTimeout(timeout);
-                const val = data.rates[this.#foreignCurrency.code];
+                const val = data.rates[RateService.#foreignCurrency.code];
                 localStorage.setItem('cachedRate', JSON.stringify({
                     rate: val,
                     date: today,
-                    currency: this.#foreignCurrency.code
+                    currency: RateService.#foreignCurrency.code
                 }));
-                this.setRate(val);
-                this.dispatchEvent(new CustomEvent('messageSent', {
-                    detail: { msg: `Live rate as of ${this.formatDate(today)} · European Central Bank` }
-                }));
+                RateService.setRate(val);
+                RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: `Live rate as of ${RateService.formatDate(today)} · European Central Bank` });
             })
             .catch(err => {
                 console.log(err);
@@ -189,61 +191,43 @@ class RateService extends EventTarget {
                 const msg = err.name === 'AbortError' ?
                     'Request timed out · using fallback' :
                     'Could not fetch live rate · using fallback';
-                this.dispatchEvent(new CustomEvent('messageSent', { detail: { msg: msg } }));
+                RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: msg });
             })
             .finally(() => {
-                this.dispatchEvent(new CustomEvent('stateChanged', { detail: { busy: false } }));
+                RateService.#dispatch(RateService.#ON_STATE_CHANGED, { busy: false });
             });
     }
 
-    toForeign(amount) { return amount * this.getRate(); }
-    toLocal(amount) { return amount / this.getRate(); }
+    // ── CONVERT ────────────────────────────────────────
 
-    #format(value, currency) {
+    static toForeign(amount) { return amount * RateService.getRate(); }
+    static toLocal(amount) { return amount / RateService.getRate(); }
+
+    // ── FORMAT ────────────────────────────────────────
+
+    static #format(value, currency) {
         if (isNaN(value) || !isFinite(value)) return '—';
-        return value.toLocaleString(this.#localCurrency.locale, {
+        return value.toLocaleString(RateService.#localCurrency.locale, {
             minimumFractionDigits: currency.decimals,
             maximumFractionDigits: currency.decimals
         });
     }
 
-    #formatInput(value, currency) {
-        return this.#format(value, currency).replace(/,/g, '');
-    }
+    static #formatInput(value, currency) { return RateService.#format(value, currency).replace(/,/g, ''); }
+    static formatLocalInput(value) { return RateService.#formatInput(value, RateService.#localCurrency); }
+    static formatForeignInput(value) { return RateService.#formatInput(value, RateService.#foreignCurrency); }
 
-    #formatSymbol(value, currency) {
-        return `${currency.symbol}${this.#format(value, currency)}`;
-    }
+    static #formatSymbol(value, currency) { return `${currency.symbol}${RateService.#format(value, currency)}`; }
+    static formatLocalSymbol(value) { return RateService.#formatSymbol(value, RateService.#localCurrency); }
+    static formatForeignSymbol(value) { return RateService.#formatSymbol(value, RateService.#foreignCurrency); }
 
-    #formatFull(value, currency) {
-        return `${currency.symbol}${this.#format(value, currency)} ${currency.code}`;
-    }
+    static #formatFull(value, currency) { return `${currency.symbol}${RateService.#format(value, currency)} ${currency.code}`; }
+    static formatLocalFull(value) { return RateService.#formatFull(value, RateService.#localCurrency); }
+    static formatForeignFull(value) { return RateService.#formatFull(value, RateService.#foreignCurrency); }
 
-    formatLocalInput(value) {
-        return this.#formatInput(value, this.#localCurrency);
-    }
+    // ── DATE ────────────────────────────────────────
 
-    formatForeignInput(value) {
-        return this.#formatInput(value, this.#foreignCurrency);
-    }
-
-    formatLocalSymbol(value) {
-        return this.#formatSymbol(value, this.#localCurrency);
-    }
-
-    formatForeignSymbol(value) {
-        return this.#formatSymbol(value, this.#foreignCurrency);
-    }
-
-    formatLocalFull(value) {
-        return this.#formatFull(value, this.#localCurrency);
-    }
-
-    formatForeignFull(value) {
-        return this.#formatFull(value, this.#foreignCurrency);
-    }
-
-    getLocalDate() {
+    static getLocalDate() {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -251,15 +235,25 @@ class RateService extends EventTarget {
         return `${year}-${month}-${day}`;
     }
 
-    formatDate(dateString) {
+    static formatDate(dateString) {
         const [year, month, day] = dateString.split('-').map(Number);
         return new Date(year, month - 1, day).toLocaleDateString(
-            this.#localCurrency.locale, {
+            RateService.#localCurrency.locale, {
             month: 'short',
             day: 'numeric',
             year: 'numeric'
         });
     }
+
+    // ── EVENTS ────────────────────────────────────────
+
+    static #dispatch(name, detail = {}) { document.dispatchEvent(new CustomEvent(name, { detail })); }
+    static #listen(name, handler) { document.addEventListener(name, handler); }
+
+    static onRateChanged(handler) { RateService.#listen(RateService.#ON_RATE_CHANGED, handler); }
+    static onStateChanged(handler) { RateService.#listen(RateService.#ON_STATE_CHANGED, handler); }
+    static onCurrencyChanged(handler) { RateService.#listen(RateService.#ON_CURRENCY_CHANGED, handler); }
+    static onMessageSent(handler) { RateService.#listen(RateService.#ON_MESSAGE_SENT, handler); }
 }
 
 class Card {
@@ -304,7 +298,6 @@ class Card {
 class RateCard extends Card {
     constructor(rateService) {
         super('card-rate');
-        this.rateService = rateService;
 
         // elements
         this.rateInput = document.getElementById('rate');
@@ -327,7 +320,7 @@ class RateCard extends Card {
         // settings
         const savedCurrency = localStorage.getItem('foreignCurrency') || 'MXN';
         this.currencySelect.value = savedCurrency;
-        this.rateService.setForeignCurrency(savedCurrency);
+        RateService.setForeignCurrency(savedCurrency);
         this.#updateLabel(savedCurrency);
         const saved = localStorage.getItem('autoFetchRate');
         this.autoFetchCheckbox.checked = saved === null ? true : saved === 'true';
@@ -338,15 +331,15 @@ class RateCard extends Card {
             const code = e.target.value;
             localStorage.setItem('foreignCurrency', code);
             localStorage.removeItem('customRate');
-            this.rateService.setForeignCurrency(code);
+            RateService.setForeignCurrency(code);
             this.#updateLabel(code);
-            this.rateService.fetchRate(true);
+            RateService.fetchRate(true);
         });
         this.rateInput.addEventListener('input', () => {
             this.hintOutput.textContent = 'Using a custom rate';
             const val = parseFloat(this.rateInput.value);
             localStorage.setItem('customRate', val);
-            this.rateService.setRate(val);
+            RateService.setRate(val);
             this.autoFetchCheckbox.checked = false;
             localStorage.setItem('autoFetchRate', false);
         });
@@ -356,18 +349,19 @@ class RateCard extends Card {
         this.refreshButton.addEventListener('click', (e) => {
             e.stopPropagation();
             localStorage.removeItem('customRate');
-            this.rateService.fetchRate(true);
+            RateService.fetchRate(true);
         });
-        this.rateService.addEventListener('rateChanged', (e) => {
+
+        RateService.onRateChanged((e) => {
             if (document.activeElement !== this.rateInput) {
                 this.rateInput.value = e.detail.rate;
             }
-            this.updateSummary(this.rateService.formatForeignFull(e.detail.rate));
+            this.updateSummary(RateService.formatForeignFull(e.detail.rate));
         });
-        this.rateService.addEventListener('stateChanged', (e) => {
+        RateService.onStateChanged((e) => {
             this.refreshButton.disabled = e.detail.busy;
         });
-        this.rateService.addEventListener('messageSent', (e) => {
+        RateService.onMessageSent((e) => {
             this.hintOutput.textContent = e.detail.msg;
         });
     }
@@ -383,22 +377,21 @@ class ReferenceCard extends Card {
 
     constructor(rateService) {
         super('card-reference');
-        this.rateService = rateService;
 
         this.tableEl = document.getElementById('reference-table');
         this.multBtns = document.querySelectorAll('.ref-mult-btn');
 
         // set default multiplier from currency
-        this.#multiplier = this.rateService.getForeignCurrency().multiplier ?? 1;
+        this.#multiplier = RateService.getForeignCurrency().multiplier ?? 1;
         this.#syncMultiplierButtons();
 
         // build initial table
         this.#build();
 
         // listeners
-        this.rateService.addEventListener('rateChanged', () => this.#updateValues());
-        this.rateService.addEventListener('currencyChanged', () => {
-            this.#multiplier = this.rateService.getForeignCurrency().multiplier ?? 1;
+        RateService.onRateChanged(() => this.#updateValues());
+        RateService.onCurrencyChanged(() => {
+            this.#multiplier = RateService.getForeignCurrency().multiplier ?? 1;
             this.#syncMultiplierButtons();
             this.#updateValues();
         });
@@ -441,8 +434,8 @@ class ReferenceCard extends Card {
     }
 
     #updateValues() {
-        const local = this.rateService.getLocalCurrency();
-        const foreign = this.rateService.getForeignCurrency();
+        const local = RateService.getLocalCurrency();
+        const foreign = RateService.getForeignCurrency();
 
         // update headers
         this.headerForeign.textContent = foreign.code;
@@ -451,8 +444,8 @@ class ReferenceCard extends Card {
         // update rows
         this.tableEl.querySelectorAll('.ref-row[data-amount]').forEach(row => {
             const scaled = parseFloat(row.dataset.amount) * this.#multiplier;
-            row.querySelector('.ref-foreign').textContent = this.rateService.formatForeignSymbol(scaled);
-            row.querySelector('.ref-local').textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(scaled));
+            row.querySelector('.ref-foreign').textContent = RateService.formatForeignSymbol(scaled);
+            row.querySelector('.ref-local').textContent = RateService.formatLocalSymbol(RateService.toLocal(scaled));
         });
     }
 }
@@ -463,7 +456,6 @@ class CostCard extends Card {
 
     constructor(rateService) {
         super('card-cost');
-        this.rateService = rateService;
 
         // elements
         this.costForeignLabel = document.getElementById('cost-foreign-label');
@@ -502,8 +494,8 @@ class CostCard extends Card {
                 return;
             }
             this.#lastForeign = val;
-            this.costLocalInput.value = this.rateService.formatLocalInput(
-                this.rateService.toLocal(val)
+            this.costLocalInput.value = RateService.formatLocalInput(
+                RateService.toLocal(val)
             );
             this.#updateTotal();
         });
@@ -517,30 +509,30 @@ class CostCard extends Card {
                 this.#updateTotal();
                 return;
             }
-            this.#lastForeign = this.rateService.toForeign(val);
-            this.costForeignInput.value = this.rateService.formatForeignInput(this.#lastForeign);
+            this.#lastForeign = RateService.toForeign(val);
+            this.costForeignInput.value = RateService.formatForeignInput(this.#lastForeign);
             this.#updateTotal();
         });
 
         // rate changed — recalculate from whichever side was last edited
-        this.rateService.addEventListener('rateChanged', () => {
+        RateService.onRateChanged(() => {
             if (this.#lastForeign === null) return;
             if (this.#lastEdited === 'foreign') {
-                this.costLocalInput.value = this.rateService.formatLocalInput(
-                    this.rateService.toLocal(this.#lastForeign)
+                this.costLocalInput.value = RateService.formatLocalInput(
+                    RateService.toLocal(this.#lastForeign)
                 );
             } else {
                 // local was last edited — keep local value, update foreign
                 const localVal = parseFloat(this.costLocalInput.value);
                 if (!isNaN(localVal)) {
-                    this.#lastForeign = this.rateService.toForeign(localVal);
-                    this.costForeignInput.value = this.rateService.formatForeignInput(this.#lastForeign);
+                    this.#lastForeign = RateService.toForeign(localVal);
+                    this.costForeignInput.value = RateService.formatForeignInput(this.#lastForeign);
                 }
             }
             this.#updateTotal();
         });
 
-        this.rateService.addEventListener('currencyChanged', () => {
+        RateService.onCurrencyChanged(() => {
             this.#updateLabels();
             // clear on currency change — stale values would be misleading
             this.#lastForeign = null;
@@ -554,8 +546,8 @@ class CostCard extends Card {
     }
 
     #updateLabels() {
-        const local = this.rateService.getLocalCurrency();
-        const foreign = this.rateService.getForeignCurrency();
+        const local = RateService.getLocalCurrency();
+        const foreign = RateService.getForeignCurrency();
         this.costForeignLabel.textContent = `${foreign.name} (${foreign.code})`;
         this.costLocalLabel.textContent = `${local.name} (${local.code})`;
         this.costTotalLabel.textContent = `Total (${local.code})`;
@@ -567,10 +559,10 @@ class CostCard extends Card {
             this.updateSummary('');
             return;
         }
-        const localPerUnit = this.rateService.toLocal(this.#lastForeign);
+        const localPerUnit = RateService.toLocal(this.#lastForeign);
         const total = localPerUnit * this.#getQuantity();
-        this.costTotalOutput.value = this.rateService.formatLocalSymbol(total);
-        this.updateSummary(this.rateService.formatLocalFull(total));
+        this.costTotalOutput.value = RateService.formatLocalSymbol(total);
+        this.updateSummary(RateService.formatLocalFull(total));
     }
 
     #getQuantity() {
@@ -581,7 +573,6 @@ class CostCard extends Card {
 class MarketWeightCard extends Card {
     constructor(rateService) {
         super('card-market');
-        this.rateService = rateService;
 
         // elements
         this.ratelabel = document.getElementById('market-rate-label');
@@ -596,16 +587,16 @@ class MarketWeightCard extends Card {
         // listeners
         this.rateInput.addEventListener('input', (e) => { this.#updateValues(); });
         this.weightInput.addEventListener('input', (e) => { this.#updateValues(); });
-        this.rateService.addEventListener('rateChanged', (e) => { this.#updateValues(); });
-        this.rateService.addEventListener('currencyChanged', () => { this.#updateLabels() });
+        RateService.onRateChanged((e) => { this.#updateValues(); });
+        RateService.onCurrencyChanged(() => { this.#updateLabels() });
 
         // init
         this.#updateLabels();
     }
 
     #updateLabels() {
-        const foreign = this.rateService.getForeignCurrency();
-        const local = this.rateService.getLocalCurrency();
+        const foreign = RateService.getForeignCurrency();
+        const local = RateService.getLocalCurrency();
         this.ratelabel.textContent = `${foreign.name} / KG`;
         this.foreignlabel.textContent = `Total (${foreign.code})`;
         this.locallabel.textContent = `Total (${local.code})`;
@@ -621,10 +612,10 @@ class MarketWeightCard extends Card {
             return;
         }
         const totalForeign = rate * weight;
-        const totalLocal = this.rateService.toLocal(totalForeign);
-        this.foreignOutput.value = this.rateService.formatForeignSymbol(totalForeign);
-        this.localOutput.value = this.rateService.formatLocalSymbol(totalLocal);
-        this.updateSummary(this.rateService.formatLocalFull(totalLocal));
+        const totalLocal = RateService.toLocal(totalForeign);
+        this.foreignOutput.value = RateService.formatForeignSymbol(totalForeign);
+        this.localOutput.value = RateService.formatLocalSymbol(totalLocal);
+        this.updateSummary(RateService.formatLocalFull(totalLocal));
     }
 }
 
@@ -634,7 +625,6 @@ class BillCard extends Card {
 
     constructor(rateService) {
         super('card-bill');
-        this.rateService = rateService;
 
         // binding
         this.setTipPreset = this.setTipPreset.bind(this);
@@ -681,7 +671,7 @@ class BillCard extends Card {
             this.setTipCustom();
             this.update();
         });
-        this.rateService.addEventListener('rateChanged', (e) => {
+        RateService.onRateChanged((e) => {
             this.update();
         });
     }
@@ -710,16 +700,16 @@ class BillCard extends Card {
         if (this.lastBillCurrency === 'foreign') {
             totalF = parseFloat(this.total1FInput.value);
             if (!isNaN(totalF) && this.total1FInput.value !== '') {
-                totalLocal = this.rateService.toLocal(totalF);
-                this.totalLInput.value = this.rateService.formatLocalInput(totalLocal);
+                totalLocal = RateService.toLocal(totalF);
+                this.totalLInput.value = RateService.formatLocalInput(totalLocal);
             } else {
                 this.totalLInput.value = '';
             }
         } else {
             totalLocal = parseFloat(this.totalLInput.value);
             if (!isNaN(totalLocal) && this.totalLInput.value !== '') {
-                totalF = this.rateService.toForeign(totalLocal);
-                this.total1FInput.value = this.rateService.formatForeignInput(totalF);
+                totalF = RateService.toForeign(totalLocal);
+                this.total1FInput.value = RateService.formatForeignInput(totalF);
             } else {
                 totalF = NaN;
                 this.total1FInput.value = '';
@@ -739,28 +729,28 @@ class BillCard extends Card {
         }
 
         const tipF = totalF * (pct / 100);
-        const tipL = this.rateService.toLocal(tipF);
+        const tipL = RateService.toLocal(tipF);
         const tipPerF = tipF / people;
-        const tipPerL = this.rateService.toLocal(tipPerF);
+        const tipPerL = RateService.toLocal(tipPerF);
         const subF = totalF / people;
-        const subL = this.rateService.toLocal(subF);
+        const subL = RateService.toLocal(subF);
         const finalF = subF + tipPerF;
-        const finalL = this.rateService.toLocal(finalF);
+        const finalL = RateService.toLocal(finalF);
 
-        this.subFOutput.value = this.rateService.formatForeignSymbol(subF);
-        this.subLOutput.value = this.rateService.formatLocalSymbol(subL);
+        this.subFOutput.value = RateService.formatForeignSymbol(subF);
+        this.subLOutput.value = RateService.formatLocalSymbol(subL);
         if (people > 1) {
-            this.tipFOutput.value = `${this.rateService.formatForeignSymbol(tipPerF)} (${this.rateService.formatForeignSymbol(tipF)})`;
-            this.tipLOutput.value = `${this.rateService.formatLocalSymbol(tipPerL)} (${this.rateService.formatLocalSymbol(tipL)})`;
-            this.finalFOutput.value = `${this.rateService.formatForeignSymbol(finalF)} (${this.rateService.formatForeignSymbol(totalF + tipF)})`;
-            this.finalLOutput.value = `${this.rateService.formatLocalSymbol(finalL)} (${this.rateService.formatLocalSymbol(totalLocal + tipL)})`;
-            this.updateSummary(`${this.rateService.formatLocalFull(finalL)} / person`);
+            this.tipFOutput.value = `${RateService.formatForeignSymbol(tipPerF)} (${RateService.formatForeignSymbol(tipF)})`;
+            this.tipLOutput.value = `${RateService.formatLocalSymbol(tipPerL)} (${RateService.formatLocalSymbol(tipL)})`;
+            this.finalFOutput.value = `${RateService.formatForeignSymbol(finalF)} (${RateService.formatForeignSymbol(totalF + tipF)})`;
+            this.finalLOutput.value = `${RateService.formatLocalSymbol(finalL)} (${RateService.formatLocalSymbol(totalLocal + tipL)})`;
+            this.updateSummary(`${RateService.formatLocalFull(finalL)} / person`);
         } else {
-            this.tipFOutput.value = this.rateService.formatForeignSymbol(tipF);
-            this.tipLOutput.value = this.rateService.formatLocalSymbol(tipL);
-            this.finalFOutput.value = this.rateService.formatForeignSymbol(finalF);
-            this.finalLOutput.value = this.rateService.formatLocalSymbol(finalL);
-            this.updateSummary(this.rateService.formatLocalFull(finalL));
+            this.tipFOutput.value = RateService.formatForeignSymbol(tipF);
+            this.tipLOutput.value = RateService.formatLocalSymbol(tipL);
+            this.finalFOutput.value = RateService.formatForeignSymbol(finalF);
+            this.finalLOutput.value = RateService.formatLocalSymbol(finalL);
+            this.updateSummary(RateService.formatLocalFull(finalL));
         }
     }
 }
@@ -772,7 +762,6 @@ class MarketTallyCard extends Card {
 
     constructor(rateService) {
         super('card-tally');
-        this.rateService = rateService;
 
         // elements
         this.listElement = document.getElementById('tally-list');
@@ -813,7 +802,7 @@ class MarketTallyCard extends Card {
             });
         });
 
-        this.rateService.addEventListener('rateChanged', () => this.update());
+        RateService.onRateChanged(() => this.update());
     }
 
     #createItem(label = '', price = null, checked = false) {
@@ -953,11 +942,11 @@ class MarketTallyCard extends Card {
         const spentForeign = checked.reduce((sum, i) => sum + i.price, 0);
         const remainingForeign = unchecked.reduce((sum, i) => sum + i.price, 0);
 
-        this.spentForeignOutput.textContent = this.rateService.formatForeignFull(spentForeign);
-        this.spentLocalOutput.textContent = this.rateService.formatLocalFull(this.rateService.toLocal(spentForeign));
-        this.remainingForeignOutput.textContent = this.rateService.formatForeignFull(remainingForeign);
-        this.remainingLocalOutput.textContent = this.rateService.formatLocalFull(this.rateService.toLocal(remainingForeign));
-        this.updateSummary(this.rateService.formatLocalFull(this.rateService.toLocal(totalForeign)));
+        this.spentForeignOutput.textContent = RateService.formatForeignFull(spentForeign);
+        this.spentLocalOutput.textContent = RateService.formatLocalFull(RateService.toLocal(spentForeign));
+        this.remainingForeignOutput.textContent = RateService.formatForeignFull(remainingForeign);
+        this.remainingLocalOutput.textContent = RateService.formatLocalFull(RateService.toLocal(remainingForeign));
+        this.updateSummary(RateService.formatLocalFull(RateService.toLocal(totalForeign)));
     }
 }
 
@@ -1148,7 +1137,6 @@ class DebtCard extends Card {
 
     constructor(rateService) {
         super('card-debt');
-        this.rateService = rateService;
 
         // elements
         this.listElement = document.getElementById('debt-list');
@@ -1189,7 +1177,7 @@ class DebtCard extends Card {
             const val = parseFloat(this.amountForeignInput.value);
             if (!isNaN(val) && this.amountForeignInput.value !== '') {
                 this.amountLocalInput.value =
-                    this.rateService.formatLocalInput(this.rateService.toLocal(val));
+                    RateService.formatLocalInput(RateService.toLocal(val));
             } else {
                 this.amountLocalInput.value = '';
             }
@@ -1199,7 +1187,7 @@ class DebtCard extends Card {
             const val = parseFloat(this.amountLocalInput.value);
             if (!isNaN(val) && this.amountLocalInput.value !== '') {
                 this.amountForeignInput.value =
-                    this.rateService.formatForeignInput(this.rateService.toForeign(val));
+                    RateService.formatForeignInput(RateService.toForeign(val));
             } else {
                 this.amountForeignInput.value = '';
             }
@@ -1239,7 +1227,7 @@ class DebtCard extends Card {
         const debt = {
             id: this.#nextId++,
             person,
-            amount: this.rateService.toLocal(foreignVal),
+            amount: RateService.toLocal(foreignVal),
             direction: this.#direction,
             note,
             settled: false
@@ -1308,7 +1296,7 @@ class DebtCard extends Card {
                 <div class="info">
                     <span>${debt.person}</span>
                     <span class="direction ${debt.direction}">${debt.direction === 'owe' ? 'is owed' : 'owes me'}</span>
-                    <span class="highlight">${this.rateService.formatLocalFull(debt.amount)}</span>
+                    <span class="highlight">${RateService.formatLocalFull(debt.amount)}</span>
                     ${debt.note ? ` for ${debt.note}` : ''}
                 </div>
                 <button class="red delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
@@ -1727,25 +1715,24 @@ class App {
     }
 
     constructor() {
-        // rate
-        this.rateService = new RateService();
-        this.rateService.addEventListener('currencyChanged', () => this.#onCurrencyChange());
+        // rate    
+        RateService.onCurrencyChanged(() => this.#onCurrencyChange());
         this.#onCurrencyChange();
 
         // cards
-        new RateCard(this.rateService);
-        new ReferenceCard(this.rateService);
-        new CostCard(this.rateService);
-        new MarketWeightCard(this.rateService);
-        new BillCard(this.rateService);
-        new MarketTallyCard(this.rateService);
-        new NotesCard(this.rateService);
-        new DebtCard(this.rateService);
-        new ConversionsCard(this.rateService);
-        new TimezonesCard(this.rateService);
+        new RateCard();
+        new ReferenceCard();
+        new CostCard();
+        new MarketWeightCard();
+        new BillCard();
+        new MarketTallyCard();
+        new NotesCard();
+        new DebtCard();
+        new ConversionsCard();
+        new TimezonesCard();
 
         // init
-        this.rateService.fetchRate();
+        RateService.fetchRate();
         this.#registerServiceWorker();
         this.#setupInstallPrompt();
         this.#setupWakeLock();
@@ -1757,8 +1744,8 @@ class App {
 
     #onCurrencyChange() {
         const subtitle = document.getElementById('subtitle');
-        const local = this.rateService.getLocalCurrency();
-        const foreign = this.rateService.getForeignCurrency();
+        const local = RateService.getLocalCurrency();
+        const foreign = RateService.getForeignCurrency();
         subtitle.innerHTML = `Travel Tools · ${foreign.code} / ${local.code}`;
     }
 
