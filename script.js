@@ -1,38 +1,41 @@
 class Config {
     static timeZones = [
-        { label: 'Honolulu', tz: 'Pacific/Honolulu' },
-        { label: 'Anchorage', tz: 'America/Anchorage' },
-        { label: 'Los Angeles', tz: 'America/Los_Angeles' },
-        { label: 'Phoenix', tz: 'America/Phoenix' },
-        { label: 'Denver', tz: 'America/Denver' },
-        { label: 'Chicago', tz: 'America/Chicago' },
-        { label: 'New York', tz: 'America/New_York' },
-        { label: 'Toronto', tz: 'America/Toronto' },
-        { label: 'São Paulo', tz: 'America/Sao_Paulo' },
-        { label: 'London', tz: 'Europe/London' },
-        { label: 'Lisbon', tz: 'Europe/Lisbon' },
-        { label: 'Paris', tz: 'Europe/Paris' },
-        { label: 'Berlin', tz: 'Europe/Berlin' },
-        { label: 'Rome', tz: 'Europe/Rome' },
-        { label: 'Athens', tz: 'Europe/Athens' },
-        { label: 'Moscow', tz: 'Europe/Moscow' },
-        { label: 'Dubai', tz: 'Asia/Dubai' },
-        { label: 'Bangkok', tz: 'Asia/Bangkok' },
-        { label: 'Singapore', tz: 'Asia/Singapore' },
-        { label: 'Hong Kong', tz: 'Asia/Hong_Kong' },
-        { label: 'Shanghai', tz: 'Asia/Shanghai' },
-        { label: 'Tokyo', tz: 'Asia/Tokyo' },
-        { label: 'Seoul', tz: 'Asia/Seoul' },
-        { label: 'Sydney', tz: 'Australia/Sydney' },
-        { label: 'Melbourne', tz: 'Australia/Melbourne' },
-        { label: 'Auckland', tz: 'Pacific/Auckland' },
-        { label: 'Mexico City', tz: 'America/Mexico_City' },
-        { label: 'Cancún', tz: 'America/Cancun' },
-        { label: 'Bogotá', tz: 'America/Bogota' },
-        { label: 'Lima', tz: 'America/Lima' },
-        { label: 'Buenos Aires', tz: 'America/Argentina/Buenos_Aires' },
-        { label: 'Casablanca', tz: 'Africa/Casablanca' },
-        { label: 'Cairo', tz: 'Africa/Cairo' },
+        { label: 'Honolulu', zone: 'Hawaii', tz: 'Pacific/Honolulu' },
+        { label: 'Anchorage', zone: 'Alaska', tz: 'America/Anchorage' },
+        { label: 'Los Angeles', zone: 'Pacific', tz: 'America/Los_Angeles' },
+        { label: 'Phoenix', zone: 'Mountain (no DST)', tz: 'America/Phoenix' },
+        { label: 'Denver', zone: 'Mountain', tz: 'America/Denver' },
+        { label: 'Chicago', zone: 'Central', tz: 'America/Chicago' },
+        { label: 'New York', zone: 'Eastern', tz: 'America/New_York' },
+        { label: 'Toronto', zone: 'Eastern', tz: 'America/Toronto' },
+        { label: 'São Paulo', zone: 'Brasília', tz: 'America/Sao_Paulo' },
+        { label: 'London', zone: 'GMT / BST', tz: 'Europe/London' },
+        { label: 'Lisbon', zone: 'Western Europe', tz: 'Europe/Lisbon' },
+        { label: 'Paris', zone: 'Central Europe', tz: 'Europe/Paris' },
+        { label: 'Berlin', zone: 'Central Europe', tz: 'Europe/Berlin' },
+        { label: 'Rome', zone: 'Central Europe', tz: 'Europe/Rome' },
+        { label: 'Athens', zone: 'Eastern Europe', tz: 'Europe/Athens' },
+        { label: 'Moscow', zone: 'Moscow', tz: 'Europe/Moscow' },
+        { label: 'Dubai', zone: 'Gulf', tz: 'Asia/Dubai' },
+        { label: 'Bangkok', zone: 'Indochina', tz: 'Asia/Bangkok' },
+        { label: 'Singapore', zone: 'Singapore', tz: 'Asia/Singapore' },
+        { label: 'Hong Kong', zone: 'Hong Kong', tz: 'Asia/Hong_Kong' },
+        { label: 'Shanghai', zone: 'China', tz: 'Asia/Shanghai' },
+        { label: 'Tokyo', zone: 'Japan', tz: 'Asia/Tokyo' },
+        { label: 'Seoul', zone: 'Korea', tz: 'Asia/Seoul' },
+        { label: 'Sydney', zone: 'Eastern Australia', tz: 'Australia/Sydney' },
+        { label: 'Melbourne', zone: 'Eastern Australia', tz: 'Australia/Melbourne' },
+        { label: 'Auckland', zone: 'New Zealand', tz: 'Pacific/Auckland' },
+        { label: 'Tijuana', zone: 'Baja California', tz: 'America/Tijuana' },
+        { label: 'Mazatlán', zone: 'Pacific Mexico', tz: 'America/Mazatlan' },
+        { label: 'Hermosillo', zone: 'Sonora (no DST)', tz: 'America/Hermosillo' },
+        { label: 'Mexico City', zone: 'Central Mexico', tz: 'America/Mexico_City' },
+        { label: 'Cancún', zone: 'Eastern Mexico', tz: 'America/Cancun' },
+        { label: 'Bogotá', zone: 'Colombia', tz: 'America/Bogota' },
+        { label: 'Lima', zone: 'Peru', tz: 'America/Lima' },
+        { label: 'Buenos Aires', zone: 'Argentina', tz: 'America/Argentina/Buenos_Aires' },
+        { label: 'Casablanca', zone: 'Morocco', tz: 'Africa/Casablanca' },
+        { label: 'Cairo', zone: 'Egypt', tz: 'Africa/Cairo' },
     ];
 
     static conversions = [
@@ -1428,7 +1431,8 @@ class TimezonesCard extends Card {
         const q = query.toLowerCase();
         return Config.timeZones.filter(z =>
             z.label.toLowerCase().includes(q) ||
-            z.tz.toLowerCase().includes(q)
+            z.tz.toLowerCase().includes(q) ||
+            z.zone.toLowerCase().includes(q)
         );
     }
 
@@ -1455,8 +1459,7 @@ class TimezonesCard extends Card {
             const list = matches.length ? matches : Config.timeZones;
 
             this.curatedSelect.innerHTML = '<option value="">— select —</option>' +
-                list.map(z => `<option value="${z.tz}">${z.label} · ${z.tz}</option>`).join('');
-
+                list.map(z => `<option value="${z.tz}">${z.label} · ${z.zone}</option>`).join('');
             this.curatedEl.style.display = '';
         } else {
             this.#pendingZone = result;
