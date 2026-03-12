@@ -1236,26 +1236,25 @@ class DebtCard extends Card {
         this.formElement = document.getElementById('debt-form');
         this.personInput = document.getElementById('debt-person');
         this.noteInput = document.getElementById('debt-note');
-        this.amountForeignInput = document.getElementById('debt-amount-foreign');
-        this.amountLocalInput = document.getElementById('debt-amount-local');
+        this.foreignLabel = document.getElementById('debt-foreign-label');
+        this.foreignInput = document.getElementById('debt-foreign-val');
+        this.localLabel = document.getElementById('debt-local-label');
+        this.localInput = document.getElementById('debt-local-val');
         this.dirButtons = document.querySelectorAll('.debt-dir-btn');
         this.addButton = document.getElementById('debt-add');
         this.clearButton = document.getElementById('debt-clear');
         this.toggleButton = document.getElementById('debt-toggle');
 
-        // init — form hidden by default
+        // init 
         this.formElement.style.display = 'none';
-
-        // load
+        this.#updateLabels();
         this.#load();
 
-        // toggle form
+        // listeners
         this.toggleButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.#setFormVisible(!this.#formVisible);
         });
-
-        // direction buttons
         this.dirButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1264,26 +1263,13 @@ class DebtCard extends Card {
                 btn.classList.add('active');
             });
         });
-
-        // bidirectional amount
-        this.amountForeignInput.addEventListener('input', () => {
-            const val = parseFloat(this.amountForeignInput.value);
-            if (!isNaN(val) && this.amountForeignInput.value !== '') {
-                this.amountLocalInput.value =
-                    RateService.formatLocalInput(RateService.toLocal(val));
-            } else {
-                this.amountLocalInput.value = '';
-            }
+        this.foreignInput.addEventListener('input', () => {
+            this.#updateValues();
         });
-
-        this.amountLocalInput.addEventListener('input', () => {
-            const val = parseFloat(this.amountLocalInput.value);
-            if (!isNaN(val) && this.amountLocalInput.value !== '') {
-                this.amountForeignInput.value =
-                    RateService.formatForeignInput(RateService.toForeign(val));
-            } else {
-                this.amountForeignInput.value = '';
-            }
+        this.localInput.addEventListener('input', () => {
+            if (this.localInput.value === '') { this.foreignInput.value = ''; return; }
+            this.foreignInput.value = RateService.formatForeignInput(RateService.toForeign(this.localInput.value));
+            this.#updateValues();
         });
 
         this.addButton.addEventListener('click', (e) => {
@@ -1300,6 +1286,12 @@ class DebtCard extends Card {
                 this.#renderAll();
             }
         });
+        RateService.onRateChanged(() => { this.#updateValues(); });
+        RateService.onCurrencyChanged(() => {
+            this.#updateLabels();
+            this.foreignInput.value = '';
+            this.#updateValues();
+        });
     }
 
     #setFormVisible(visible) {
@@ -1314,8 +1306,8 @@ class DebtCard extends Card {
 
         if (!person) { this.personInput.focus(); return; }
 
-        const foreignVal = parseFloat(this.amountForeignInput.value);
-        if (isNaN(foreignVal) || foreignVal <= 0) { this.amountForeignInput.focus(); return; }
+        const foreignVal = parseFloat(this.foreignInput.value);
+        if (isNaN(foreignVal) || foreignVal <= 0) { this.foreignInput.focus(); return; }
 
         const debt = {
             id: this.#nextId++,
@@ -1338,14 +1330,14 @@ class DebtCard extends Card {
 
         this.#clearForm();
         this.#setFormVisible(false);
-        this.update();
+        this.#updateValues();
     }
 
     #clearForm() {
         this.personInput.value = '';
         this.noteInput.value = '';
-        this.amountForeignInput.value = '';
-        this.amountLocalInput.value = '';
+        this.foreignInput.value = '';
+        this.localInput.value = '';
         this.dirButtons.forEach(b => b.classList.remove('active'));
         this.dirButtons[0].classList.add('active');
         this.#direction = 'owe';
@@ -1355,7 +1347,7 @@ class DebtCard extends Card {
         this.#debts = this.#debts.filter(d => d.id !== id);
         document.getElementById(`debt-${id}`).remove();
         this.#save();
-        this.update();
+        this.#updateValues();
     }
 
     #toggleSettled(id) {
@@ -1364,7 +1356,7 @@ class DebtCard extends Card {
         debt.settled = !debt.settled;
         document.getElementById(`debt-${id}`).classList.toggle('settled', debt.settled);
         this.#save();
-        this.update();
+        this.#updateValues();
     }
 
     #save() {
@@ -1380,6 +1372,14 @@ class DebtCard extends Card {
                 this.#debts.reduce((max, d) => Math.max(max, d.id), 0) + 1;
         }
         this.#renderAll();
+    }
+
+    #renderAll() {
+        this.listElement.innerHTML = this.#debts.map(d => this.#debtHTML(d)).join('');
+        this.listElement.querySelectorAll('.debt-entry').forEach(row => {
+            this.#wireListeners(row, parseInt(row.dataset.id));
+        });
+        this.#updateValues();
     }
 
     #debtHTML(debt) {
@@ -1414,15 +1414,14 @@ class DebtCard extends Card {
         });
     }
 
-    #renderAll() {
-        this.listElement.innerHTML = this.#debts.map(d => this.#debtHTML(d)).join('');
-        this.listElement.querySelectorAll('.debt-entry').forEach(row => {
-            this.#wireListeners(row, parseInt(row.dataset.id));
-        });
-        this.update();
+    #updateLabels() {
+        const local = RateService.getLocalCurrency();
+        const foreign = RateService.getForeignCurrency();
+        this.foreignLabel.textContent = `Amount (${foreign.code})`;
+        this.localLabel.textContent = `Amount (${local.code})`;
     }
 
-    update() {
+    #updateValues() {
         const active = this.#debts.filter(d => !d.settled);
         const oweCount = active.filter(d => d.direction === 'owe').length;
         const owedCount = active.filter(d => d.direction === 'owedBy').length;
@@ -1433,6 +1432,15 @@ class DebtCard extends Card {
             this.updateSummary('All settled');
         } else {
             this.updateSummary(`Owe ${oweCount} · Owed ${owedCount}`);
+        }
+
+        const foreign = parseFloat(this.foreignInput.value);
+        const local = RateService.toLocal(foreign);
+        if (isNaN(foreign) || this.foreignInput.value === '') {
+            this.localInput.value = '';
+            return;
+        } else if (document.activeElement !== this.localInput) {
+            this.localInput.value = RateService.formatLocalInput(local);
         }
     }
 }
