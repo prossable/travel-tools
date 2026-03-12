@@ -81,7 +81,7 @@ class Config {
         }
     ];
 
-    static referenceAmounts = [5, 10, 20, 30, 50, 75, 100, 150, 200, 500, 1000];
+    static referenceAmounts = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 50, 75, 100];
 
     static currencies = {
         USD: {
