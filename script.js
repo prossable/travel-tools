@@ -757,6 +757,24 @@ class MarketTallyCard extends Card {
         RateService.onRateChanged(() => this.update());
     }
 
+    #load() {
+        const stored = localStorage.getItem('tallyItems');
+        if (stored) {
+            this.#items = JSON.parse(stored);
+            this.#nextId = parseInt(localStorage.getItem('tallyNextId')) ||
+                this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
+        }
+        this.#renderAll();
+    }
+
+    #renderAll() {
+        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
+        this.listElement.querySelectorAll('.tally-item').forEach(row => {
+            this.#wireListeners(row, parseInt(row.dataset.id));
+        });
+        this.update();
+    }
+
     #createItem(label = '', price = null, checked = false) {
         return { id: this.#nextId++, label, price, checked };
     }
@@ -769,12 +787,11 @@ class MarketTallyCard extends Card {
         const el = document.createElement('div');
         el.innerHTML = this.#itemHTML(item);
         const itemEl = el.firstElementChild;
+
         this.listElement.appendChild(itemEl);
         this.#wireListeners(itemEl, item.id);
-
-        // focus new label
-        itemEl.querySelector('.tally-label').focus();
         this.update();
+        itemEl.querySelector('.tally-label').focus();
     }
 
     #duplicateItem(id) {
@@ -788,7 +805,6 @@ class MarketTallyCard extends Card {
         el.innerHTML = this.#itemHTML(item);
         const itemEl = el.firstElementChild;
 
-        // insert after source element
         const sourceEl = document.getElementById(`tally-${id}`);
         sourceEl.insertAdjacentElement('afterend', itemEl);
         this.#wireListeners(itemEl, item.id);
@@ -816,22 +832,12 @@ class MarketTallyCard extends Card {
         localStorage.setItem('tallyNextId', this.#nextId);
     }
 
-    #load() {
-        const stored = localStorage.getItem('tallyItems');
-        if (stored) {
-            this.#items = JSON.parse(stored);
-            this.#nextId = parseInt(localStorage.getItem('tallyNextId')) ||
-                this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
-        }
-        this.#renderAll();
-    }
-
     #itemHTML(item) {
         return `
             <div class="tally-item ${item.checked ? 'checked' : ''}" id="tally-${item.id}" data-id="${item.id}">
                 <input type="checkbox" class="tally-check" ${item.checked ? 'checked' : ''}>
                 <input type="text" class="tally-label" value="${item.label}" placeholder="Item">
-                <input type="number" class="tally-price" value="${item.price ?? ''}" placeholder="$0" min="0"step="any">
+                <input type="number" class="tally-price" value="${item.price ?? ''}" placeholder="0" min="0"step="any">
                 <button class="duplicate" title="Duplicate"><svg><use href="#icon-duplicate"/></svg></button>
                 <button class="red delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
             </div>`;
@@ -874,18 +880,6 @@ class MarketTallyCard extends Card {
         });
     }
 
-    #renderAll() {
-        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
-        this.listElement.querySelectorAll('.tally-item').forEach(row => {
-            this.#wireListeners(row, parseInt(row.dataset.id));
-        });
-        this.update();
-    }
-
-    addExternalItem(label, price) {
-        this.#addItem(label, price);
-    }
-
     update() {
         const withPrice = this.#items.filter(i => i.price !== null);
         const checked = withPrice.filter(i => i.checked);
@@ -899,6 +893,10 @@ class MarketTallyCard extends Card {
         this.remainingForeignOutput.textContent = RateService.formatForeignFull(remainingForeign);
         this.remainingLocalOutput.textContent = RateService.formatLocalFull(RateService.toLocal(remainingForeign));
         this.updateSummary(RateService.formatLocalFull(RateService.toLocal(totalForeign)));
+    }
+
+    addExternalItem(label, price) {
+        this.#addItem(label, price);
     }
 }
 
