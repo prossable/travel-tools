@@ -541,7 +541,7 @@
                 </div>
 
                 <!-- People -->
-                <div class="row-equation">
+                <div class="row-2col">
                     <div class="label-group">
                         <label>Split between</label>
                         <div class="tab">
@@ -552,6 +552,14 @@
                             <button class="narrow" id="bill-people-plus"><svg>
                                     <use href="#icon-add" />
                                 </svg></button>
+                        </div>
+                    </div>
+
+                    <div class="label-group">
+                        <label>Split</label>
+                        <div class="tab">
+                            <button class="bill-mode-btn active" data-mode="even">Even</button>
+                            <button class="bill-mode-btn" data-mode="uneven">Uneven</button>
                         </div>
                     </div>
                 </div>
@@ -585,21 +593,6 @@
                     </div>
                 </div>
 
-                <!-- Subtotal -->
-                <div class="row-equation" id="bill-subtotal">
-                    <div class="label-group">
-                        <label>Subtotal (MXN)</label>
-                        <input class="output" id="bill-sub1" placeholder="—" readonly>
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-arrow-forward" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label>Subtotal (USD)</label>
-                        <input class="output" id="bill-sub2" placeholder="—" readonly>
-                    </div>
-                </div>
-
                 <!-- total -->
                 <div class="row-equation">
                     <div class="label-group">
@@ -615,6 +608,24 @@
                     </div>
                 </div>
 
+                <!-- Uneven Mode -->
+                <div id="split-list">
+                    <div class="split-row">
+                        <span>&nbsp;</span>
+                        <label>Name</label>
+                        <label>Offset MXN</label>
+                        <label>Tip</label>
+                        <label>Total</label>
+                    </div>
+                    <div class="split-row" data-id="1">
+                        <button class="split-currency-btn">MXN</button>
+                        <input type="text" class="split-name" placeholder="Name">
+                        <input type="number" class="split-offset" placeholder="+/-">
+                        <span class="split-tip">—</span>
+                        <span class="split-total">—</span>
+                    </div>
+                </div>
+                <div>Unclaimed amounts will be divided evenly.</div>
             </div>
         </div>
     </div>
