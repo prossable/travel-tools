@@ -1717,8 +1717,10 @@ class App {
     }
 
     constructor() {
-        // services
+        // rate
         this.rateService = new RateService();
+        this.rateService.addEventListener('currencyChanged', () => this.#onCurrencyChange());
+        this.#onCurrencyChange();
 
         // cards
         new RateCard(this.rateService);
@@ -1741,6 +1743,13 @@ class App {
         this.#getVersion().then(v => {
             document.getElementById('footer-version').textContent = `v${v}`;
         });
+    }
+
+    #onCurrencyChange() {
+        const subtitle = document.getElementById('subtitle');
+        const local = this.rateService.getLocalCurrency();
+        const foreign = this.rateService.getForeignCurrency();
+        subtitle.innerHTML = `Travel Tools · ${foreign.flag} ${foreign.code} / ${local.flag} ${local.code}`;
     }
 
     #registerServiceWorker() {
