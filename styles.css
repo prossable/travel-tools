@@ -108,6 +108,7 @@ select {
         background: var(--input-bg);
         color: var(--text);
     }
+
     &::-webkit-scrollbar {
         width: 6px;
     }
@@ -231,6 +232,7 @@ button {
         height: auto;
         border-radius: 0;
         background: var(--border);
+        flex: 1;
 
         &:hover {
             background: var(--accent);
@@ -249,6 +251,10 @@ button {
         &.narrow {
             padding: 8px;
         }
+    }
+
+    &.row-flex {
+        gap: 0;
     }
 }
 

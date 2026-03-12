@@ -81,8 +81,7 @@ class Config {
         }
     ];
 
-    static referenceAmounts = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 5000];
-
+    static referenceAmounts = [5, 10, 20, 30, 50, 75, 100, 150, 200, 500, 1000];
 
     static currencies = {
         USD: {
@@ -93,7 +92,7 @@ class Config {
             defaultRate: 1,
             flag: '🇺🇸',
             decimals: 2,
-            locale: 'en-US'
+            locale: 'en-US', referenceMultiplier: 1
         },
         MXN: {
             code: 'MXN',
@@ -103,7 +102,7 @@ class Config {
             defaultRate: 17.57,
             flag: '🇲🇽',
             decimals: 2,
-            locale: 'es-MX'
+            locale: 'es-MX', referenceMultiplier: 10
         },
         JPY: {
             code: 'JPY',
@@ -113,7 +112,7 @@ class Config {
             defaultRate: 149.50,
             flag: '🇯🇵',
             decimals: 0,
-            locale: 'ja-JP'
+            locale: 'ja-JP', referenceMultiplier: 100
         },
         CNY: {
             code: 'CNY',
@@ -123,7 +122,7 @@ class Config {
             defaultRate: 7.24,
             flag: '🇨🇳',
             decimals: 2,
-            locale: 'zh-CN'
+            locale: 'zh-CN', referenceMultiplier: 10
         },
         CAD: {
             code: 'CAD',
@@ -133,7 +132,7 @@ class Config {
             defaultRate: 1.36,
             flag: '🇨🇦',
             decimals: 2,
-            locale: 'en-CA'
+            locale: 'en-CA', referenceMultiplier: 1
         },
         EUR: {
             code: 'EUR',
@@ -143,7 +142,7 @@ class Config {
             defaultRate: 0.92,
             flag: '🇪🇺',
             decimals: 2,
-            locale: 'de-DE'
+            locale: 'de-DE', referenceMultiplier: 1
         },
         GBP: {
             code: 'GBP',
@@ -153,7 +152,7 @@ class Config {
             defaultRate: 0.79,
             flag: '🇬🇧',
             decimals: 2,
-            locale: 'en-GB'
+            locale: 'en-GB', referenceMultiplier: 1
         }
     };
 
@@ -436,30 +435,83 @@ class RateCard extends Card {
 }
 
 class ReferenceCard extends Card {
+    #multiplier = 1;
+
     constructor(rateService) {
         super('card-reference');
         this.rateService = rateService;
 
-        // init
+        this.tableEl = document.getElementById('reference-table');
+        this.multBtns = document.querySelectorAll('.ref-mult-btn');
+
+        // set default multiplier from currency
+        this.#multiplier = this.rateService.getForeignCurrency().referenceMultiplier ?? 1;
+        this.#syncMultiplierButtons();
+
+        // build initial table
         this.#build();
 
         // listeners
-        this.rateService.addEventListener('rateChanged', (e) => this.update());
+        this.rateService.addEventListener('rateChanged', () => this.#updateValues());
+        this.rateService.addEventListener('currencyChanged', () => {
+            this.#multiplier = this.rateService.getForeignCurrency().referenceMultiplier ?? 1;
+            this.#syncMultiplierButtons();
+            this.#updateValues();
+        });
+
+        this.multBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.#multiplier = parseInt(btn.dataset.mult);
+                this.#syncMultiplierButtons();
+                this.#updateValues();
+            });
+        });
+    }
+
+    #syncMultiplierButtons() {
+        this.multBtns.forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.mult) === this.#multiplier);
+        });
     }
 
     #build() {
-        const localCurrency = this.rateService.getLocalCurrency();
-        const foreignCurrency = this.rateService.getForeignCurrency();
-        const table = document.getElementById('reference-table');
-        const rows = Config.referenceAmounts.map(amount => `<div class="ref-row"><span>${this.rateService.formatForeignSymbol(amount)}</span><span class="ref-local highlight" data-foreign="${amount}">—</span></div>`).join('');
-        table.innerHTML = `<div class="ref-row ref-header"><span>${foreignCurrency.code}</span><span class="highlight">${localCurrency.code}</span></div>${rows}`;
+        const rows = Config.referenceAmounts.map(amount => `
+        <div class="ref-row" data-amount="${amount}">
+            <span class="ref-foreign"></span>
+            <span class="ref-local highlight"></span>
+        </div>`).join('');
+
+        this.tableEl.innerHTML = `
+        <div class="ref-row ref-header">
+            <span id="ref-header-foreign"></span>
+            <span id="ref-header-local" class="highlight"></span>
+        </div>
+        ${rows}`;
+
+        // store header refs once
+        this.headerForeign = document.getElementById('ref-header-foreign');
+        this.headerLocal = document.getElementById('ref-header-local');
+
+        this.#updateValues();
     }
 
-    update() {
-        document.querySelectorAll('.ref-local').forEach(cell => {
-            const foreign = parseFloat(cell.dataset.foreign);
-            cell.textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(foreign));
+    #updateValues() {
+        const local = this.rateService.getLocalCurrency();
+        const foreign = this.rateService.getForeignCurrency();
+
+        // update headers
+        this.headerForeign.textContent = `${foreign.flag} ${foreign.code}`;
+        this.headerLocal.textContent = `${local.flag} ${local.code}`;
+
+        // update rows
+        this.tableEl.querySelectorAll('.ref-row[data-amount]').forEach(row => {
+            const scaled = parseFloat(row.dataset.amount) * this.#multiplier;
+            row.querySelector('.ref-foreign').textContent = this.rateService.formatForeignSymbol(scaled);
+            row.querySelector('.ref-local').textContent = this.rateService.formatLocalSymbol(this.rateService.toLocal(scaled));
         });
+
+        this.updateSummary(`${foreign.flag} ${foreign.code}`);
     }
 }
 
