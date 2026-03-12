@@ -200,8 +200,8 @@ class RateService {
 
     // ── CONVERT ────────────────────────────────────────
 
-    static toForeign(amount) { return amount * RateService.getRate(); }
-    static toLocal(amount) { return amount / RateService.getRate(); }
+    static toForeign(amount) { return parseFloat(amount) * RateService.getRate(); }
+    static toLocal(amount) { return parseFloat(amount) / RateService.getRate(); }
 
     // ── FORMAT ────────────────────────────────────────
 
@@ -271,7 +271,7 @@ class Card {
         // listeners
         this.cardElement.addEventListener('click', () => this.expand());
         this.collapseButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // prevent card click from firing
+            e.stopPropagation();
             this.collapse();
         });
     }
@@ -358,12 +358,8 @@ class RateCard extends Card {
             }
             this.updateSummary(RateService.formatForeignFull(e.detail.rate));
         });
-        RateService.onStateChanged((e) => {
-            this.refreshButton.disabled = e.detail.busy;
-        });
-        RateService.onMessageSent((e) => {
-            this.hintOutput.textContent = e.detail.msg;
-        });
+        RateService.onStateChanged((e) => { this.refreshButton.disabled = e.detail.busy; });
+        RateService.onMessageSent((e) => { this.hintOutput.textContent = e.detail.msg; });
     }
 
     #updateLabel(code) {
@@ -378,31 +374,29 @@ class ReferenceCard extends Card {
     constructor(rateService) {
         super('card-reference');
 
+        // elements
         this.tableEl = document.getElementById('reference-table');
         this.multBtns = document.querySelectorAll('.ref-mult-btn');
 
-        // set default multiplier from currency
+        // init
         this.#multiplier = RateService.getForeignCurrency().multiplier ?? 1;
         this.#syncMultiplierButtons();
-
-        // build initial table
-        this.#build();
+        this.#render();
 
         // listeners
-        RateService.onRateChanged(() => this.#updateValues());
-        RateService.onCurrencyChanged(() => {
-            this.#multiplier = RateService.getForeignCurrency().multiplier ?? 1;
-            this.#syncMultiplierButtons();
-            this.#updateValues();
-        });
-
         this.multBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.#multiplier = parseInt(btn.dataset.mult);
                 this.#syncMultiplierButtons();
-                this.#updateValues();
+                this.#update();
             });
+        });
+        RateService.onRateChanged(() => this.#update());
+        RateService.onCurrencyChanged(() => {
+            this.#multiplier = RateService.getForeignCurrency().multiplier ?? 1;
+            this.#syncMultiplierButtons();
+            this.#update();
         });
     }
 
@@ -412,7 +406,7 @@ class ReferenceCard extends Card {
         });
     }
 
-    #build() {
+    #render() {
         const rows = Config.referenceAmounts.map(amount => `
         <div class="ref-row" data-amount="${amount}">
             <span class="ref-foreign"></span>
@@ -430,10 +424,10 @@ class ReferenceCard extends Card {
         this.headerForeign = document.getElementById('ref-header-foreign');
         this.headerLocal = document.getElementById('ref-header-local');
 
-        this.#updateValues();
+        this.#update();
     }
 
-    #updateValues() {
+    #update() {
         const local = RateService.getLocalCurrency();
         const foreign = RateService.getForeignCurrency();
 
@@ -451,16 +445,13 @@ class ReferenceCard extends Card {
 }
 
 class CostCard extends Card {
-    #lastForeign = null;
-    #lastEdited = 'foreign'; // track which side was last edited for rate updates
-
     constructor(rateService) {
         super('card-cost');
 
         // elements
         this.costForeignLabel = document.getElementById('cost-foreign-label');
-        this.costLocalLabel = document.getElementById('cost-local-label');
         this.costForeignInput = document.getElementById('cost-foreign-val');
+        this.costLocalLabel = document.getElementById('cost-local-label');
         this.costLocalInput = document.getElementById('cost-local-val');
         this.costQuantityInput = document.getElementById('cost-qty');
         this.costQuantityMinusButton = document.getElementById('cost-qty-minus');
@@ -468,81 +459,36 @@ class CostCard extends Card {
         this.costTotalLabel = document.getElementById('cost-total-label');
         this.costTotalOutput = document.getElementById('cost-total-val');
 
-        // quantity buttons
+        // init
+        this.#updateLabels();
+
+        // listeners
         this.costQuantityMinusButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (this.#getQuantity() > 1) {
-                this.costQuantityInput.value = this.#getQuantity() - 1;
-                this.#updateTotal();
-            }
+            this.costQuantityInput.value = Math.max(1, this.#getQuantity() - 1);
+            this.#updateValues();
         });
         this.costQuantityPlusButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.costQuantityInput.value = this.#getQuantity() + 1;
-            this.#updateTotal();
+            this.#updateValues();
         });
-        this.costQuantityInput.addEventListener('input', () => this.#updateTotal());
-
-        // bidirectional inputs
+        this.costQuantityInput.addEventListener('input', () => this.#updateValues());
         this.costForeignInput.addEventListener('input', () => {
-            this.#lastEdited = 'foreign';
-            const val = parseFloat(this.costForeignInput.value);
-            if (isNaN(val) || this.costForeignInput.value === '') {
-                this.#lastForeign = null;
-                this.costLocalInput.value = '';
-                this.#updateTotal();
-                return;
-            }
-            this.#lastForeign = val;
-            this.costLocalInput.value = RateService.formatLocalInput(
-                RateService.toLocal(val)
-            );
-            this.#updateTotal();
+            if (this.costForeignInput.value === '') { this.costLocalInput.value = ''; return; }
+            this.#updateValues();
         });
-
         this.costLocalInput.addEventListener('input', () => {
-            this.#lastEdited = 'local';
-            const val = parseFloat(this.costLocalInput.value);
-            if (isNaN(val) || this.costLocalInput.value === '') {
-                this.#lastForeign = null;
-                this.costForeignInput.value = '';
-                this.#updateTotal();
-                return;
-            }
-            this.#lastForeign = RateService.toForeign(val);
-            this.costForeignInput.value = RateService.formatForeignInput(this.#lastForeign);
-            this.#updateTotal();
+            if (this.costLocalInput.value === '') { this.costForeignInput.value = ''; return; }
+            this.costForeignInput.value = RateService.toForeign(this.costLocalInput.value);
+            this.#updateValues();
         });
-
-        // rate changed — recalculate from whichever side was last edited
-        RateService.onRateChanged(() => {
-            if (this.#lastForeign === null) return;
-            if (this.#lastEdited === 'foreign') {
-                this.costLocalInput.value = RateService.formatLocalInput(
-                    RateService.toLocal(this.#lastForeign)
-                );
-            } else {
-                // local was last edited — keep local value, update foreign
-                const localVal = parseFloat(this.costLocalInput.value);
-                if (!isNaN(localVal)) {
-                    this.#lastForeign = RateService.toForeign(localVal);
-                    this.costForeignInput.value = RateService.formatForeignInput(this.#lastForeign);
-                }
-            }
-            this.#updateTotal();
-        });
-
+        RateService.onRateChanged(() => { this.#updateValues(); });
         RateService.onCurrencyChanged(() => {
             this.#updateLabels();
-            // clear on currency change — stale values would be misleading
-            this.#lastForeign = null;
             this.costForeignInput.value = '';
-            this.costLocalInput.value = '';
-            this.#updateTotal();
+            this.#updateValues();
         });
-
-        // init
-        this.#updateLabels();
     }
 
     #updateLabels() {
@@ -553,14 +499,20 @@ class CostCard extends Card {
         this.costTotalLabel.textContent = `Total (${local.code})`;
     }
 
-    #updateTotal() {
-        if (this.#lastForeign === null) {
+    #updateValues() {
+        const foreign = parseFloat(this.costForeignInput.value);
+        if (isNaN(foreign) || this.costForeignInput.value === '') {
+            this.costLocalInput.value = '';
             this.costTotalOutput.value = '';
             this.updateSummary('');
             return;
         }
-        const localPerUnit = RateService.toLocal(this.#lastForeign);
+
+        const localPerUnit = RateService.toLocal(foreign);
         const total = localPerUnit * this.#getQuantity();
+        if (document.activeElement !== this.costLocalInput) {
+            this.costLocalInput.value = RateService.formatLocalInput(localPerUnit);
+        }
         this.costTotalOutput.value = RateService.formatLocalSymbol(total);
         this.updateSummary(RateService.formatLocalFull(total));
     }
@@ -584,14 +536,14 @@ class MarketWeightCard extends Card {
         this.locallabel = document.getElementById('market-local-label');
         this.localOutput = document.getElementById('market-local-val');
 
+        // init
+        this.#updateLabels();
+
         // listeners
         this.rateInput.addEventListener('input', (e) => { this.#updateValues(); });
         this.weightInput.addEventListener('input', (e) => { this.#updateValues(); });
         RateService.onRateChanged((e) => { this.#updateValues(); });
         RateService.onCurrencyChanged(() => { this.#updateLabels() });
-
-        // init
-        this.#updateLabels();
     }
 
     #updateLabels() {
