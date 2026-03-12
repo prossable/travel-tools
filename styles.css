@@ -693,6 +693,49 @@ header {
     }
 }
 
+/* BILL */
+#split-list {
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+
+    .split-header {
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+
+        >span:nth-child(n+3) {
+            text-align: right;
+        }
+    }
+
+    .split-row {
+        display: grid;
+        grid-template-columns: 1.5fr 80px 1fr 1fr 30px;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+
+        .split-currency-btn {
+            border-radius: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .split-offset {
+            text-align: right;
+        }
+
+        .split-tip,
+        .split-total {
+            text-align: right;
+            color: var(--accent2);
+        }
+    }
+
+    .split-footer {
+        text-align: center;
+    }
+
+}
+
 /* TIME */
 
 #card-timezones {

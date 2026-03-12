@@ -573,46 +573,77 @@ class MarketWeightCard extends Card {
 
 class BillCard extends Card {
     lastBillPercent = null;
+    #mode = 'even';
+    #splitRows = [];
 
     constructor(rateService) {
         super('card-bill');
 
         // elements
-        this.total1FInput = document.getElementById('bill-total1');
-        this.totalLInput = document.getElementById('bill-total2');
+        this.foreignLabel = document.getElementById('bill-foreign-label');
+        this.foreignInput = document.getElementById('bill-foreign-val');
+        this.localLabel = document.getElementById('bill-local-label');
+        this.localInput = document.getElementById('bill-local-val');
         this.peopleInput = document.getElementById('bill-people');
         this.peopleMinusButton = document.getElementById('bill-people-minus');
         this.peoplePlusButton = document.getElementById('bill-people-plus');
         this.tipButtons = document.getElementById('tip-options').querySelectorAll('button');
         this.tipCustomInput = document.getElementById('bill-tip-custom');
-        this.tipFOutput = document.getElementById('bill-tip1');
-        this.tipLOutput = document.getElementById('bill-tip2');
-        this.finalFOutput = document.getElementById('bill-final1');
-        this.finalLOutput = document.getElementById('bill-final2');
+        this.tipForeignLabel = document.getElementById('bill-foreign-tip-label');
+        this.tipForeignOutput = document.getElementById('bill-foreign-tip-val');
+        this.tipLocalLabel = document.getElementById('bill-local-tip-label');
+        this.tipLocalOutput = document.getElementById('bill-local-tip-val');
+        this.totalForeignLabel = document.getElementById('bill-foreign-total-label');
+        this.totalForeignOutput = document.getElementById('bill-foreign-total-val');
+        this.totalLocalLabel = document.getElementById('bill-local-total-label');
+        this.totalLocalOutput = document.getElementById('bill-local-total-val');
+        this.modeButtons = document.querySelectorAll('.bill-mode-btn');
+        this.splitList = document.getElementById('split-list');
+        this.splitRowsEl = document.getElementById('split-rows');
+        this.splitOffsetLabel = document.getElementById('split-offset-label');
+
+        // init
+        this.#updateLabels();
 
         // listeners
-        this.total1FInput.addEventListener('input', () => {
-            if (this.total1FInput.value === '') { this.totalLInput.value = ''; return; }
+        this.modeButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.#mode = btn.dataset.mode;
+                this.modeButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.#syncRows();
+                this.#updateValues();
+            });
+        });
+        this.foreignInput.addEventListener('input', () => {
+            if (this.foreignInput.value === '') { this.localInput.value = ''; return; }
             this.#updateValues();
         });
-        this.totalLInput.addEventListener('input', () => {
-            if (this.totalLInput.value === '') { this.total1FInput.value = ''; return; }
-            this.total1FInput.value = RateService.formatForeignInput(RateService.toForeign(this.totalLInput.value));
+        this.localInput.addEventListener('input', () => {
+            if (this.localInput.value === '') { this.foreignInput.value = ''; return; }
+            this.foreignInput.value = RateService.formatForeignInput(RateService.toForeign(this.localInput.value));
             this.#updateValues();
         });
-        this.peopleInput.addEventListener('input', () => { this.#updateValues() });
+        this.peopleInput.addEventListener('input', () => {
+            this.#syncRows();
+            this.#updateValues();
+        });
         this.peopleMinusButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.peopleInput.value = Math.max(1, this.#getPeople() - 1);
+            this.#syncRows();
             this.#updateValues();
         });
         this.peoplePlusButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.peopleInput.value = this.#getPeople() + 1;
+            this.#syncRows();
             this.#updateValues();
         });
         this.tipButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.lastBillPercent = parseFloat(btn.dataset.pct);
                 this.tipCustomInput.value = '';
                 this.setTipPreset(btn);
@@ -624,10 +655,188 @@ class BillCard extends Card {
             this.setTipCustom();
             this.#updateValues();
         });
-        RateService.onRateChanged((e) => {
+        RateService.onRateChanged(() => this.#updateValues());
+        RateService.onCurrencyChanged(() => {
+            this.#updateLabels();
             this.#updateValues();
         });
     }
+
+    // ── Split rows ────────────────────────────────────
+
+    #syncRows() {
+        const count = this.#getPeople();
+
+        // add missing rows
+        while (this.#splitRows.length < count) {
+            const id = this.#splitRows.length + 1;
+            const row = this.#buildRow(id);
+            this.#splitRows.push(row);
+            this.splitRowsEl.appendChild(row.el);
+        }
+
+        // hide/show rows
+        this.#splitRows.forEach((row, i) => {
+            row.el.style.display = i < count ? '' : 'none';
+        });
+
+        // toggle uneven list
+        this.splitList.style.display = (this.#mode === 'uneven' && this.#getPeople() > 1) ? '' : 'none';
+    }
+
+    #buildRow(index) {
+        const el = document.createElement('div');
+        el.className = 'split-row';
+        el.innerHTML = `
+            <input type="text" class="split-name" placeholder="Person ${index}">
+            <input type="number" class="split-offset" placeholder="+/-" step="any">
+            <span class="split-tip">—</span>
+            <span class="split-total">—</span>            
+            <button class="split-currency-btn">${RateService.getForeignCurrency().code}</button>`;
+
+        const currencyBtn = el.querySelector('.split-currency-btn');
+        const offsetInput = el.querySelector('.split-offset');
+
+        // currency toggle
+        currencyBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isForeign = currencyBtn.textContent === RateService.getForeignCurrency().code;
+            currencyBtn.textContent = isForeign
+                ? RateService.getLocalCurrency().code
+                : RateService.getForeignCurrency().code;
+            this.#updateValues();
+        });
+
+        // offset change triggers recalc
+        offsetInput.addEventListener('input', () => this.#updateValues());
+
+        return {
+            el,
+            get currencyBtn() { return el.querySelector('.split-currency-btn'); },
+            get nameInput() { return el.querySelector('.split-name'); },
+            get offsetInput() { return el.querySelector('.split-offset'); },
+            get tipEl() { return el.querySelector('.split-tip'); },
+            get totalEl() { return el.querySelector('.split-total'); },
+        };
+    }
+
+    // ── Labels ────────────────────────────────────────
+
+    #updateLabels() {
+        const foreign = RateService.getForeignCurrency();
+        const local = RateService.getLocalCurrency();
+
+        this.foreignLabel.textContent = `Bill (${foreign.code})`;
+        this.localLabel.textContent = `Bill (${local.code})`;
+        this.tipForeignLabel.textContent = `Tip (${foreign.code})`;
+        this.tipLocalLabel.textContent = `Tip (${local.code})`;
+        this.totalForeignLabel.textContent = `Total (${foreign.code})`;
+        this.totalLocalLabel.textContent = `Total (${local.code})`;
+
+        this.splitOffsetLabel.textContent = `Offset ${foreign.code}`;
+        // reset currency buttons to foreign on currency change
+        this.#splitRows.forEach(row => {
+            row.currencyBtn.textContent = foreign.code;
+        });
+    }
+
+    // ── Calculations ──────────────────────────────────
+
+    #getPeople() { return Math.max(1, parseInt(this.peopleInput.value) || 1); }
+
+    #updateValues() {
+        const people = this.#getPeople();
+        const pct = this.lastBillPercent;
+        const foreign = parseFloat(this.foreignInput.value);
+
+        if (isNaN(foreign) || this.foreignInput.value === '') {
+            this.localInput.value = '';
+            this.tipForeignOutput.value = '';
+            this.tipLocalOutput.value = '';
+            this.totalForeignOutput.value = '';
+            this.totalLocalOutput.value = '';
+            this.updateSummary('');
+            this.#clearSplitRows();
+            return;
+        }
+
+        if (document.activeElement !== this.localInput) {
+            this.localInput.value = RateService.formatLocalInput(RateService.toLocal(foreign));
+        }
+
+        if (pct === null || isNaN(pct)) {
+            this.tipForeignOutput.value = '';
+            this.tipLocalOutput.value = '';
+            this.totalForeignOutput.value = '';
+            this.totalLocalOutput.value = '';
+            this.updateSummary('');
+            this.#clearSplitRows();
+            return;
+        }
+
+        const tipF = foreign * (pct / 100);
+        const tipL = RateService.toLocal(tipF);
+        const tipPerF = tipF / people;
+        const subF = foreign / people;
+        const finalF = subF + tipPerF;
+        const finalL = RateService.toLocal(finalF);
+
+        // even mode outputs
+        if (people == 1 || this.#mode === 'uneven') {
+            this.tipForeignOutput.value = RateService.formatForeignSymbol(tipF);
+            this.tipLocalOutput.value = RateService.formatLocalSymbol(tipL);
+            this.totalForeignOutput.value = RateService.formatForeignSymbol(foreign + tipF);
+            this.totalLocalOutput.value = RateService.formatLocalSymbol(RateService.toLocal(foreign + tipF));
+            this.updateSummary(RateService.formatLocalFull(RateService.toLocal(foreign + tipF)));
+        } else {
+            this.tipForeignOutput.value = `${RateService.formatForeignSymbol(tipPerF)} (${RateService.formatForeignSymbol(tipF)})`;
+            this.tipLocalOutput.value = `${RateService.formatLocalSymbol(RateService.toLocal(tipPerF))} (${RateService.formatLocalSymbol(tipL)})`;
+            this.totalForeignOutput.value = `${RateService.formatForeignSymbol(finalF)} (${RateService.formatForeignSymbol(foreign + tipF)})`;
+            this.totalLocalOutput.value = `${RateService.formatLocalSymbol(finalL)} (${RateService.formatLocalSymbol(RateService.toLocal(foreign + tipF))})`;
+            this.updateSummary(`${RateService.formatLocalFull(finalL)} / person`);
+        }
+
+        // uneven mode
+        if (this.#mode === 'uneven') this.#updateSplitRows(foreign, tipF);
+    }
+
+    #updateSplitRows(foreign, tipF) {
+        const count = this.#getPeople();
+        const activeRows = this.#splitRows.slice(0, count);
+
+        // sum of offsets
+        const totalOffset = activeRows.reduce((sum, row) => {
+            const val = parseFloat(row.offsetInput.value) || 0;
+            return sum + val;
+        }, 0);
+
+        const remainder = foreign - totalOffset;
+        const perPerson = remainder / count;
+
+        activeRows.forEach(row => {
+            const offset = parseFloat(row.offsetInput.value) || 0;
+            const sub = perPerson + offset;
+            const tip = (sub / foreign) * tipF;
+            const total = sub + tip;
+            const isForeign = row.currencyBtn.textContent === RateService.getForeignCurrency().code;
+
+            row.tipEl.textContent = isForeign
+                ? RateService.formatForeignSymbol(tip)
+                : RateService.formatLocalSymbol(RateService.toLocal(tip));
+            row.totalEl.textContent = isForeign
+                ? RateService.formatForeignSymbol(total)
+                : RateService.formatLocalSymbol(RateService.toLocal(total));
+        });
+    }
+
+    #clearSplitRows() {
+        this.#splitRows.forEach(row => {
+            row.tipEl.textContent = '—';
+            row.totalEl.textContent = '—';
+        });
+    }
+
+    // ── Tip helpers ───────────────────────────────────
 
     setTipPreset(btn) {
         this.tipButtons.forEach(b => b.classList.remove('active'));
@@ -638,55 +847,6 @@ class BillCard extends Card {
     setTipCustom() {
         this.tipButtons.forEach(b => b.classList.remove('active'));
         this.tipCustomInput.classList.add('active');
-    }
-
-    #getPeople() { return Math.max(1, parseInt(this.peopleInput.value) || 1); }
-
-    #updateValues() {
-        const people = this.#getPeople();
-        const pct = this.lastBillPercent;
-
-        // sync bill fields
-        const foreign = parseFloat(this.total1FInput.value);
-        const local = RateService.toLocal(foreign);
-        if (isNaN(foreign) || this.total1FInput.value === '') {
-            this.totalLInput.value = '';
-            return;
-        } else if (document.activeElement !== this.totalLInput) {
-            this.totalLInput.value = RateService.formatLocalInput(local);
-        }
-
-        // error check
-        if ( pct === null || isNaN(pct)) {
-            this.tipFOutput.value = '';
-            this.tipLOutput.value = '';
-            this.finalFOutput.value = '';
-            this.finalLOutput.value = '';
-            this.updateSummary('');
-            return;
-        }
-
-        const tipF = foreign * (pct / 100);
-        const tipL = RateService.toLocal(tipF);
-        const tipPerF = tipF / people;
-        const tipPerL = RateService.toLocal(tipPerF);
-        const subF = foreign / people;
-        const finalF = subF + tipPerF;
-        const finalL = RateService.toLocal(finalF);
-
-        if (people > 1) {
-            this.tipFOutput.value = `${RateService.formatForeignSymbol(tipPerF)} (${RateService.formatForeignSymbol(tipF)})`;
-            this.tipLOutput.value = `${RateService.formatLocalSymbol(tipPerL)} (${RateService.formatLocalSymbol(tipL)})`;
-            this.finalFOutput.value = `${RateService.formatForeignSymbol(finalF)} (${RateService.formatForeignSymbol(foreign + tipF)})`;
-            this.finalLOutput.value = `${RateService.formatLocalSymbol(finalL)} (${RateService.formatLocalSymbol(local + tipL)})`;
-            this.updateSummary(`${RateService.formatLocalFull(finalL)} / person`);
-        } else {
-            this.tipFOutput.value = RateService.formatForeignSymbol(tipF);
-            this.tipLOutput.value = RateService.formatLocalSymbol(tipL);
-            this.finalFOutput.value = RateService.formatForeignSymbol(finalF);
-            this.finalLOutput.value = RateService.formatLocalSymbol(finalL);
-            this.updateSummary(RateService.formatLocalFull(finalL));
-        }
     }
 }
 
