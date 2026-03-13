@@ -748,7 +748,7 @@ class BillCard extends Card {
         el.className = 'split-row';
         el.innerHTML = `
             <input type="text" class="split-name" placeholder="Person ${index}">
-            <input type="number" class="split-offset" placeholder="+/-" step="any">
+            <input type="number" class="split-offset" placeholder="0" min="0" step="any">
             <span class="split-tip">—</span>
             <span class="split-total">—</span>            
             <button class="split-currency-btn">${RateService.getForeignCurrency().code}</button>`;
@@ -767,7 +767,12 @@ class BillCard extends Card {
         });
 
         // offset change triggers recalc
-        offsetInput.addEventListener('input', () => this.#updateValues());
+        offsetInput.addEventListener('blur', () => {
+            const bill = parseFloat(this.foreignInput.value) || 0;
+            const val = parseFloat(offsetInput.value) || 0;
+            offsetInput.value = Math.min(Math.max(0, val), bill);
+            this.#updateValues();
+        });
 
         return {
             el,
@@ -873,7 +878,7 @@ class BillCard extends Card {
         const perPerson = remainder / count;
 
         activeRows.forEach(row => {
-            const offset = parseFloat(row.offsetInput.value) || 0;
+            const offset = Math.min(Math.max(0, parseFloat(row.offsetInput.value) || 0), foreign);
             const sub = perPerson + offset;
             const tip = (sub / foreign) * tipF;
             const total = sub + tip;
