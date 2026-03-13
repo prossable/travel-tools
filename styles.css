@@ -262,6 +262,12 @@ button {
     &.row-flex {
         gap: 0;
     }
+
+    >input {
+        &:focus-within {
+            border-color: var(--accent);
+        }
+    }
 }
 
 .options {
@@ -438,10 +444,6 @@ header {
     transition: border-color 0.2s;
     transition: padding 0.2s;
 
-    :focus-within {
-        border-color: var(--accent);
-    }
-
     >.header {
         text-transform: uppercase;
         letter-spacing: 0.12em;
@@ -598,6 +600,10 @@ header {
     border: 1px solid var(--border);
     border-radius: 10px;
     overflow: hidden;
+
+    &:focus-within {
+        border-color: var(--accent);
+    }
 
     .header {
         display: flex;
