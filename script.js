@@ -105,6 +105,31 @@ class Config {
     }
 }
 
+class StorageService {
+    static #STORED_RATE = 'storedRate';
+    static #AUTO_FETCH_RATE = 'autoFetchRate';
+    static #FOREIGN_CURRENCY = 'foreignCurrency';
+
+    static #toBool(value, defaultVal = true) { return value === null ? defaultVal : value === 'true'; }
+
+    static deleteStoredRate() { localStorage.removeItem(StorageService.#STORED_RATE); }
+    static getStoredRate() { return JSON.parse(localStorage.getItem(StorageService.#STORED_RATE)); }
+    static setStoredRate(rate, isCustom) {
+        localStorage.setItem(StorageService.#STORED_RATE, JSON.stringify({
+            rate,
+            date: RateService.getLocalDate(),
+            currency: RateService.getForeignCurrency().code,
+            isCustom
+        }));
+    }
+
+    static getAutoFetchRate() { return StorageService.#toBool(localStorage.getItem(StorageService.#AUTO_FETCH_RATE)); }
+    static setAutoFetchRate(value) { localStorage.setItem(StorageService.#AUTO_FETCH_RATE, value); }
+
+    static getForeignCode() { return localStorage.getItem(StorageService.#FOREIGN_CURRENCY) || 'MXN'; }
+    static setForeignCode(value) { localStorage.setItem(StorageService.#FOREIGN_CURRENCY, value); }
+}
+
 class RateService {
     static #ON_RATE_CHANGED = 'rateChanged';
     static #ON_STATE_CHANGED = 'stateChanged';
@@ -113,61 +138,94 @@ class RateService {
     static #API_TIMEOUT = 5000;
 
     static #localCurrency = Config.currencies['USD'];
-    static #foreignCurrency = Config.currencies['MXN'];
+    static #foreignCurrency;
     static #rate = null;
+    static #message = "Fetching live rate…";
 
     constructor() { throw new Error('EventService is static'); }
+
+    static init() {
+        RateService.setForeignCurrency(StorageService.getForeignCode());
+    }
 
     // ── CURRENCY ────────────────────────────────────────
 
     static getLocalCurrency() { return RateService.#localCurrency; }
     static getForeignCurrency() { return RateService.#foreignCurrency; }
     static setForeignCurrency(code) {
-        const currency = Config.getCurrency(code);
-        if (!currency) return;
+        let currency = Config.getCurrency(code);
+        if (currency == null) currency = Config.getCurrency('MXN');
+
+        const oldCode = RateService.#foreignCurrency?.code;
+        if (currency.code === oldCode) return;
+
         RateService.#foreignCurrency = currency;
+        StorageService.setForeignCode(currency.code);
         RateService.#rate = null;
-        localStorage.removeItem('cachedRate');
+
+        // only clear stored rate if it belongs to a different currency
+        const stored = StorageService.getStoredRate();
+        if (stored !== null && stored.currency !== currency.code) {
+            StorageService.deleteStoredRate();
+        }
+
         RateService.#dispatch(RateService.#ON_CURRENCY_CHANGED, { currency });
+        RateService.fetchRate();
     }
 
     // ── RATE ────────────────────────────────────────
 
     static getRate() {
-        return RateService.#rate ?? RateService.#foreignCurrency.rate;
+        return RateService.#rate ?? RateService.#foreignCurrency.default;
     }
 
     static setRate(value) {
-        const changed = RateService.#rate !== parseFloat(value);
-        RateService.#rate = parseFloat(value);
+        const parsed = parseFloat(value);
+        const changed = RateService.#rate !== parsed;
+        RateService.#rate = parsed;
         if (changed) {
             RateService.#dispatch(RateService.#ON_RATE_CHANGED, { rate: RateService.#rate });
         }
     }
 
-    static fetchRate(force = false) {
+    static fetchRate(forceFetch = false) {
         const today = RateService.getLocalDate();
+        const stored = StorageService.getStoredRate();
 
-        // fetch rate
-        const custom = localStorage.getItem('customRate');
-        if (custom && !force) {
-            RateService.setRate(parseFloat(custom));
-            RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: 'Using a custom rate' });
+        // custom rate — only override if not force fetching
+        if (stored?.isCustom && !forceFetch) {
+            RateService.setRate(stored.rate);
+            RateService.#sendMessage('Using a custom rate');
             return;
         }
 
-        // check cache
-        const cached = JSON.parse(localStorage.getItem('cachedRate'));
-        if (!force && cached && cached.date === today && cached.currency === RateService.#foreignCurrency.code) {
-            RateService.setRate(cached.rate);
-            RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: `Cached rate as of ${RateService.formatDate(cached.date)}` });
+        // valid cached rate for today
+        if (!forceFetch &&
+            stored !== null &&
+            !stored.isCustom &&
+            stored.date === today &&
+            stored.currency === RateService.#foreignCurrency.code) {
+            RateService.setRate(stored.rate);
+            RateService.#sendMessage(`Cached rate as of ${RateService.formatDate(stored.date)}`);
             return;
         }
 
-        console.log("==== FETCH RATE ===");
+        // respect auto fetch setting
+        if (!forceFetch && !StorageService.getAutoFetchRate()) {
+            if (stored !== null && stored.currency === RateService.#foreignCurrency.code) {
+                RateService.setRate(stored.rate);
+                RateService.#sendMessage(`Rate as of ${RateService.formatDate(stored.date)} · auto-fetch disabled`);
+            } else {
+                RateService.setRate(RateService.getForeignCurrency().default);
+                RateService.#sendMessage('Auto-fetch disabled · using default rate');
+            }
+            return;
+        }
+
         // fetch live
         RateService.#dispatch(RateService.#ON_STATE_CHANGED, { busy: true });
-        RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: 'Fetching live rate…' });
+        RateService.#sendMessage('Fetching live rate…');
+
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), RateService.#API_TIMEOUT);
         const url = `https://api.frankfurter.app/latest?from=${RateService.#localCurrency.code}&to=${RateService.#foreignCurrency.code}`;
@@ -177,21 +235,20 @@ class RateService {
             .then(data => {
                 clearTimeout(timeout);
                 const val = data.rates[RateService.#foreignCurrency.code];
-                localStorage.setItem('cachedRate', JSON.stringify({
-                    rate: val,
-                    date: today,
-                    currency: RateService.#foreignCurrency.code
-                }));
+                StorageService.setStoredRate(val, false);
                 RateService.setRate(val);
-                RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: `Live rate as of ${RateService.formatDate(today)} · European Central Bank` });
+                RateService.#sendMessage(`Live rate as of ${RateService.formatDate(today)} · European Central Bank`);
             })
             .catch(err => {
                 console.log(err);
                 clearTimeout(timeout);
-                const msg = err.name === 'AbortError' ?
-                    'Request timed out · using fallback' :
-                    'Could not fetch live rate · using fallback';
-                RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: msg });
+                // fall back to stale stored rate if available
+                if (stored !== null && stored.currency === RateService.#foreignCurrency.code) {
+                    RateService.setRate(stored.rate);
+                    RateService.#sendMessage(`Using rate from ${RateService.formatDate(stored.date)} · network unavailable`);
+                } else {
+                    RateService.#sendMessage(err.name === 'AbortError' ? 'Request timed out · using default rate' : 'Could not fetch live rate · using default rate');
+                }
             })
             .finally(() => {
                 RateService.#dispatch(RateService.#ON_STATE_CHANGED, { busy: false });
@@ -249,6 +306,12 @@ class RateService {
 
     static #dispatch(name, detail = {}) { document.dispatchEvent(new CustomEvent(name, { detail })); }
     static #listen(name, handler) { document.addEventListener(name, handler); }
+
+    static #sendMessage(msg) {
+        RateService.#message = msg;
+        RateService.#dispatch(RateService.#ON_MESSAGE_SENT, { msg: msg });
+    }
+    static getMessage() { return RateService.#message; }
 
     static onRateChanged(handler) { RateService.#listen(RateService.#ON_RATE_CHANGED, handler); }
     static onStateChanged(handler) { RateService.#listen(RateService.#ON_STATE_CHANGED, handler); }
@@ -317,38 +380,34 @@ class RateCard extends Card {
                 this.currencySelect.appendChild(opt);
             });
 
-        // settings
-        const savedCurrency = localStorage.getItem('foreignCurrency') || 'MXN';
-        this.currencySelect.value = savedCurrency;
-        RateService.setForeignCurrency(savedCurrency);
-        this.#updateLabel(savedCurrency);
-        const saved = localStorage.getItem('autoFetchRate');
-        this.autoFetchCheckbox.checked = saved === null ? true : saved === 'true';
+        // init
+        const rate = RateService.getRate();
+        this.currencySelect.value = RateService.getForeignCurrency().code;
+        this.rateInput.value = rate;
+        this.autoFetchCheckbox.checked = StorageService.getAutoFetchRate();
+        this.hintOutput.textContent = RateService.getMessage();
+        this.#updateLabel();
+        this.updateSummary(RateService.formatForeignFull(rate));
 
         // listeners
         this.currencySelect.addEventListener('change', (e) => {
             e.stopPropagation();
-            const code = e.target.value;
-            localStorage.setItem('foreignCurrency', code);
-            localStorage.removeItem('customRate');
-            RateService.setForeignCurrency(code);
-            this.#updateLabel(code);
-            RateService.fetchRate(true);
+            RateService.setForeignCurrency(e.target.value);
+            this.#updateLabel();
         });
         this.rateInput.addEventListener('input', () => {
             this.hintOutput.textContent = 'Using a custom rate';
             const val = parseFloat(this.rateInput.value);
-            localStorage.setItem('customRate', val);
+            StorageService.setStoredRate(val, true);
             RateService.setRate(val);
             this.autoFetchCheckbox.checked = false;
-            localStorage.setItem('autoFetchRate', false);
+            StorageService.setAutoFetchRate(false);
         });
         this.autoFetchCheckbox.addEventListener('change', () => {
-            localStorage.setItem('autoFetchRate', this.autoFetchCheckbox.checked);
+            StorageService.setAutoFetchRate(this.autoFetchCheckbox.checked);
         });
         this.refreshButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            localStorage.removeItem('customRate');
             RateService.fetchRate(true);
         });
 
@@ -362,9 +421,9 @@ class RateCard extends Card {
         RateService.onMessageSent((e) => { this.hintOutput.textContent = e.detail.msg; });
     }
 
-    #updateLabel(code) {
-        const currency = Config.getCurrency(code);
-        this.rateLabel.textContent = `${currency.symbol} ${currency.code} per $1 USD`;
+    #updateLabel() {
+        const foreign = RateService.getForeignCurrency();
+        this.rateLabel.textContent = `${foreign.symbol} ${foreign.code} per $1 USD`;
     }
 }
 
@@ -1817,6 +1876,7 @@ class App {
 
     constructor() {
         // rate    
+        RateService.init();
         RateService.onCurrencyChanged(() => this.#onCurrencyChange());
         this.#onCurrencyChange();
 
@@ -1833,7 +1893,6 @@ class App {
         new TimezonesCard();
 
         // init
-        RateService.fetchRate();
         this.#registerServiceWorker();
         this.#setupInstallPrompt();
         this.#setupWakeLock();
