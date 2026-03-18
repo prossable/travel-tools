@@ -9,10 +9,7 @@
 
 :root {
     --bg: #0c0f14;
-    --card: #131820;
     --border: #1e2a38;
-    --accent: #3a9bd5;
-    --accent2: #00ffff;
     --text: #ffffff;
     --muted: #bed1df;
     --mid: #77838b;
@@ -20,11 +17,16 @@
     --input-bg: #06090c;
     --dark: #1b587e;
 
-    --accentX: #3ad59a;
-    --accentY: 58 155 213;
-    --dark1: hsl(from var(--accent) h calc(s * .8) calc(l * .4));
-    --dark2: hsl(from var(--accent) h calc(s * 1) calc(l * .6));
-    --dark3: hsl(from #d53ad5 h s l);
+    --accent1: #3a9bd5;
+    --accent2: #00e1ff;
+    --accent3: #0062ff;
+
+    --card-bg: hsl(from var(--accent3) h calc(s * .2) calc(l * .15));
+
+    --card-tool: hsl(from var(--accent1) h calc(s * .8) calc(l * .2));
+    --card-form: hsl(from var(--accent1) h calc(s * .8) calc(l * .6));
+    --bg1: hsl(from var(--accent1) h calc(s * .6) calc(l * .4));
+    --bg2: hsl(from var(--accent1) h calc(s * .8) calc(l * .2));
 }
 
 * {
@@ -44,7 +46,7 @@ body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     overscroll-behavior: none;
-    background: linear-gradient(var(--border) 0%, #0e1b31 100%);
+    background: linear-gradient(var(--bg1) 0%, var(--bg2) 100%);
     background-attachment: fixed;
 }
 
@@ -110,11 +112,11 @@ select {
     color: var(--text);
     padding: 10px;
     outline: none;
-    scrollbar-color: var(--accent) var(--input-bg);
+    scrollbar-color: var(--accent1) var(--input-bg);
     scrollbar-width: thin;
 
     &:focus {
-        border-color: var(--accent);
+        border-color: var(--accent1);
     }
 
     option {
@@ -131,7 +133,7 @@ select {
     }
 
     &::-webkit-scrollbar-thumb {
-        background: var(--accent);
+        background: var(--accent1);
         border-radius: 3px;
     }
 }
@@ -150,12 +152,12 @@ input[type="checkbox"] {
     transition: background 0.2s, border-color 0.2s;
 
     &:hover {
-        border-color: var(--accent);
+        border-color: var(--accent1);
     }
 
     &:checked {
-        background: var(--accent);
-        border-color: var(--accent);
+        background: var(--accent1);
+        border-color: var(--accent1);
 
         &::after {
             content: '';
@@ -173,7 +175,7 @@ input[type="checkbox"] {
 }
 
 button {
-    background: var(--accent);
+    background: var(--accent1);
     border: none;
     border-radius: 50%;
     text-transform: uppercase;
@@ -190,7 +192,7 @@ button {
     -webkit-user-select: none;
 
     &:hover {
-        background: var(--accent);
+        background: var(--accent1);
         color: var(--border);
     }
 
@@ -235,7 +237,7 @@ div.toggle {
     &:hover {
         >button {
             color: var(--bg);
-            background: var(--accent);
+            background: var(--accent1);
 
             &.active {
                 color: var(--muted);
@@ -254,7 +256,7 @@ div.toggle {
 
         &.active {
             color: var(--bg);
-            background: var(--accent);
+            background: var(--accent1);
         }
     }
 }
@@ -278,7 +280,7 @@ div.tab {
         flex: 1;
 
         &:hover {
-            background: var(--accent);
+            background: var(--accent1);
         }
 
         &:active {
@@ -287,7 +289,7 @@ div.tab {
         }
 
         &.active {
-            background: var(--accent);
+            background: var(--accent1);
             color: var(--bg);
         }
 
@@ -302,7 +304,7 @@ div.tab {
 
     >input {
         &:focus-within {
-            border-color: var(--accent);
+            border-color: var(--accent1);
         }
     }
 }
@@ -320,7 +322,7 @@ div.options {
         flex: 1;
 
         &:hover {
-            background: var(--accent);
+            background: var(--accent1);
         }
 
         &:active {
@@ -329,7 +331,7 @@ div.options {
         }
 
         &.active {
-            background: var(--accent);
+            background: var(--accent1);
             color: var(--bg);
         }
     }
@@ -344,20 +346,28 @@ div.options {
 }
 
 div.form {
-    background-color: var(--dark2);
+    background-color: var(--card-form);
     transition: background 0.2s, display 0.2s, fill 0.2s, transform 0.3s ease-in-out;
+    border-radius: 0 0 20px 20px;
 }
 
 body .card .body .body-inner div.toolbar {
     display: flex;
     padding: 10px 20px;
-    background-color: var(--dark1);
+    background-color: var(--card-tool);
     gap: 10px;
 }
 
 /* ROWS */
 
 div {
+    .row-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-top: 20px;
+    }
+
     .row-flex {
         display: flex;
         align-items: center;
@@ -453,7 +463,7 @@ header {
         }
 
         span {
-            color: var(--accent);
+            color: var(--accent1);
         }
     }
 
@@ -481,7 +491,7 @@ header {
 
 /* CARD */
 .card {
-    background: var(--card);
+    background: var(--card-bg);
     border-radius: 16px;
     margin-bottom: 16px;
     max-width: 480px;
@@ -506,7 +516,7 @@ header {
         .icon {
             width: 20px;
             height: 20px;
-            fill: var(--accent);
+            fill: var(--accent1);
             transition: fill 0.4s ease-in-out;
         }
 
@@ -533,10 +543,14 @@ header {
             overflow: hidden;
 
             >div {
-                padding: 0 20px 20px;
+                padding: 10px 20px;
 
                 &:first-child {
                     padding-top: 20px;
+                }
+
+                &:last-child {
+                    padding-bottom: 20px;
                 }
             }
         }
@@ -545,7 +559,7 @@ header {
     &.open {
 
         >.header {
-            background-color: var(--accent);
+            background-color: var(--accent1);
             color: var(--bg);
 
             .icon {
@@ -562,7 +576,7 @@ header {
         }
 
         >.body {
-            background: linear-gradient(var(--card) 80%, var(--bg) 100%);
+            background: linear-gradient(var(--card-bg) 80%, var(--bg) 100%);
             grid-template-rows: 1fr;
         }
     }
@@ -598,7 +612,6 @@ header {
     #tally-list {
         .tally-item {
             align-items: center;
-            margin: 10px 0;
             display: grid;
             grid-template-columns: auto 1fr 1fr auto;
             gap: 8px;
@@ -615,17 +628,13 @@ header {
     }
 
     .total span:nth-child(3) {
-        color: var(--accent);
+        color: var(--accent1);
         text-align: right;
     }
 }
 
 /* NOTES */
 #notes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-
     .note {
         display: flex;
         flex-direction: column;
@@ -701,10 +710,6 @@ header {
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 10px;
-
-    &:not(:last-child) {
-        padding: 0 0 10px;
-    }
 
     &.settled .info {
         opacity: 0.4;
@@ -827,7 +832,7 @@ header {
 
         .tz-entry-offset {
             font-size: 0.65rem;
-            color: var(--accent);
+            color: var(--accent1);
             text-align: right;
         }
     }
@@ -847,7 +852,7 @@ header {
         }
 
         #budget-date {
-            position: absolute;
+            position: fixed;
             opacity: 0;
             pointer-events: none;
             width: 0;
@@ -864,7 +869,7 @@ header {
             white-space: nowrap;
 
             &:hover {
-                border-color: var(--accent);
+                border-color: var(--accent1);
             }
         }
     }
@@ -874,7 +879,6 @@ header {
         grid-template-columns: auto 1fr auto;
         align-items: center;
         gap: 10px;
-        margin: 10px 0;
         white-space: pre;
     }
 

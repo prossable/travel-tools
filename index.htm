@@ -304,7 +304,7 @@
         </div>
         <div class="body">
             <div class="body-inner">
-                <div id="notes-list"></div>
+                <div id="notes-list" class="row-list"></div>
             </div>
         </div>
     </div>
@@ -501,7 +501,7 @@
                 </div>
 
                 <!-- Item list -->
-                <div id="tally-list">
+                <div id="tally-list" class="row-list">
                 </div>
 
                 <!-- Totals -->
@@ -700,7 +700,7 @@
                 </div>
 
                 <!-- Entry list -->
-                <div id="debt-list"></div>
+                <div id="debt-list" class="row-list"></div>
 
             </div>
         </div>
@@ -721,6 +721,12 @@
         <div class="body">
             <div class="body-inner">
 
+                <!-- Budget target -->
+                <div class="toolbar label-group">
+                    <label>Budget</label>
+                    <input type="number" id="budget-target" placeholder="0" min="0" step="any">
+                </div>
+
                 <!-- Toolbar -->
                 <div class="toolbar">
                     <button id="budget-new-btn" title="Add expense"><svg>
@@ -732,12 +738,6 @@
                     <button class="red" id="budget-delete" title="Delete selected" disabled><svg>
                             <use href="#icon-delete" />
                         </svg></button>
-                </div>
-
-                <!-- Budget target -->
-                <div class="toolbar label-group">
-                    <label>Budget</label>
-                    <input type="number" id="budget-target" placeholder="0" min="0" step="any">
                 </div>
 
                 <!-- Add form -->
@@ -775,7 +775,7 @@
                 </div>
 
                 <!-- List -->
-                <div id="budget-list"></div>
+                <div id="budget-list" class="row-list"></div>
 
                 <!-- Progress bar -->
                 <div id="budget-progress" class="budget-progress">
