@@ -16,8 +16,15 @@
     --text: #ffffff;
     --muted: #bed1df;
     --mid: #77838b;
-    --input-bg: #0a0e14;
+    --input-active: #0a334d;
+    --input-bg: #06090c;
     --dark: #1b587e;
+
+    --accentX: #3ad59a;
+    --accentY: 58 155 213;
+    --dark1: hsl(from var(--accent) h calc(s * .8) calc(l * .4));
+    --dark2: hsl(from var(--accent) h calc(s * 1) calc(l * .6));
+    --dark3: hsl(from #d53ad5 h s l);
 }
 
 * {
@@ -37,7 +44,7 @@ body {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
     overscroll-behavior: none;
-    background: linear-gradient(var(--border) 0%, var(--accent) 100%);
+    background: linear-gradient(var(--border) 0%, #0e1b31 100%);
     background-attachment: fixed;
 }
 
@@ -50,11 +57,11 @@ select {
     font-family: inherit;
     font-size: inherit;
     font-weight: inherit;
-}
 
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-    -webkit-appearance: none;
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+    }
 }
 
 input,
@@ -72,7 +79,7 @@ textarea {
     user-select: text;
 
     &:focus {
-        background-color: var(--dark);
+        background-color: var(--input-active);
         color: var(--muted);
     }
 
@@ -98,7 +105,7 @@ textarea {
 select {
     width: 100%;
     background: var(--input-bg);
-    border: 1px solid var(--border);
+    border: none;
     border-radius: 10px;
     color: var(--text);
     padding: 10px;
@@ -166,14 +173,14 @@ input[type="checkbox"] {
 }
 
 button {
-    background: var(--dark);
+    background: var(--accent);
     border: none;
     border-radius: 50%;
     text-transform: uppercase;
     width: 30px;
     height: 30px;
     cursor: pointer;
-    color: var(--muted);
+    color: var(--bg);
     transition: background 0.2s, color 0.2s, fill 0.2s, transform 0.3s ease-in-out;
     flex-shrink: 0;
     align-items: center;
@@ -184,8 +191,7 @@ button {
 
     &:hover {
         background: var(--accent);
-        color: var(--bg);
-
+        color: var(--border);
     }
 
     &:active {
@@ -337,59 +343,73 @@ div.options {
     }
 }
 
+div.form {
+    background-color: var(--dark2);
+    transition: background 0.2s, display 0.2s, fill 0.2s, transform 0.3s ease-in-out;
+}
+
+body .card .body .body-inner div.toolbar {
+    display: flex;
+    padding: 10px 20px;
+    background-color: var(--dark1);
+    gap: 10px;
+}
+
 /* ROWS */
 
-.row-flex {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    justify-content: space-between;
-}
-
-.row-full {
-    display: block;
-    align-items: center;
-    gap: 12px;
-}
-
-.row-2col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-}
-
-.row-3col {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
-}
-
-.row-equation {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 12px;
-}
-
-.row-right {
-    text-align: right;
-    margin-left: auto;
-}
-
-.label-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    align-items: start;
-    width: stretch;
-
-    label {
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
+div {
+    .row-flex {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: space-between;
     }
 
-    >*:not(button, input) {
+    .row-full {
+        display: block;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .row-2col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    .row-3col {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 12px;
+    }
+
+    .row-equation {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .row-right {
+        text-align: right;
+        margin-left: auto;
+    }
+
+    .label-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: start;
         width: stretch;
+
+        label {
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        >*:not(button, input) {
+            width: stretch;
+        }
     }
 }
 
@@ -494,7 +514,7 @@ header {
             margin-left: auto;
             margin-right: 8px;
             opacity: 1;
-            color: var(--accent);
+            color: var(--accent2);
         }
 
         button {
@@ -513,7 +533,11 @@ header {
             overflow: hidden;
 
             >div {
-                margin-top: 14px;
+                padding: 0 20px 20px;
+
+                &:first-child {
+                    padding-top: 20px;
+                }
             }
         }
     }
@@ -538,7 +562,7 @@ header {
         }
 
         >.body {
-            padding: 10px 20px 20px;
+            background: linear-gradient(var(--card) 80%, var(--bg) 100%);
             grid-template-rows: 1fr;
         }
     }
@@ -597,74 +621,68 @@ header {
 }
 
 /* NOTES */
-.note {
+#notes-list {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    margin-top: 10px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
+    gap: 16px;
 
-    &:focus-within {
-        border-color: var(--accent);
-    }
-
-    .header {
+    .note {
         display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 8px;
-        background: var(--input-bg);
-        border-bottom: none;
+        flex-direction: column;
+        gap: 0;
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
 
-        .toggle {
-            transition: transform 0.2s;
-            transform: rotate(-90deg);
-        }
-
-        .title {
-            border: none;
-        }
-    }
-
-    .body {
-        display: none;
-        position: relative;
-        background: var(--input-bg);
-
-        textarea {
-            border: none;
-            border-radius: 0;
-            resize: none;
-            padding-bottom: 40px;
-            overflow: hidden;
-            display: none;
-        }
-
-        .actions {
-            position: absolute;
-            bottom: 8px;
-            right: 8px;
-            display: flex;
-            gap: 6px;
-        }
-    }
-
-    &.open {
         .header {
-            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            background: var(--input-bg);
 
             .toggle {
-                transform: rotate(0deg);
+                transition: transform 0.2s;
+                transform: rotate(-90deg);
             }
         }
 
         .body {
-            display: block;
+            display: none;
+            position: relative;
+            background: var(--input-bg);
 
             textarea {
+                border: none;
+                border-radius: 0;
+                resize: none;
+                padding-bottom: 40px;
+                overflow: hidden;
+                display: none;
+            }
+
+            .actions {
+                position: absolute;
+                bottom: 8px;
+                right: 8px;
+                display: flex;
+                gap: 6px;
+            }
+        }
+
+        &.open {
+            .header {
+                .toggle {
+                    transform: rotate(0deg);
+                }
+            }
+
+            .body {
                 display: block;
+
+                textarea {
+                    display: block;
+                }
             }
         }
     }
@@ -673,12 +691,9 @@ header {
 /* DEBT */
 
 #debt-form {
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 14px;
-
-    >div {
-        margin-top: 14px;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .debt-entry {
@@ -751,22 +766,16 @@ header {
 
 #card-timezones {
     .tz-form {
-        padding-bottom: 14px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 4px;
         display: none;
+        flex-direction: column;
+        gap: 10px;
 
         &.visible {
-            display: block;
-        }
-
-        >div {
-            margin-top: 14px;
+            display: flex;
         }
     }
 
     .tz-result {
-        margin-top: 10px;
         font-size: 0.75rem;
         color: var(--accent2);
         min-height: 1.2em;
@@ -778,7 +787,7 @@ header {
 
     .tz-entry {
         display: grid;
-        grid-template-columns: 1fr auto auto;
+        grid-template-columns: 1fr auto 30px;
         align-items: center;
         gap: 12px;
         margin: 10px 0;
@@ -829,12 +838,12 @@ header {
 #card-budget {
     .budget-form {
         display: none;
-        padding-bottom: 14px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 4px;
+        padding: 10px 20px;
+        flex-direction: column;
+        gap: 16px;
 
         &.visible {
-            display: block;
+            display: flex;
         }
 
         #budget-date {
@@ -847,7 +856,6 @@ header {
 
         .date-trigger {
             background: var(--input-bg);
-            border: 1px solid var(--border);
             border-radius: 10px;
             padding: 10px;
             cursor: pointer;

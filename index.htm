@@ -254,13 +254,15 @@
         </div>
         <div class="body">
             <div class="body-inner">
-                <div id="reference-multiplier" class="tab row-flex">
-                    <button class="ref-mult-btn" data-mult="1">1×</button>
-                    <button class="ref-mult-btn" data-mult="10">10×</button>
-                    <button class="ref-mult-btn" data-mult="100">100×</button>
-                    <button class="ref-mult-btn" data-mult="1000">1000×</button>
+                <div>
+                    <div id="reference-multiplier" class="tab">
+                        <button class="ref-mult-btn" data-mult="1">1×</button>
+                        <button class="ref-mult-btn" data-mult="10">10×</button>
+                        <button class="ref-mult-btn" data-mult="100">100×</button>
+                        <button class="ref-mult-btn" data-mult="1000">1000×</button>
+                    </div>
+                    <div id="reference-table" class="ref-table"></div>
                 </div>
-                <div id="reference-table" class="ref-table"></div>
             </div>
         </div>
     </div>
@@ -326,13 +328,12 @@
             <div class="body-inner">
 
                 <!-- Search form -->
-                <div id="tz-form" class="tz-form">
-                    <div class="row-equation">
+                <div id="tz-form" class="tz-form form">
+                    <div class="row-flex">
                         <div class="label-group">
                             <label>City or Region</label>
                             <input id="tz-search" type="text" placeholder="Austin TX, Tokyo, London…">
                         </div>
-                        <div class="arrow-label"></div>
                         <div class="label-group">
                             <label>&nbsp;</label>
                             <button id="tz-search-btn" title="Search"><svg>
@@ -354,12 +355,11 @@
                     </div>
 
                     <!-- Custom label -->
-                    <div id="tz-label-row" class="row-equation" style="display:none">
+                    <div id="tz-label-row" class="row-flex" style="display:none">
                         <div class="label-group">
                             <label>Label</label>
                             <input id="tz-label" type="text" placeholder="Home, Maria, Tokyo Office…">
                         </div>
-                        <div class="arrow-label"></div>
                         <div class="label-group">
                             <label>&nbsp;</label>
                             <button id="tz-confirm-btn" title="Add"><svg>
@@ -488,7 +488,7 @@
             <div class="body-inner">
 
                 <!-- Toolbar -->
-                <div class="row-full">
+                <div class="toolbar">
                     <button id="tally-add" title="Add item"><svg>
                             <use href="#icon-add" />
                         </svg></button>
@@ -656,7 +656,7 @@
             <div class="body-inner">
 
                 <!-- Add form -->
-                <div id="debt-form">
+                <div id="debt-form" class="form">
                     <div class="row-2col">
                         <div class="label-group">
                             <label>Person</label>
@@ -721,14 +721,27 @@
         <div class="body">
             <div class="body-inner">
 
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <button id="budget-new-btn" title="Add expense"><svg>
+                            <use href="#icon-add" />
+                        </svg></button>
+                    <button id="budget-select-all" title="Select all"><svg>
+                            <use href="#icon-checkbox" />
+                        </svg></button>
+                    <button class="red" id="budget-delete" title="Delete selected" disabled><svg>
+                            <use href="#icon-delete" />
+                        </svg></button>
+                </div>
+
                 <!-- Budget target -->
-                <div class="row-full label-group">
+                <div class="toolbar label-group">
                     <label>Budget</label>
                     <input type="number" id="budget-target" placeholder="0" min="0" step="any">
                 </div>
 
                 <!-- Add form -->
-                <div id="budget-form" class="budget-form">
+                <div id="budget-form" class="budget-form form">
                     <div class="row-equation">
                         <div class="label-group" style="flex:1">
                             <label>Note</label>
@@ -759,19 +772,6 @@
                                 <use href="#icon-add" />
                             </svg></button>
                     </div>
-                </div>
-
-                <!-- Toolbar -->
-                <div class="row-full">
-                    <button id="budget-new-btn" title="Add expense"><svg>
-                            <use href="#icon-add" />
-                        </svg></button>
-                    <button id="budget-select-all" title="Select all"><svg>
-                            <use href="#icon-checkbox" />
-                        </svg></button>
-                    <button class="red" id="budget-delete" title="Delete selected" disabled><svg>
-                            <use href="#icon-delete" />
-                        </svg></button>
                 </div>
 
                 <!-- List -->
