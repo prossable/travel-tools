@@ -180,6 +180,12 @@
                     d="M424,-312L706,-594L650,-650L424,-424L310,-538L254,-482L424,-312ZM200,-120C178,-120 159.167,-127.833 143.5,-143.5C127.833,-159.167 120,-178 120,-200L120,-760C120,-782 127.833,-800.833 143.5,-816.5C159.167,-832.167 178,-840 200,-840L760,-840C782,-840 800.833,-832.167 816.5,-816.5C832.167,-800.833 840,-782 840,-760L840,-200C840,-178 832.167,-159.167 816.5,-143.5C800.833,-127.833 782,-120 760,-120L200,-120ZM200,-200L760,-200L760,-760L200,-760L200,-200ZM200,-760L200,-200L200,-760Z" />
             </g>
         </symbol>
+        <symbol id="icon-budget" viewBox="0 0 24 24">
+            <g transform="matrix(0.025,0,0,0.025,0,24)">
+                <path
+                    d="M668.5,-531.5C676.167,-539.167 680,-548.667 680,-560C680,-571.333 676.167,-580.833 668.5,-588.5C660.833,-596.167 651.333,-600 640,-600C628.667,-600 619.167,-596.167 611.5,-588.5C603.833,-580.833 600,-571.333 600,-560C600,-548.667 603.833,-539.167 611.5,-531.5C619.167,-523.833 628.667,-520 640,-520C651.333,-520 660.833,-523.833 668.5,-531.5ZM320,-600L520,-600L520,-680L320,-680L320,-600ZM180,-120C157.333,-196 135,-271.833 113,-347.5C91,-423.167 80,-500.667 80,-580C80,-641.333 101.333,-693.333 144,-736C186.667,-778.667 238.667,-800 300,-800L500,-800C519.333,-825.333 542.833,-845 570.5,-859C598.167,-873 628,-880 660,-880C676.667,-880 690.833,-874.167 702.5,-862.5C714.167,-850.833 720,-836.667 720,-820C720,-816 719.5,-812 718.5,-808C717.5,-804 716.333,-800.333 715,-797C712.333,-789.667 709.833,-782.167 707.5,-774.5C705.167,-766.833 703.333,-759 702,-751L793,-660L880,-660L880,-381L767,-344L700,-120L480,-120L480,-200L400,-200L400,-120L180,-120ZM240,-200L320,-200L320,-280L560,-280L560,-200L640,-200L702,-406L800,-439L800,-580L760,-580L620,-720C620,-733.333 620.833,-746.167 622.5,-758.5C624.167,-770.833 626.667,-783.333 630,-796C610.667,-790.667 593.667,-781.5 579,-768.5C564.333,-755.5 553.667,-739.333 547,-720L300,-720C261.333,-720 228.333,-706.333 201,-679C173.667,-651.667 160,-618.667 160,-580C160,-514.667 169,-450.833 187,-388.5C205,-326.167 222.667,-263.333 240,-200Z" />
+            </g>
+        </symbol>
     </svg>
 
     <header>
@@ -248,13 +254,15 @@
         </div>
         <div class="body">
             <div class="body-inner">
-                <div id="reference-multiplier" class="tab row-flex">
-                    <button class="ref-mult-btn" data-mult="1">1×</button>
-                    <button class="ref-mult-btn" data-mult="10">10×</button>
-                    <button class="ref-mult-btn" data-mult="100">100×</button>
-                    <button class="ref-mult-btn" data-mult="1000">1000×</button>
+                <div>
+                    <div id="reference-multiplier" class="tab">
+                        <button class="ref-mult-btn" data-mult="1">1×</button>
+                        <button class="ref-mult-btn" data-mult="10">10×</button>
+                        <button class="ref-mult-btn" data-mult="100">100×</button>
+                        <button class="ref-mult-btn" data-mult="1000">1000×</button>
+                    </div>
+                    <div id="reference-table" class="ref-table"></div>
                 </div>
-                <div id="reference-table" class="ref-table"></div>
             </div>
         </div>
     </div>
@@ -320,13 +328,12 @@
             <div class="body-inner">
 
                 <!-- Search form -->
-                <div id="tz-form" class="tz-form">
-                    <div class="row-equation">
+                <div id="tz-form" class="tz-form form">
+                    <div class="row-flex">
                         <div class="label-group">
                             <label>City or Region</label>
                             <input id="tz-search" type="text" placeholder="Austin TX, Tokyo, London…">
                         </div>
-                        <div class="arrow-label"></div>
                         <div class="label-group">
                             <label>&nbsp;</label>
                             <button id="tz-search-btn" title="Search"><svg>
@@ -348,12 +355,11 @@
                     </div>
 
                     <!-- Custom label -->
-                    <div id="tz-label-row" class="row-equation" style="display:none">
+                    <div id="tz-label-row" class="row-flex" style="display:none">
                         <div class="label-group">
                             <label>Label</label>
                             <input id="tz-label" type="text" placeholder="Home, Maria, Tokyo Office…">
                         </div>
-                        <div class="arrow-label"></div>
                         <div class="label-group">
                             <label>&nbsp;</label>
                             <button id="tz-confirm-btn" title="Add"><svg>
@@ -482,7 +488,7 @@
             <div class="body-inner">
 
                 <!-- Toolbar -->
-                <div class="row-full">
+                <div class="toolbar">
                     <button id="tally-add" title="Add item"><svg>
                             <use href="#icon-add" />
                         </svg></button>
@@ -650,7 +656,7 @@
             <div class="body-inner">
 
                 <!-- Add form -->
-                <div id="debt-form">
+                <div id="debt-form" class="form">
                     <div class="row-2col">
                         <div class="label-group">
                             <label>Person</label>
@@ -695,6 +701,89 @@
 
                 <!-- Entry list -->
                 <div id="debt-list"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- BUDGET -->
+    <div class="card" id="card-budget">
+        <div class="header">
+            <svg class="icon">
+                <use href="#icon-budget" />
+            </svg>
+            Budget
+            <span class="summary"></span>
+            <button class="collapse-btn" title="Collapse"><svg>
+                    <use href="#icon-close" />
+                </svg></button>
+        </div>
+        <div class="body">
+            <div class="body-inner">
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <button id="budget-new-btn" title="Add expense"><svg>
+                            <use href="#icon-add" />
+                        </svg></button>
+                    <button id="budget-select-all" title="Select all"><svg>
+                            <use href="#icon-checkbox" />
+                        </svg></button>
+                    <button class="red" id="budget-delete" title="Delete selected" disabled><svg>
+                            <use href="#icon-delete" />
+                        </svg></button>
+                </div>
+
+                <!-- Budget target -->
+                <div class="toolbar label-group">
+                    <label>Budget</label>
+                    <input type="number" id="budget-target" placeholder="0" min="0" step="any">
+                </div>
+
+                <!-- Add form -->
+                <div id="budget-form" class="budget-form form">
+                    <div class="row-equation">
+                        <div class="label-group" style="flex:1">
+                            <label>Note</label>
+                            <input type="text" id="budget-note" placeholder="Lunch, taxi…">
+                        </div>
+                        <div class="arrow-label"></div>
+                        <div class="label-group">
+                            <label>Date</label>
+                            <div class="date-trigger" id="budget-date-trigger">—</div>
+                            <input type="date" id="budget-date">
+                        </div>
+                    </div>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="budget-foreign-label">Amount (MXN)</label>
+                            <input type="number" id="budget-amount-foreign" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-sync" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="budget-local-label">Amount (USD)</label>
+                            <input type="number" id="budget-amount-local" placeholder="0" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="row-right">
+                        <button id="budget-add"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
+                    </div>
+                </div>
+
+                <!-- List -->
+                <div id="budget-list"></div>
+
+                <!-- Progress bar -->
+                <div id="budget-progress" class="budget-progress">
+                    <div class="budget-progress-bar">
+                        <div class="budget-progress-fill" id="budget-progress-fill"></div>
+                    </div>
+                    <div class="budget-progress-label" id="budget-progress-label"></div>
+                </div>
 
             </div>
         </div>
