@@ -1008,7 +1008,7 @@ class MarketTallyCard extends Card {
     #updateToolbar() {
         const hasSelection = this.#activeIds.size > 0;
         this.deleteButton.disabled = !hasSelection;
-      //  this.toDebtButton.disabled = !hasSelection;
+        //  this.toDebtButton.disabled = !hasSelection;
         this.selectAllButton.classList.toggle(
             'active',
             this.#activeIds.size === this.#items.length && this.#items.length > 0
@@ -1936,6 +1936,329 @@ class TimezonesCard extends Card {
     }
 }
 
+class BudgetCard extends Card {
+    static #AMOUNT_WIDTH = 10;
+    #items = [];
+    #nextId = 1;
+    #activeIds = new Set();
+    #targetAmount = null;
+
+    constructor() {
+        super('card-budget');
+
+        // elements
+        this.formElement = document.getElementById('budget-form');
+        this.newBtn = document.getElementById('budget-new-btn');
+        this.noteInput = document.getElementById('budget-note');
+        this.dateTrigger = document.getElementById('budget-date-trigger');
+        this.dateInput = document.getElementById('budget-date');
+        this.amountForeignInput = document.getElementById('budget-amount-foreign');
+        this.amountLocalInput = document.getElementById('budget-amount-local');
+        this.addBtn = document.getElementById('budget-add');
+        this.listElement = document.getElementById('budget-list');
+        this.selectAllBtn = document.getElementById('budget-select-all');
+        this.deleteBtn = document.getElementById('budget-delete');
+        this.totalEl = document.getElementById('budget-total');
+        this.progressEl = document.getElementById('budget-progress');
+        this.progressFill = document.getElementById('budget-progress-fill');
+        this.progressLabel = document.getElementById('budget-progress-label');
+        this.targetInput = document.getElementById('budget-target');
+        this.foreignLabel = document.getElementById('budget-foreign-label');
+        this.localLabel = document.getElementById('budget-local-label');
+
+        // init date to today
+        this.#setDate(RateService.getLocalDate());
+
+        // restore target
+        const savedTarget = localStorage.getItem('budgetTarget');
+        if (savedTarget) {
+            this.#targetAmount = parseFloat(savedTarget);
+            this.targetInput.value = this.#targetAmount;
+        }
+
+        // load items
+        this.#load();
+        this.#updateLabels();
+
+        // toggle form
+        this.newBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#toggleForm();
+        });
+
+        // date trigger
+        this.dateTrigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.dateInput.showPicker) {
+                this.dateInput.showPicker();
+            } else {
+                this.dateInput.style.pointerEvents = 'auto';
+                this.dateInput.focus();
+                this.dateInput.style.pointerEvents = 'none';
+            }
+        });
+
+        this.dateInput.addEventListener('change', () => {
+            this.#setDate(this.dateInput.value);
+        });
+
+        // bidirectional amount
+        this.amountForeignInput.addEventListener('input', () => {
+            if (this.amountForeignInput.value === '') {
+                this.amountLocalInput.value = '';
+                return;
+            }
+            this.amountLocalInput.value = RateService.formatLocalInput(
+                RateService.toLocal(parseFloat(this.amountForeignInput.value))
+            );
+        });
+
+        this.amountLocalInput.addEventListener('input', () => {
+            if (this.amountLocalInput.value === '') {
+                this.amountForeignInput.value = '';
+                return;
+            }
+            this.amountForeignInput.value = RateService.formatForeignInput(
+                RateService.toForeign(parseFloat(this.amountLocalInput.value))
+            );
+        });
+
+        // add entry
+        this.addBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#addItem();
+        });
+
+        this.noteInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.stopPropagation(); this.#addItem(); }
+        });
+
+        // target budget
+        this.targetInput.addEventListener('input', () => {
+            this.#targetAmount = parseFloat(this.targetInput.value) || null;
+            localStorage.setItem('budgetTarget', this.#targetAmount ?? '');
+            this.update();
+        });
+
+        // select all
+        this.selectAllBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const allSelected = this.#activeIds.size === this.#items.length;
+            if (allSelected) {
+                this.#activeIds.clear();
+            } else {
+                this.#items.forEach(i => this.#activeIds.add(i.id));
+            }
+            this.#syncSelectionStyles();
+            this.#updateToolbar();
+        });
+
+        // delete selected
+        this.deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!this.#activeIds.size) return;
+            if (confirm(`Delete ${this.#activeIds.size} item(s)?`)) {
+                this.#activeIds.forEach(id => {
+                    this.#items = this.#items.filter(i => i.id !== id);
+                    document.getElementById(`budget-${id}`)?.remove();
+                });
+                this.#activeIds.clear();
+                this.#save();
+                this.#updateToolbar();
+                this.update();
+            }
+        });
+
+        RateService.onRateChanged(() => this.update());
+        RateService.onCurrencyChanged(() => {
+            this.#updateLabels();
+            this.update();
+        });
+    }
+
+    // ── Private ───────────────────────────────────────
+
+    #toggleForm() {
+        const visible = this.formElement.classList.toggle('visible');
+        if (visible) this.noteInput.focus();
+    }
+
+    #setDate(dateString) {
+        this.dateInput.value = dateString;
+        this.dateTrigger.textContent = this.#formatDateShort(dateString);
+    }
+
+    #formatDateShort(dateString) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day).toLocaleDateString(
+            RateService.getLocalCurrency().locale, {
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+
+    #padAmount(formatted) {
+        return formatted.padStart(BudgetCard.#AMOUNT_WIDTH);
+    }
+
+    #addItem() {
+        const note = this.noteInput.value.trim();
+        const localVal = parseFloat(this.amountLocalInput.value);
+        const date = this.dateInput.value || RateService.getLocalDate();
+
+        if (!note) { this.noteInput.focus(); return; }
+        if (isNaN(localVal) || localVal <= 0) { this.amountForeignInput.focus(); return; }
+
+        const item = {
+            id: this.#nextId++,
+            note,
+            date,
+            amount: localVal
+        };
+
+        this.#items.push(item);
+        this.#items.sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+        this.#save();
+        this.#renderAll();
+        this.#clearForm();
+        this.formElement.classList.remove('visible');
+        this.update();
+    }
+
+    #clearForm() {
+        this.noteInput.value = '';
+        this.amountForeignInput.value = '';
+        this.amountLocalInput.value = '';
+        this.#setDate(RateService.getLocalDate());
+    }
+
+    #updateLabels() {
+        const foreign = RateService.getForeignCurrency();
+        const local = RateService.getLocalCurrency();
+        this.foreignLabel.textContent = `Amount (${foreign.code})`;
+        this.localLabel.textContent = `Amount (${local.code})`;
+    }
+
+    #setActive(id, active) {
+        active ? this.#activeIds.add(id) : this.#activeIds.delete(id);
+        document.getElementById(`budget-${id}`)
+            ?.classList.toggle('selected', active);
+        this.#updateToolbar();
+    }
+
+    #syncSelectionStyles() {
+        this.#items.forEach(item => {
+            const row = document.getElementById(`budget-${item.id}`);
+            if (!row) return;
+            const isSelected = this.#activeIds.has(item.id);
+            row.classList.toggle('selected', isSelected);
+            row.querySelector('.budget-select').checked = isSelected;
+        });
+    }
+
+    #updateToolbar() {
+        const hasSelection = this.#activeIds.size > 0;
+        this.deleteBtn.disabled = !hasSelection;
+        this.selectAllBtn.classList.toggle(
+            'active',
+            this.#activeIds.size === this.#items.length && this.#items.length > 0
+        );
+    }
+
+    #updateProgress() {
+        const total = this.#items.reduce((sum, i) => sum + i.amount, 0);
+
+        if (!this.#targetAmount || this.#targetAmount <= 0) {
+            this.progressEl.classList.remove('visible');
+            return;
+        }
+
+        this.progressEl.classList.add('visible');
+        const pct = Math.min((total / this.#targetAmount) * 100, 100);
+        const left = this.#targetAmount - total;
+        const isOver = total > this.#targetAmount;
+        const isWarn = pct >= 80 && !isOver;
+
+        this.progressFill.style.width = `${pct}%`;
+        this.progressFill.classList.toggle('warning', isWarn);
+        this.progressFill.classList.toggle('over', isOver);
+
+        if (isOver) {
+            this.progressLabel.textContent =
+                `${RateService.formatLocalSymbol(total)} spent · ${RateService.formatLocalSymbol(Math.abs(left))} over budget`;
+        } else {
+            this.progressLabel.textContent =
+                `${RateService.formatLocalSymbol(total)} of ${RateService.formatLocalSymbol(this.#targetAmount)} · ${RateService.formatLocalSymbol(left)} left`;
+        }
+    }
+
+    #entryHTML(item) {
+        const dateStr = this.#formatDateShort(item.date);
+        const amountStr = this.#padAmount(RateService.formatLocalSymbol(item.amount));
+        return `
+            <div class="budget-entry" id="budget-${item.id}" data-id="${item.id}">
+                <input type="checkbox" class="budget-select" ${this.#activeIds.has(item.id) ? 'checked' : ''}>
+                <div>${dateStr}  <span class="highlight">${amountStr}</span>  ${item.note}</div>
+            </div>`;
+    }
+
+    #wireListeners(row, id) {
+        const checkbox = row.querySelector('.budget-select');
+        checkbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.#setActive(id, checkbox.checked);
+        });
+    }
+
+    #renderAll() {
+        this.listElement.innerHTML = this.#items.map(i => this.#entryHTML(i)).join('');
+        this.listElement.querySelectorAll('.budget-entry').forEach(row => {
+            this.#wireListeners(row, parseInt(row.dataset.id));
+        });
+    }
+
+    #save() {
+        localStorage.setItem('budgetItems', JSON.stringify(this.#items));
+        localStorage.setItem('budgetNextId', this.#nextId);
+    }
+
+    #load() {
+        const stored = localStorage.getItem('budgetItems');
+        if (stored) {
+            this.#items = JSON.parse(stored);
+            this.#nextId = parseInt(localStorage.getItem('budgetNextId')) ||
+                this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
+        }
+        this.#renderAll();
+        this.update();
+    }
+
+    // ── Public ────────────────────────────────────────
+
+    update() {
+        const total = this.#items.reduce((sum, i) => sum + i.amount, 0);
+        const target = this.#targetAmount;
+        const left = target ? target - total : null;
+        const isOver = left !== null && left < 0;
+
+        this.#updateProgress();
+        this.updateSummary(
+            target
+                ? `${RateService.formatLocalSymbol(total)} / ${RateService.formatLocalSymbol(target)}`
+                : RateService.formatLocalFull(total)
+        );
+    }
+
+    addExternalItem(amount, note = '') {
+        // prefill form from external source (e.g. basket)
+        this.amountLocalInput.value = RateService.formatLocalInput(amount);
+        this.amountForeignInput.value = RateService.formatForeignInput(RateService.toForeign(amount));
+        if (note) this.noteInput.value = note;
+        this.formElement.classList.add('visible');
+        this.noteInput.focus();
+    }
+}
+
 class App {
     #wakeLock = null;
     #installPrompt = null;
@@ -1962,6 +2285,7 @@ class App {
         new DebtCard();
         new ConversionsCard();
         new TimezonesCard();
+        new BudgetCard();
 
         // init
         this.#registerServiceWorker();
