@@ -13,8 +13,9 @@
     --border: #1e2a38;
     --accent: #3a9bd5;
     --accent2: #00ffff;
-    --text: #e2eaf0;
+    --text: #ffffff;
     --muted: #bed1df;
+    --mid: #77838b;
     --input-bg: #0a0e14;
     --dark: #1b587e;
 }
@@ -89,7 +90,7 @@ textarea {
 
     & ::placeholder,
     &::-webkit-input-placeholder {
-        color: var(--accent2);
+        color: var(--mid);
         opacity: 1;
     }
 }
@@ -173,7 +174,7 @@ button {
     height: 30px;
     cursor: pointer;
     color: var(--muted);
-    transition: background 0.2s, color 0.2s, transform 0.3s;
+    transition: background 0.2s, color 0.2s, fill 0.2s, transform 0.3s ease-in-out;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
@@ -185,9 +186,6 @@ button {
         background: var(--accent);
         color: var(--bg);
 
-        svg {
-            fill: var(--bg);
-        }
     }
 
     &:active {
@@ -221,7 +219,41 @@ button {
     }
 }
 
-.tab {
+div.toggle {
+    display: flex;
+    border: 0px;
+    border-radius: 10px;
+    overflow: hidden;
+    width: 60px;
+
+    &:hover {
+        >button {
+            color: var(--bg);
+            background: var(--accent);
+
+            &.active {
+                color: var(--muted);
+                background: var(--border);
+            }
+        }
+    }
+
+    >button {
+        color: var(--muted);
+        background: var(--border);
+        padding: 8px 0;
+        height: auto;
+        border-radius: 0;
+        flex: 1;
+
+        &.active {
+            color: var(--bg);
+            background: var(--accent);
+        }
+    }
+}
+
+div.tab {
     display: flex;
     background: var(--input-bg);
     border: 0px solid var(--border);
@@ -269,7 +301,7 @@ button {
     }
 }
 
-.options {
+div.options {
     width: 100%;
     height: 100%;
 
@@ -544,7 +576,7 @@ header {
             align-items: center;
             margin: 10px 0;
             display: grid;
-            grid-template-columns: 20px 1fr 1fr 80px;
+            grid-template-columns: auto 1fr 1fr auto;
             gap: 8px;
 
             .tally-price {

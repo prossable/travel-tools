@@ -972,7 +972,7 @@ class MarketTallyCard extends Card {
             }
         });
 
-        // to debt
+        /*// to debt
         this.toDebtButton.addEventListener('click', (e) => {
             e.stopPropagation();
             if (!this.#activeIds.size) return;
@@ -980,7 +980,7 @@ class MarketTallyCard extends Card {
                 .filter(i => this.#activeIds.has(i.id) && i.price)
                 .reduce((sum, i) => sum + i.price, 0);
             if (total > 0) EventService.addToDebt(total);
-        });
+        });*/
 
         RateService.onRateChanged(() => this.update());
         RateService.onCurrencyChanged(() => this.update());
@@ -1008,7 +1008,7 @@ class MarketTallyCard extends Card {
     #updateToolbar() {
         const hasSelection = this.#activeIds.size > 0;
         this.deleteButton.disabled = !hasSelection;
-        this.toDebtButton.disabled = !hasSelection;
+      //  this.toDebtButton.disabled = !hasSelection;
         this.selectAllButton.classList.toggle(
             'active',
             this.#activeIds.size === this.#items.length && this.#items.length > 0
@@ -1017,8 +1017,8 @@ class MarketTallyCard extends Card {
 
     // ── Items ─────────────────────────────────────────
 
-    #createItem(label = '', price = null, got = false) {
-        return { id: this.#nextId++, label, price, got };
+    #createItem(label = '', price = null, checked = false) {
+        return { id: this.#nextId++, label, price, checked };
     }
 
     #addItem(label = '', price = null) {
@@ -1059,15 +1059,13 @@ class MarketTallyCard extends Card {
         this.update();
     }
 
-    #toggleGot(id) {
+    #toggleItem(id) {
         const item = this.#items.find(i => i.id === id);
         if (!item) return;
-        item.got = !item.got;
+        item.toggleItem = !item.toggleItem;
         const row = document.getElementById(`tally-${id}`);
-        row.classList.toggle('got', item.got);
-        row.querySelectorAll('.tally-status-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.status === (item.got ? 'got' : 'need'));
-        });
+        row.classList.toggle('toggleItem', item.toggleItem);
+        //row.querySelectorAll('.tally-status-btn').forEach(btn => {btn.classList.toggle('active', btn.dataset.status === (item.got ? 'got' : 'need'));});
         this.#save();
         this.update();
     }
@@ -1089,14 +1087,14 @@ class MarketTallyCard extends Card {
 
     #itemHTML(item) {
         return `
-            <div class="tally-item ${item.got ? 'got' : ''}" 
+            <div class="tally-item ${item.checked ? 'checked' : ''}" 
                  id="tally-${item.id}" data-id="${item.id}">
                 <input type="checkbox" class="tally-select" ${this.#activeIds.has(item.id) ? 'checked' : ''}>
                 <input type="text" class="tally-label" value="${item.label}" placeholder="Item">
                 <input type="number" class="tally-price" value="${item.price ?? ''}" placeholder="0" min="0" step="any">
-                <div class="tab tally-status">
-                    <button class="tally-status-btn narrow ${!item.got ? 'active' : ''}" data-status="need"><svg><use href="#icon-basket" /></svg></button>
-                    <button class="tally-status-btn narrow ${item.got ? 'active' : ''}" data-status="got"><svg><use href="#icon-check" /></svg></button>
+                <div class="toggle tally-status">
+                    <button class="${!item.checked ? 'active' : ''}"><svg><use href="#icon-basket" /></svg></button>
+                    <button class="${item.checked ? 'active' : ''}"><svg><use href="#icon-check" /></svg></button>
                 </div>
             </div>`;
     }
@@ -1105,7 +1103,7 @@ class MarketTallyCard extends Card {
         const checkbox = row.querySelector('.tally-select');
         const labelInput = row.querySelector('.tally-label');
         const priceInput = row.querySelector('.tally-price');
-        const statusBtns = row.querySelectorAll('.tally-status-btn');
+        const statusContainer = row.querySelector('.tally-status');
 
         // selection checkbox
         checkbox.addEventListener('change', (e) => {
@@ -1129,16 +1127,20 @@ class MarketTallyCard extends Card {
             }
         });
 
-        // need / got toggle
-        statusBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
+        // toggle
+        const item = this.#items.find(i => i.id === id);
+        InputHelper.setupToggle(
+            statusContainer,
+            item.checked,
+            (isGot) => {
                 const item = this.#items.find(i => i.id === id);
                 if (!item) return;
-                const wantsGot = btn.dataset.status === 'got';
-                if (item.got !== wantsGot) this.#toggleGot(id);
-            });
-        });
+                item.checked = isGot;
+                document.getElementById(`tally-${id}`).classList.toggle('checked', isGot);
+                this.#save();
+                this.update();
+            }
+        );
     }
 
     #renderAll() {
@@ -1153,8 +1155,8 @@ class MarketTallyCard extends Card {
 
     update() {
         const withPrice = this.#items.filter(i => i.price !== null);
-        const got = withPrice.filter(i => i.got);
-        const need = withPrice.filter(i => !i.got);
+        const got = withPrice.filter(i => i.checked);
+        const need = withPrice.filter(i => !i.checked);
         const totalForeign = withPrice.reduce((sum, i) => sum + i.price, 0);
         const spentForeign = got.reduce((sum, i) => sum + i.price, 0);
         const remainingForeign = need.reduce((sum, i) => sum + i.price, 0);
@@ -2089,6 +2091,26 @@ class App {
         const cache = keys.find(k => k.startsWith('travel-tools-'));
         return cache ? cache.replace('travel-tools-', '') : 'unknown';
     }
+}
+
+class InputHelper {
+    static setupToggle(container, initialState, onChange) {
+        InputHelper.updateToggle(container, initialState);
+
+        container.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const [first, second] = container.children;
+            const next = !second.classList.contains('active');
+            InputHelper.updateToggle(container, next);
+            onChange(next);
+        });
+    }
+
+    static updateToggle(container, state) {
+        const [first, second] = container.children;
+        first.classList.toggle('active', !state);
+        second.classList.toggle('active', state);
+    };
 }
 
 new App();
