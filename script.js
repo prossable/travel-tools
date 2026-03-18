@@ -917,70 +917,105 @@ class BillCard extends Card {
 class MarketTallyCard extends Card {
     #items = [];
     #nextId = 1;
-    #mode = 'plan';
+    #activeIds = new Set(); // selected row ids
 
-    constructor(rateService) {
+    constructor() {
         super('card-tally');
 
         // elements
         this.listElement = document.getElementById('tally-list');
         this.addButton = document.getElementById('tally-add');
-        this.clearButton = document.getElementById('tally-clear');
+        this.selectAllButton = document.getElementById('tally-select');
+        this.deleteButton = document.getElementById('tally-delete');
+        this.toDebtButton = document.getElementById('tally-debt');
         this.spentForeignOutput = document.getElementById('tally-spent-foreign');
         this.spentLocalOutput = document.getElementById('tally-spent-local');
         this.remainingForeignOutput = document.getElementById('tally-remaining-foreign');
         this.remainingLocalOutput = document.getElementById('tally-remaining-local');
-        this.modeButtons = document.querySelectorAll('.tally-mode-btn');
 
         // init
         this.#load();
+        this.#updateToolbar();
 
-        // listeners
+        // add
         this.addButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.#addItem();
         });
 
-        this.clearButton.addEventListener('click', (e) => {
+        // select all / deselect all
+        this.selectAllButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (confirm('Clear all items?')) {
-                this.#items = [];
-                this.#nextId = 1;
+            const allSelected = this.#activeIds.size === this.#items.length;
+            if (allSelected) {
+                this.#activeIds.clear();
+            } else {
+                this.#items.forEach(i => this.#activeIds.add(i.id));
+            }
+            this.#syncSelectionStyles();
+            this.#updateToolbar();
+        });
+
+        // delete selected
+        this.deleteButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!this.#activeIds.size) return;
+            if (confirm(`Delete ${this.#activeIds.size} item(s)?`)) {
+                this.#activeIds.forEach(id => {
+                    this.#items = this.#items.filter(i => i.id !== id);
+                    document.getElementById(`tally-${id}`)?.remove();
+                });
+                this.#activeIds.clear();
                 this.#save();
-                this.#renderAll();
+                this.#updateToolbar();
+                this.update();
             }
         });
 
-        this.modeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.#mode = btn.dataset.mode;
-                this.modeButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.listElement.classList.toggle('shop-mode', this.#mode === 'shop');
-            });
-        });
+        /*// to debt
+        this.toDebtButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!this.#activeIds.size) return;
+            const total = this.#items
+                .filter(i => this.#activeIds.has(i.id) && i.price)
+                .reduce((sum, i) => sum + i.price, 0);
+            if (total > 0) EventService.addToDebt(total);
+        });*/
 
         RateService.onRateChanged(() => this.update());
+        RateService.onCurrencyChanged(() => this.update());
     }
 
-    #load() {
-        const stored = localStorage.getItem('tallyItems');
-        if (stored) {
-            this.#items = JSON.parse(stored);
-            this.#nextId = parseInt(localStorage.getItem('tallyNextId')) ||
-                this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
-        }
-        this.#renderAll();
+    // ── Selection ─────────────────────────────────────
+
+    #setActive(id, active) {
+        active ? this.#activeIds.add(id) : this.#activeIds.delete(id);
+        document.getElementById(`tally-${id}`)
+            ?.classList.toggle('selected', active);
+        this.#updateToolbar();
     }
 
-    #renderAll() {
-        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
-        this.listElement.querySelectorAll('.tally-item').forEach(row => {
-            this.#wireListeners(row, parseInt(row.dataset.id));
+    #syncSelectionStyles() {
+        this.#items.forEach(item => {
+            const row = document.getElementById(`tally-${item.id}`);
+            if (!row) return;
+            const isSelected = this.#activeIds.has(item.id);
+            row.classList.toggle('selected', isSelected);
+            row.querySelector('.tally-select').checked = isSelected; // add this
         });
-        this.update();
     }
+
+    #updateToolbar() {
+        const hasSelection = this.#activeIds.size > 0;
+        this.deleteButton.disabled = !hasSelection;
+      //  this.toDebtButton.disabled = !hasSelection;
+        this.selectAllButton.classList.toggle(
+            'active',
+            this.#activeIds.size === this.#items.length && this.#items.length > 0
+        );
+    }
+
+    // ── Items ─────────────────────────────────────────
 
     #createItem(label = '', price = null, checked = false) {
         return { id: this.#nextId++, label, price, checked };
@@ -994,7 +1029,6 @@ class MarketTallyCard extends Card {
         const el = document.createElement('div');
         el.innerHTML = this.#itemHTML(item);
         const itemEl = el.firstElementChild;
-
         this.listElement.appendChild(itemEl);
         this.#wireListeners(itemEl, item.id);
         this.update();
@@ -1011,25 +1045,27 @@ class MarketTallyCard extends Card {
         const el = document.createElement('div');
         el.innerHTML = this.#itemHTML(item);
         const itemEl = el.firstElementChild;
-
-        const sourceEl = document.getElementById(`tally-${id}`);
-        sourceEl.insertAdjacentElement('afterend', itemEl);
+        document.getElementById(`tally-${id}`).insertAdjacentElement('afterend', itemEl);
         this.#wireListeners(itemEl, item.id);
         this.update();
     }
 
     #removeItem(id) {
         this.#items = this.#items.filter(i => i.id !== id);
+        this.#activeIds.delete(id);
         document.getElementById(`tally-${id}`).remove();
         this.#save();
+        this.#updateToolbar();
         this.update();
     }
 
     #toggleItem(id) {
         const item = this.#items.find(i => i.id === id);
         if (!item) return;
-        item.checked = !item.checked;
-        document.getElementById(`tally-${id}`).classList.toggle('checked', item.checked);
+        item.toggleItem = !item.toggleItem;
+        const row = document.getElementById(`tally-${id}`);
+        row.classList.toggle('toggleItem', item.toggleItem);
+        //row.querySelectorAll('.tally-status-btn').forEach(btn => {btn.classList.toggle('active', btn.dataset.status === (item.got ? 'got' : 'need'));});
         this.#save();
         this.update();
     }
@@ -1039,31 +1075,49 @@ class MarketTallyCard extends Card {
         localStorage.setItem('tallyNextId', this.#nextId);
     }
 
+    #load() {
+        const stored = localStorage.getItem('tallyItems');
+        if (stored) {
+            this.#items = JSON.parse(stored);
+            this.#nextId = parseInt(localStorage.getItem('tallyNextId')) ||
+                this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
+        }
+        this.#renderAll();
+    }
+
     #itemHTML(item) {
         return `
-            <div class="tally-item ${item.checked ? 'checked' : ''}" id="tally-${item.id}" data-id="${item.id}">
-                <input type="checkbox" class="tally-check" ${item.checked ? 'checked' : ''}>
+            <div class="tally-item ${item.checked ? 'checked' : ''}" 
+                 id="tally-${item.id}" data-id="${item.id}">
+                <input type="checkbox" class="tally-select" ${this.#activeIds.has(item.id) ? 'checked' : ''}>
                 <input type="text" class="tally-label" value="${item.label}" placeholder="Item">
-                <input type="number" class="tally-price" value="${item.price ?? ''}" placeholder="0" min="0"step="any">
-                <button class="duplicate" title="Duplicate"><svg><use href="#icon-duplicate"/></svg></button>
-                <button class="red delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
+                <input type="number" class="tally-price" value="${item.price ?? ''}" placeholder="0" min="0" step="any">
+                <div class="toggle tally-status">
+                    <button class="${!item.checked ? 'active' : ''}"><svg><use href="#icon-basket" /></svg></button>
+                    <button class="${item.checked ? 'active' : ''}"><svg><use href="#icon-check" /></svg></button>
+                </div>
             </div>`;
     }
 
     #wireListeners(row, id) {
-        const checkbox = row.querySelector('.tally-check');
+        const checkbox = row.querySelector('.tally-select');
         const labelInput = row.querySelector('.tally-label');
         const priceInput = row.querySelector('.tally-price');
-        const dupButton = row.querySelector('.duplicate');
-        const delButton = row.querySelector('.delete');
+        const statusContainer = row.querySelector('.tally-status');
 
-        checkbox.addEventListener('change', () => this.#toggleItem(id));
+        // selection checkbox
+        checkbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.#setActive(id, checkbox.checked);
+        });
 
+        // label
         labelInput.addEventListener('input', () => {
             const item = this.#items.find(i => i.id === id);
             if (item) { item.label = labelInput.value; this.#save(); }
         });
 
+        // price
         priceInput.addEventListener('input', () => {
             const item = this.#items.find(i => i.id === id);
             if (item) {
@@ -1073,27 +1127,39 @@ class MarketTallyCard extends Card {
             }
         });
 
-        dupButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.#duplicateItem(id);
-        });
-
-        delButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const item = this.#items.find(i => i.id === id);
-            if (confirm(`Delete "${item?.label || 'this item'}"?`)) {
-                this.#removeItem(id);
+        // toggle
+        const item = this.#items.find(i => i.id === id);
+        InputHelper.setupToggle(
+            statusContainer,
+            item.checked,
+            (isGot) => {
+                const item = this.#items.find(i => i.id === id);
+                if (!item) return;
+                item.checked = isGot;
+                document.getElementById(`tally-${id}`).classList.toggle('checked', isGot);
+                this.#save();
+                this.update();
             }
-        });
+        );
     }
+
+    #renderAll() {
+        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
+        this.listElement.querySelectorAll('.tally-item').forEach(row => {
+            this.#wireListeners(row, parseInt(row.dataset.id));
+        });
+        this.update();
+    }
+
+    // ── Public ────────────────────────────────────────
 
     update() {
         const withPrice = this.#items.filter(i => i.price !== null);
-        const checked = withPrice.filter(i => i.checked);
-        const unchecked = withPrice.filter(i => !i.checked);
+        const got = withPrice.filter(i => i.checked);
+        const need = withPrice.filter(i => !i.checked);
         const totalForeign = withPrice.reduce((sum, i) => sum + i.price, 0);
-        const spentForeign = checked.reduce((sum, i) => sum + i.price, 0);
-        const remainingForeign = unchecked.reduce((sum, i) => sum + i.price, 0);
+        const spentForeign = got.reduce((sum, i) => sum + i.price, 0);
+        const remainingForeign = need.reduce((sum, i) => sum + i.price, 0);
 
         this.spentForeignOutput.textContent = RateService.formatForeignFull(spentForeign);
         this.spentLocalOutput.textContent = RateService.formatLocalFull(RateService.toLocal(spentForeign));
@@ -2025,6 +2091,26 @@ class App {
         const cache = keys.find(k => k.startsWith('travel-tools-'));
         return cache ? cache.replace('travel-tools-', '') : 'unknown';
     }
+}
+
+class InputHelper {
+    static setupToggle(container, initialState, onChange) {
+        InputHelper.updateToggle(container, initialState);
+
+        container.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const [first, second] = container.children;
+            const next = !second.classList.contains('active');
+            InputHelper.updateToggle(container, next);
+            onChange(next);
+        });
+    }
+
+    static updateToggle(container, state) {
+        const [first, second] = container.children;
+        first.classList.toggle('active', !state);
+        second.classList.toggle('active', state);
+    };
 }
 
 new App();
