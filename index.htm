@@ -174,6 +174,12 @@
                     style="fill:rgb(227,227,227);fill-rule:nonzero;" />
             </g>
         </symbol>
+        <symbol id="icon-checkbox" viewBox="0 0 24 24">
+            <g transform="matrix(0.025,0,0,0.025,0,24)">
+                <path
+                    d="M424,-312L706,-594L650,-650L424,-424L310,-538L254,-482L424,-312ZM200,-120C178,-120 159.167,-127.833 143.5,-143.5C127.833,-159.167 120,-178 120,-200L120,-760C120,-782 127.833,-800.833 143.5,-816.5C159.167,-832.167 178,-840 200,-840L760,-840C782,-840 800.833,-832.167 816.5,-816.5C832.167,-800.833 840,-782 840,-760L840,-200C840,-178 832.167,-159.167 816.5,-143.5C800.833,-127.833 782,-120 760,-120L200,-120ZM200,-200L760,-200L760,-760L200,-760L200,-200ZM200,-760L200,-200L200,-760Z" />
+            </g>
+        </symbol>
     </svg>
 
     <header>
@@ -476,23 +482,24 @@
             <div class="body-inner">
 
                 <!-- Toolbar -->
-                <div class="row-flex">
-                    <div class="tab">
-                        <button class="tally-mode-btn active" data-mode="plan">Plan</button>
-                        <button class="tally-mode-btn" data-mode="shop">Shop</button>
-                    </div>
-                    <div>
-                        <button id="tally-add" title="Add item"><svg>
-                                <use href="#icon-add" />
-                            </svg></button>
-                        <button class="red" id="tally-clear" title="Clear all"><svg>
-                                <use href="#icon-delete" />
-                            </svg></button>
-                    </div>
+                <div class="row-full">
+                    <button id="tally-add" title="Add item"><svg>
+                            <use href="#icon-add" />
+                        </svg></button>
+                    <button id="tally-select" title="Select All"><svg>
+                            <use href="#icon-checkbox" />
+                        </svg></button>
+                    <button class="red" id="tally-delete" title="Delete Selected"><svg>
+                            <use href="#icon-delete" />
+                        </svg></button>
+                    <button class="wide" id="tally-debt" title="To Debt"><svg>
+                            <use href="#icon-debt" />
+                        </svg>To Debt</button>
                 </div>
 
                 <!-- Item list -->
-                <div id="tally-list"></div>
+                <div id="tally-list">
+                </div>
 
                 <!-- Totals -->
                 <div class="row-3col total">
