@@ -699,12 +699,6 @@ header {
 
 /* DEBT */
 
-#debt-form {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
 .debt-entry {
     display: grid;
     grid-template-columns: auto 1fr auto;

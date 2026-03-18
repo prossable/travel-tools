@@ -642,12 +642,6 @@
             </svg>
             Debt
             <span class="summary"></span>
-            <button id="debt-toggle" title="Clear all"><svg>
-                    <use href="#icon-add" />
-                </svg></button>
-            <button class="red" id="debt-clear" title="Clear all"><svg>
-                    <use href="#icon-delete" />
-                </svg></button>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
@@ -655,8 +649,21 @@
         <div class="body">
             <div class="body-inner">
 
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <button id="debt-toggle" title="Clear all"><svg>
+                            <use href="#icon-add" />
+                        </svg></button>
+                    <button id="debt-select-all" title="Select all"><svg>
+                            <use href="#icon-checkbox" />
+                        </svg></button>
+                    <button class="red" id="debt-clear" title="Clear all"><svg>
+                            <use href="#icon-delete" />
+                        </svg></button>
+                </div>
+
                 <!-- Add form -->
-                <div id="debt-form" class="form">
+                <div id="debt-form" class="form row-list">
                     <div class="row-2col">
                         <div class="label-group">
                             <label>Person</label>
