@@ -209,14 +209,21 @@
             </svg>
             Rate
             <span class="summary"></span>
-            <button id="rate-refresh" title="Refresh rate"><svg>
-                    <use href="#icon-refresh" />
-                </svg></button>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
         </div>
         <div class="body">
+            <div class="toolbar row-flex">
+                <div class="row-flex">
+                    <input id="rate-auto-fetch" type="checkbox" checked>
+                    <label> Auto-fetch daily rate </label>
+                </div>
+                <button id="rate-refresh" title="Refresh rate"><svg>
+                        <use href="#icon-refresh" />
+                    </svg></button>
+            </div>
+
             <div class="row-full label-group">
                 <label>Foreign Currency</label>
                 <select id="rate-currency">
@@ -228,12 +235,6 @@
             </div>
             <div class="row-flex">
                 <div id="rate-hint"></div>
-            </div>
-            <div class="row-flex">
-                <div class="row-flex">
-                    <input id="rate-auto-fetch" type="checkbox" checked>
-                    <label> Auto-fetch daily rate </label>
-                </div>
             </div>
         </div>
     </div>
@@ -286,17 +287,19 @@
             </svg>
             Notes
             <span class="summary"></span>
-            <button id="notes-add" title="Add note"><svg>
-                    <use href="#icon-add" />
-                </svg></button>
-            <button id="notes-clear" class="red" title="Clear all"><svg>
-                    <use href="#icon-delete" />
-                </svg></button>
             <button class="collapse-btn" title="Collapse"><svg>
                     <use href="#icon-close" />
                 </svg></button>
         </div>
         <div class="body">
+            <div class="toolbar">
+                <button id="notes-add" title="Add note"><svg>
+                        <use href="#icon-add" />
+                    </svg></button>
+                <button id="notes-clear" class="red" title="Clear all"><svg>
+                        <use href="#icon-delete" />
+                    </svg></button>
+            </div>
             <div id="notes-list" class="row-list"></div>
         </div>
     </div>
@@ -775,7 +778,7 @@
     </div>
 
     <footer>
-        <div>*Rate conversions are approximate. Rates vary by business.</div>
+        <div>*Rate conversions are approximate.<br />Rates vary by business.</div>
         <div><span id="footer-version">v1.0</span> · © 2026 Pedro Chavez</div>
     </footer>
 </body>

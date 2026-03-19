@@ -14,8 +14,8 @@
     --red: #e05555;
 
     --input-bg: hsl(from var(--color1) h s calc(l * .4));
-    --input-active: hsl(from var(--color2) h s calc(l * .75));
-    --input-inactive: hsl(from var(--color1) h calc(s * .2) calc(l * .3));
+    --input-active: hsl(from var(--color2) h calc(s*.5) calc(l * .4));
+    --input-inactive: hsl(from var(--color1) h calc(s * .6) calc(l * .3));
     --input-placeholder: hsl(from var(--color1) h s calc(l * .75));
 
     --btn-normal: var(--color1);
@@ -117,6 +117,18 @@ textarea {
     }
 }
 
+textarea {
+    background: var(--input-inactive);
+
+    &:hover {
+        background-color: var(--input-active);
+    }
+
+    &:focus {
+        background-color: var(--input-inactive);
+    }
+}
+
 select {
     width: 100%;
     background: var(--input-bg);
@@ -201,8 +213,10 @@ button {
     user-select: none;
     -webkit-user-select: none;
 
-    &:hover {
-        background: var(--btn-hover);
+    @media (hover: hover) {
+        &:hover {
+            background: var(--btn-hover);
+        }
     }
 
     &:active {
@@ -243,8 +257,10 @@ div.toggle {
     overflow: hidden;
     width: 60px;
 
-    &:hover button.active {
-        background: var(--btn-hover);
+    @media (hover: hover) {
+        &:hover button.active {
+            background: var(--btn-hover);
+        }
     }
 
     &:active button.active {
@@ -273,7 +289,6 @@ div.tab {
     flex: auto;
 
     >button {
-        padding: 8px 16px;
         letter-spacing: 0.08em;
         width: fit-content;
         border-radius: 0;
@@ -290,14 +305,30 @@ div.tab {
             padding: 8px;
         }
 
-        &:hover {
-            background: var(--btn-hover);
-            color: var(--ele-normal);
+        @media (hover: hover) {
+            &:hover {
+                background: var(--btn-hover);
+                color: var(--ele-normal);
+            }
         }
 
         &:active {
             background: var(--btn-active);
             color: var(--ele-normal);
+        }
+    }
+
+    >input {
+        background: var(--input-inactive);
+
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--input-active);
+            }
+        }
+
+        &:focus {
+            background-color: var(--input-active);
         }
     }
 
@@ -328,9 +359,11 @@ div.options {
             color: var(--ele-normal);
         }
 
-        &:hover {
-            background: var(--btn-hover);
-            color: var(--ele-normal);
+        @media (hover: hover) {
+            &:hover {
+                background: var(--btn-hover);
+                color: var(--ele-normal);
+            }
         }
     }
 
@@ -342,8 +375,10 @@ div.options {
             background: var(--btn-normal);
         }
 
-        &:hover {
-            background-color: var(--btn-hover);
+        @media (hover: hover) {
+            &:hover {
+                background-color: var(--btn-hover);
+            }
         }
 
         &:focus {
@@ -591,7 +626,7 @@ header {
     grid-template-columns: 1fr 1fr;
     border-radius: 16px;
     overflow: hidden;
-    background: var(--bg1);
+    background-color: var(--card-bg1);
 
     .ref-row {
         display: contents;
@@ -602,7 +637,7 @@ header {
         }
 
         &.ref-header span {
-            background: var(--bg2);
+            background: var(--bg1);
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
@@ -618,7 +653,7 @@ header {
         border: none;
         border-radius: 20px;
         overflow: hidden;
-        background: var(--input-bg);
+        background: var(--input-inactive);
 
         .header {
             display: flex;
@@ -629,6 +664,10 @@ header {
             .toggle {
                 transition: transform 0.2s;
                 transform: rotate(-90deg);
+            }
+
+            >input {
+                background: var(--input-inactive);
             }
         }
 
