@@ -217,24 +217,22 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
-                <div class="row-full label-group">
-                    <label>Foreign Currency</label>
-                    <select id="rate-currency">
-                    </select>
-                </div>
-                <div class="row-full label-group">
-                    <label id="rate-label">X</label>
-                    <input id="rate" type="number" step="0.01" min="1">
-                </div>
+            <div class="row-full label-group">
+                <label>Foreign Currency</label>
+                <select id="rate-currency">
+                </select>
+            </div>
+            <div class="row-full label-group">
+                <label id="rate-label">X</label>
+                <input id="rate" type="number" step="0.01" min="1">
+            </div>
+            <div class="row-flex">
+                <div id="rate-hint"></div>
+            </div>
+            <div class="row-flex">
                 <div class="row-flex">
-                    <div id="rate-hint"></div>
-                </div>
-                <div class="row-flex">
-                    <div class="row-flex">
-                        <input id="rate-auto-fetch" type="checkbox" checked>
-                        <label> Auto-fetch daily rate </label>
-                    </div>
+                    <input id="rate-auto-fetch" type="checkbox" checked>
+                    <label> Auto-fetch daily rate </label>
                 </div>
             </div>
         </div>
@@ -253,16 +251,14 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
-                <div>
-                    <div id="reference-multiplier" class="tab">
-                        <button class="ref-mult-btn" data-mult="1">1×</button>
-                        <button class="ref-mult-btn" data-mult="10">10×</button>
-                        <button class="ref-mult-btn" data-mult="100">100×</button>
-                        <button class="ref-mult-btn" data-mult="1000">1000×</button>
-                    </div>
-                    <div id="reference-table" class="ref-table"></div>
+            <div>
+                <div id="reference-multiplier" class="tab">
+                    <button class="ref-mult-btn" data-mult="1">1×</button>
+                    <button class="ref-mult-btn" data-mult="10">10×</button>
+                    <button class="ref-mult-btn" data-mult="100">100×</button>
+                    <button class="ref-mult-btn" data-mult="1000">1000×</button>
                 </div>
+                <div id="reference-table" class="ref-table"></div>
             </div>
         </div>
     </div>
@@ -279,9 +275,7 @@
                     <use href="#icon-close" />
                 </svg></button>
         </div>
-        <div class="body">
-            <div id="conversions-list" class="body-inner"></div>
-        </div>
+        <div class="body" id="conversions-list"></div>
     </div>
 
     <!-- NOTES -->
@@ -303,9 +297,7 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
-                <div id="notes-list" class="row-list"></div>
-            </div>
+            <div id="notes-list" class="row-list"></div>
         </div>
     </div>
 
@@ -325,54 +317,52 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
 
-                <!-- Search form -->
-                <div id="tz-form" class="tz-form form">
-                    <div class="row-flex">
-                        <div class="label-group">
-                            <label>City or Region</label>
-                            <input id="tz-search" type="text" placeholder="Austin TX, Tokyo, London…">
-                        </div>
-                        <div class="label-group">
-                            <label>&nbsp;</label>
-                            <button id="tz-search-btn" title="Search"><svg>
-                                    <use href="#icon-search" />
-                                </svg></button>
-                        </div>
+            <!-- Search form -->
+            <div id="tz-form" class="tz-form form">
+                <div class="row-flex">
+                    <div class="label-group">
+                        <label>City or Region</label>
+                        <input id="tz-search" type="text" placeholder="Austin TX, Tokyo, London…">
                     </div>
-
-                    <!-- Result confirmation -->
-                    <div id="tz-result" class="tz-result">Enter a city, region, or landmark</div>
-
-                    <div id="tz-curated" class="tz-curated" style="display:none">
-                        <div class="label-group">
-                            <label>Choose a Time Zone</label>
-                            <select id="tz-curated-select">
-                                <option value="">— select —</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Custom label -->
-                    <div id="tz-label-row" class="row-flex" style="display:none">
-                        <div class="label-group">
-                            <label>Label</label>
-                            <input id="tz-label" type="text" placeholder="Home, Maria, Tokyo Office…">
-                        </div>
-                        <div class="label-group">
-                            <label>&nbsp;</label>
-                            <button id="tz-confirm-btn" title="Add"><svg>
-                                    <use href="#icon-add" />
-                                </svg></button>
-                        </div>
+                    <div class="label-group">
+                        <label>&nbsp;</label>
+                        <button id="tz-search-btn" title="Search"><svg>
+                                <use href="#icon-search" />
+                            </svg></button>
                     </div>
                 </div>
 
-                <!-- Timezone list -->
-                <div id="tz-list"></div>
+                <!-- Result confirmation -->
+                <div id="tz-result" class="tz-result">Enter a city, region, or landmark</div>
 
+                <div id="tz-curated" class="tz-curated" style="display:none">
+                    <div class="label-group">
+                        <label>Choose a Time Zone</label>
+                        <select id="tz-curated-select">
+                            <option value="">— select —</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Custom label -->
+                <div id="tz-label-row" class="row-flex" style="display:none">
+                    <div class="label-group">
+                        <label>Label</label>
+                        <input id="tz-label" type="text" placeholder="Home, Maria, Tokyo Office…">
+                    </div>
+                    <div class="label-group">
+                        <label>&nbsp;</label>
+                        <button id="tz-confirm-btn" title="Add"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
+                    </div>
+                </div>
             </div>
+
+            <!-- Timezone list -->
+            <div id="tz-list"></div>
+
         </div>
     </div>
 
@@ -389,40 +379,38 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="cost-foreign-label">X</label>
-                        <input id="cost-foreign-val" type="number" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-sync" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="cost-local-label">X</label>
-                        <input id="cost-local-val" placeholder="0">
+            <div class="row-equation">
+                <div class="label-group">
+                    <label id="cost-foreign-label">X</label>
+                    <input id="cost-foreign-val" type="number" placeholder="0" min="0" step="any">
+                </div>
+                <div class="arrow-label"><svg>
+                        <use href="#icon-sync" />
+                    </svg></div>
+                <div class="label-group">
+                    <label id="cost-local-label">X</label>
+                    <input id="cost-local-val" placeholder="0">
+                </div>
+            </div>
+            <div class="row-equation">
+                <div class="label-group">
+                    <label>Quantity</label>
+                    <div class="tab">
+                        <button id="cost-qty-minus" class="narrow"><svg>
+                                <use href="#icon-minus" />
+                            </svg></button>
+                        <input id="cost-qty" type="number" class="inner" value="1" min="1">
+                        <button id="cost-qty-plus" class="narrow"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
                     </div>
                 </div>
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label>Quantity</label>
-                        <div class="tab">
-                            <button id="cost-qty-minus" class="narrow"><svg>
-                                    <use href="#icon-minus" />
-                                </svg></button>
-                            <input id="cost-qty" type="number" class="inner" value="1" min="1">
-                            <button id="cost-qty-plus" class="narrow"><svg>
-                                    <use href="#icon-add" />
-                                </svg></button>
-                        </div>
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-close" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="cost-total-label">X</label>
-                        <input id="cost-total-val" class="output" placeholder="—" readonly>
-                    </div>
+                <div class="arrow-label"><svg>
+                        <use href="#icon-close" />
+                    </svg></div>
+                <div class="label-group">
+                    <label id="cost-total-label">X</label>
+                    <input id="cost-total-val" class="output" placeholder="—" readonly>
                 </div>
             </div>
         </div>
@@ -441,32 +429,30 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="market-rate-label">Pesos / kg</label>
-                        <input id="market-rate-val" type="number" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-close" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="market-weight-label">Kilograms</label>
-                        <input id="market-weight-val" type="number" placeholder="0" min="0" step="any">
-                    </div>
+            <div class="row-equation">
+                <div class="label-group">
+                    <label id="market-rate-label">Pesos / kg</label>
+                    <input id="market-rate-val" type="number" placeholder="0" min="0" step="any">
                 </div>
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="market-foreign-label">Total (MXN)</label>
-                        <input id="market-foreign-val" class="output" placeholder="—" readonly>
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-arrow-forward" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="market-local-label">Total (USD)</label>
-                        <input id="market-local-val" class="output" placeholder="—" readonly>
-                    </div>
+                <div class="arrow-label"><svg>
+                        <use href="#icon-close" />
+                    </svg></div>
+                <div class="label-group">
+                    <label id="market-weight-label">Kilograms</label>
+                    <input id="market-weight-val" type="number" placeholder="0" min="0" step="any">
+                </div>
+            </div>
+            <div class="row-equation">
+                <div class="label-group">
+                    <label id="market-foreign-label">Total (MXN)</label>
+                    <input id="market-foreign-val" class="output" placeholder="—" readonly>
+                </div>
+                <div class="arrow-label"><svg>
+                        <use href="#icon-arrow-forward" />
+                    </svg></div>
+                <div class="label-group">
+                    <label id="market-local-label">Total (USD)</label>
+                    <input id="market-local-val" class="output" placeholder="—" readonly>
                 </div>
             </div>
         </div>
@@ -485,38 +471,36 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
 
-                <!-- Toolbar -->
-                <div class="toolbar">
-                    <button id="tally-add" title="Add item"><svg>
-                            <use href="#icon-add" />
-                        </svg></button>
-                    <button id="tally-select" title="Select All"><svg>
-                            <use href="#icon-checkbox" />
-                        </svg></button>
-                    <button class="red" id="tally-delete" title="Delete Selected"><svg>
-                            <use href="#icon-delete" />
-                        </svg></button>
-                </div>
-
-                <!-- Item list -->
-                <div id="tally-list" class="row-list">
-                </div>
-
-                <!-- Totals -->
-                <div class="row-3col total">
-                    <span>Remaining</span>
-                    <span id="tally-remaining-foreign">—</span>
-                    <span id="tally-remaining-local">—</span>
-                </div>
-                <div class="row-3col total">
-                    <span>Spent</span>
-                    <span id="tally-spent-foreign">—</span>
-                    <span id="tally-spent-local">—</span>
-                </div>
-
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <button id="tally-add" title="Add item"><svg>
+                        <use href="#icon-add" />
+                    </svg></button>
+                <button id="tally-select" title="Select All"><svg>
+                        <use href="#icon-checkbox" />
+                    </svg></button>
+                <button class="red" id="tally-delete" title="Delete Selected"><svg>
+                        <use href="#icon-delete" />
+                    </svg></button>
             </div>
+
+            <!-- Item list -->
+            <div id="tally-list" class="row-list">
+            </div>
+
+            <!-- Totals -->
+            <div class="row-3col total">
+                <span>Remaining</span>
+                <span id="tally-remaining-foreign">—</span>
+                <span id="tally-remaining-local">—</span>
+            </div>
+            <div class="row-3col total">
+                <span>Spent</span>
+                <span id="tally-spent-foreign">—</span>
+                <span id="tally-spent-local">—</span>
+            </div>
+
         </div>
     </div>
 
@@ -533,103 +517,101 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
 
-                <!-- Bill amount -->
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="bill-foreign-label">Bill (MXN)</label>
-                        <input id="bill-foreign-val" type="number" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-sync" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="bill-local-label">Bill (USD)</label>
-                        <input id="bill-local-val" type="number" placeholder="0" min="0" step="any">
+            <!-- Bill amount -->
+            <div class="row-equation">
+                <div class="label-group">
+                    <label id="bill-foreign-label">Bill (MXN)</label>
+                    <input id="bill-foreign-val" type="number" placeholder="0" min="0" step="any">
+                </div>
+                <div class="arrow-label"><svg>
+                        <use href="#icon-sync" />
+                    </svg></div>
+                <div class="label-group">
+                    <label id="bill-local-label">Bill (USD)</label>
+                    <input id="bill-local-val" type="number" placeholder="0" min="0" step="any">
+                </div>
+            </div>
+
+            <!-- People -->
+            <div class="row-2col">
+                <div class="label-group">
+                    <label>Split between</label>
+                    <div class="tab">
+                        <button class="narrow" id="bill-people-minus"><svg>
+                                <use href="#icon-minus" />
+                            </svg></button>
+                        <input type="number" class="inner" id="bill-people" value="1" min="1">
+                        <button class="narrow" id="bill-people-plus"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
                     </div>
                 </div>
 
-                <!-- People -->
-                <div class="row-2col">
-                    <div class="label-group">
-                        <label>Split between</label>
-                        <div class="tab">
-                            <button class="narrow" id="bill-people-minus"><svg>
-                                    <use href="#icon-minus" />
-                                </svg></button>
-                            <input type="number" class="inner" id="bill-people" value="1" min="1">
-                            <button class="narrow" id="bill-people-plus"><svg>
-                                    <use href="#icon-add" />
-                                </svg></button>
-                        </div>
-                    </div>
-
-                    <div class="label-group">
-                        <label>Split</label>
-                        <div class="tab">
-                            <button class="bill-mode-btn active" data-mode="even">Even</button>
-                            <button class="bill-mode-btn" data-mode="uneven">Uneven</button>
-                        </div>
+                <div class="label-group">
+                    <label>Split</label>
+                    <div class="tab">
+                        <button class="bill-mode-btn active" data-mode="even">Even</button>
+                        <button class="bill-mode-btn" data-mode="uneven">Uneven</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- Tip presets -->
-                <div class="row-full" id="tip-options">
-                    <div class="label-group">
-                        <label>Tip</label>
-                        <div class="options row-flex">
-                            <button data-pct="0">0%</button>
-                            <button data-pct="10">10%</button>
-                            <button data-pct="15">15%</button>
-                            <button data-pct="20">20%</button>
-                            <input type="number" id="bill-tip-custom" placeholder="%" min="0" max="100">
-                        </div>
+            <!-- Tip presets -->
+            <div class="row-full" id="tip-options">
+                <div class="label-group">
+                    <label>Tip</label>
+                    <div class="options row-flex">
+                        <button data-pct="0">0%</button>
+                        <button data-pct="10">10%</button>
+                        <button data-pct="15">15%</button>
+                        <button data-pct="20">20%</button>
+                        <input type="number" id="bill-tip-custom" placeholder="%" min="0" max="100">
                     </div>
                 </div>
+            </div>
 
-                <!-- Tip -->
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="bill-foreign-tip-label">Tip (MXN)</label>
-                        <input id="bill-foreign-tip-val" class="output" placeholder="—" readonly>
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-arrow-forward" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="bill-local-tip-label">Tip (USD)</label>
-                        <input id="bill-local-tip-val" class="output" placeholder="—" readonly>
-                    </div>
+            <!-- Tip -->
+            <div class="row-equation">
+                <div class="label-group">
+                    <label id="bill-foreign-tip-label">Tip (MXN)</label>
+                    <input id="bill-foreign-tip-val" class="output" placeholder="—" readonly>
                 </div>
+                <div class="arrow-label"><svg>
+                        <use href="#icon-arrow-forward" />
+                    </svg></div>
+                <div class="label-group">
+                    <label id="bill-local-tip-label">Tip (USD)</label>
+                    <input id="bill-local-tip-val" class="output" placeholder="—" readonly>
+                </div>
+            </div>
 
-                <!-- total -->
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="bill-foreign-total-label">Total (MXN)</label>
-                        <input id="bill-foreign-total-val" class="output" placeholder="—" readonly>
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-arrow-forward" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="bill-local-total-label">Total (USD)</label>
-                        <input id="bill-local-total-val" class="output" placeholder="—" readonly>
-                    </div>
+            <!-- total -->
+            <div class="row-equation">
+                <div class="label-group">
+                    <label id="bill-foreign-total-label">Total (MXN)</label>
+                    <input id="bill-foreign-total-val" class="output" placeholder="—" readonly>
                 </div>
+                <div class="arrow-label"><svg>
+                        <use href="#icon-arrow-forward" />
+                    </svg></div>
+                <div class="label-group">
+                    <label id="bill-local-total-label">Total (USD)</label>
+                    <input id="bill-local-total-val" class="output" placeholder="—" readonly>
+                </div>
+            </div>
 
-                <!-- Uneven Mode -->
-                <div id="split-list" style="display:none" class="form">
-                    <div class="split-row split-header">
-                        <span>Name</span>
-                        <span id="split-offset-label">Offset</span>
-                        <span>Tip</span>
-                        <span>Total</span>
-                    </div>
-                    <div id="split-rows"></div>
-                    <div class="split-footer">Add an offset to adjust someone's share.<br />e.g. 80 for extra
-                        drinks<br />Offset is in foreign currency.</div>
+            <!-- Uneven Mode -->
+            <div id="split-list" style="display:none" class="form">
+                <div class="split-row split-header">
+                    <span>Name</span>
+                    <span id="split-offset-label">Offset</span>
+                    <span>Tip</span>
+                    <span>Total</span>
                 </div>
+                <div id="split-rows"></div>
+                <div class="split-footer">Add an offset to adjust someone's share.<br />e.g. 80 for extra
+                    drinks<br />Offset is in foreign currency.</div>
             </div>
         </div>
     </div>
@@ -647,69 +629,67 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
 
-                <!-- Toolbar -->
-                <div class="toolbar">
-                    <button id="debt-toggle" title="Clear all"><svg>
-                            <use href="#icon-add" />
-                        </svg></button>
-                    <button id="debt-select-all" title="Select all"><svg>
-                            <use href="#icon-checkbox" />
-                        </svg></button>
-                    <button class="red" id="debt-clear" title="Clear all"><svg>
-                            <use href="#icon-delete" />
-                        </svg></button>
-                </div>
-
-                <!-- Add form -->
-                <div id="debt-form" class="form row-list">
-                    <div class="row-2col">
-                        <div class="label-group">
-                            <label>Person</label>
-                            <input type="text" id="debt-person" placeholder="Name">
-                        </div>
-                        <div class="label-group">
-                            <label>Note</label>
-                            <input type="text" id="debt-note" placeholder="Lunch, taxi…">
-                        </div>
-                    </div>
-                    <div class="row-equation">
-                        <div class="label-group">
-                            <label id="debt-foreign-label">Amount (MXN)</label>
-                            <input id="debt-foreign-val" type="number" placeholder="0" min="0" step="any">
-                        </div>
-                        <div class="arrow-label"><svg>
-                                <use href="#icon-sync" />
-                            </svg></div>
-                        <div class="label-group">
-                            <label id="debt-local-label">Amount (USD)</label>
-                            <input id="debt-local-val" type="number" placeholder="0" min="0" step="any">
-                        </div>
-                    </div>
-                    <div class="row-2col">
-                        <div class="label-group">
-                            <label>Direction</label>
-                            <div class="tab">
-                                <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
-                                <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
-                            </div>
-                        </div>
-                        <div class="label-group">
-                            <label class="row-right">&nbsp;</label>
-                            <div class="row-right">
-                                <button id="debt-add"><svg>
-                                        <use href="#icon-add" />
-                                    </svg></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Entry list -->
-                <div id="debt-list" class="row-list"></div>
-
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <button id="debt-toggle" title="Clear all"><svg>
+                        <use href="#icon-add" />
+                    </svg></button>
+                <button id="debt-select-all" title="Select all"><svg>
+                        <use href="#icon-checkbox" />
+                    </svg></button>
+                <button class="red" id="debt-clear" title="Clear all"><svg>
+                        <use href="#icon-delete" />
+                    </svg></button>
             </div>
+
+            <!-- Add form -->
+            <div id="debt-form" class="form row-list">
+                <div class="row-2col">
+                    <div class="label-group">
+                        <label>Person</label>
+                        <input type="text" id="debt-person" placeholder="Name">
+                    </div>
+                    <div class="label-group">
+                        <label>Note</label>
+                        <input type="text" id="debt-note" placeholder="Lunch, taxi…">
+                    </div>
+                </div>
+                <div class="row-equation">
+                    <div class="label-group">
+                        <label id="debt-foreign-label">Amount (MXN)</label>
+                        <input id="debt-foreign-val" type="number" placeholder="0" min="0" step="any">
+                    </div>
+                    <div class="arrow-label"><svg>
+                            <use href="#icon-sync" />
+                        </svg></div>
+                    <div class="label-group">
+                        <label id="debt-local-label">Amount (USD)</label>
+                        <input id="debt-local-val" type="number" placeholder="0" min="0" step="any">
+                    </div>
+                </div>
+                <div class="row-2col">
+                    <div class="label-group">
+                        <label>Direction</label>
+                        <div class="tab">
+                            <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
+                            <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
+                        </div>
+                    </div>
+                    <div class="label-group">
+                        <label class="row-right">&nbsp;</label>
+                        <div class="row-right">
+                            <button id="debt-add"><svg>
+                                    <use href="#icon-add" />
+                                </svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entry list -->
+            <div id="debt-list" class="row-list"></div>
+
         </div>
     </div>
 
@@ -726,73 +706,71 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="body-inner">
 
-                <!-- Budget target -->
-                <div class="toolbar label-group">
-                    <label>Budget</label>
-                    <input type="number" id="budget-target" placeholder="0" min="0" step="any">
+            <!-- Budget target -->
+            <div class="toolbar label-group">
+                <label>Budget</label>
+                <input type="number" id="budget-target" placeholder="0" min="0" step="any">
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <button id="budget-new-btn" title="Add expense"><svg>
+                        <use href="#icon-add" />
+                    </svg></button>
+                <button id="budget-select-all" title="Select all"><svg>
+                        <use href="#icon-checkbox" />
+                    </svg></button>
+                <button class="red" id="budget-delete" title="Delete selected" disabled><svg>
+                        <use href="#icon-delete" />
+                    </svg></button>
+            </div>
+
+            <!-- Add form -->
+            <div id="budget-form" class="budget-form form">
+                <div class="row-equation">
+                    <div class="label-group" style="flex:1">
+                        <label>Note</label>
+                        <input type="text" id="budget-note" placeholder="Lunch, taxi…">
+                    </div>
+                    <div class="arrow-label"></div>
+                    <div class="label-group">
+                        <label>Date</label>
+                        <div class="date-trigger" id="budget-date-trigger">—</div>
+                        <input type="date" id="budget-date">
+                    </div>
                 </div>
-
-                <!-- Toolbar -->
-                <div class="toolbar">
-                    <button id="budget-new-btn" title="Add expense"><svg>
+                <div class="row-equation">
+                    <div class="label-group">
+                        <label id="budget-foreign-label">Amount (MXN)</label>
+                        <input type="number" id="budget-amount-foreign" placeholder="0" min="0" step="any">
+                    </div>
+                    <div class="arrow-label"><svg>
+                            <use href="#icon-sync" />
+                        </svg></div>
+                    <div class="label-group">
+                        <label id="budget-local-label">Amount (USD)</label>
+                        <input type="number" id="budget-amount-local" placeholder="0" min="0" step="any">
+                    </div>
+                </div>
+                <div class="row-right">
+                    <button id="budget-add"><svg>
                             <use href="#icon-add" />
                         </svg></button>
-                    <button id="budget-select-all" title="Select all"><svg>
-                            <use href="#icon-checkbox" />
-                        </svg></button>
-                    <button class="red" id="budget-delete" title="Delete selected" disabled><svg>
-                            <use href="#icon-delete" />
-                        </svg></button>
                 </div>
-
-                <!-- Add form -->
-                <div id="budget-form" class="budget-form form">
-                    <div class="row-equation">
-                        <div class="label-group" style="flex:1">
-                            <label>Note</label>
-                            <input type="text" id="budget-note" placeholder="Lunch, taxi…">
-                        </div>
-                        <div class="arrow-label"></div>
-                        <div class="label-group">
-                            <label>Date</label>
-                            <div class="date-trigger" id="budget-date-trigger">—</div>
-                            <input type="date" id="budget-date">
-                        </div>
-                    </div>
-                    <div class="row-equation">
-                        <div class="label-group">
-                            <label id="budget-foreign-label">Amount (MXN)</label>
-                            <input type="number" id="budget-amount-foreign" placeholder="0" min="0" step="any">
-                        </div>
-                        <div class="arrow-label"><svg>
-                                <use href="#icon-sync" />
-                            </svg></div>
-                        <div class="label-group">
-                            <label id="budget-local-label">Amount (USD)</label>
-                            <input type="number" id="budget-amount-local" placeholder="0" min="0" step="any">
-                        </div>
-                    </div>
-                    <div class="row-right">
-                        <button id="budget-add"><svg>
-                                <use href="#icon-add" />
-                            </svg></button>
-                    </div>
-                </div>
-
-                <!-- List -->
-                <div id="budget-list" class="row-list"></div>
-
-                <!-- Progress bar -->
-                <div id="budget-progress" class="budget-progress">
-                    <div class="budget-progress-bar">
-                        <div class="budget-progress-fill" id="budget-progress-fill"></div>
-                    </div>
-                    <div class="budget-progress-label" id="budget-progress-label"></div>
-                </div>
-
             </div>
+
+            <!-- List -->
+            <div id="budget-list" class="row-list"></div>
+
+            <!-- Progress bar -->
+            <div id="budget-progress" class="budget-progress">
+                <div class="budget-progress-bar">
+                    <div class="budget-progress-fill" id="budget-progress-fill"></div>
+                </div>
+                <div class="budget-progress-label" id="budget-progress-label"></div>
+            </div>
+
         </div>
     </div>
 

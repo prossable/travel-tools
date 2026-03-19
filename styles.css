@@ -351,7 +351,7 @@ div.form {
     border-radius: 0 0 20px 20px;
 }
 
-body .card .body .body-inner div.toolbar {
+body .card .body div.toolbar {
     display: flex;
     padding: 10px 20px;
     background-color: var(--card-tool);
@@ -498,7 +498,10 @@ header {
     margin-left: auto;
     margin-right: auto;
     position: relative;
-    overflow: auto;
+    display: grid;
+    grid-template-rows: 40px 0fr;
+    transition: grid-template-rows .4s ease-in-out;
+    overflow: hidden;
 
     >.header {
         height: 40px;
@@ -534,29 +537,24 @@ header {
 
     >.body {
         padding: 0;
-        display: grid;
-        grid-template-rows: 0fr;
         overflow: hidden;
-        transition: grid-template-rows .4s, padding .4s ease-in-out;
+        background: linear-gradient(var(--card-bg) 80%, var(--bg) 100%);
 
-        >.body-inner {
-            overflow: hidden;
+        >div {
+            padding: 10px 20px;
 
-            >div {
-                padding: 10px 20px;
+            &:first-child {
+                padding-top: 20px;
+            }
 
-                &:first-child {
-                    padding-top: 20px;
-                }
-
-                &:last-child {
-                    padding-bottom: 20px;
-                }
+            &:last-child {
+                padding-bottom: 20px;
             }
         }
     }
 
     &.open {
+        grid-template-rows: 40px 1fr;
 
         >.header {
             background-color: var(--accent1);
@@ -573,11 +571,6 @@ header {
             .summary {
                 opacity: 0;
             }
-        }
-
-        >.body {
-            background: linear-gradient(var(--card-bg) 80%, var(--bg) 100%);
-            grid-template-rows: 1fr;
         }
     }
 }
