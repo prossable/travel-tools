@@ -1736,15 +1736,6 @@ class TimezonesCard extends Card {
         this.#pendingZone = null;
     }
 
-    #searchCurated(query) {
-        const q = query.toLowerCase();
-        return Config.timeZones.filter(z =>
-            z.label.toLowerCase().includes(q) ||
-            z.tz.toLowerCase().includes(q) ||
-            z.zone.toLowerCase().includes(q)
-        );
-    }
-
     async #search() {
         const query = this.searchInput.value.trim();
         if (!query) { this.searchInput.focus(); return; }
@@ -1764,9 +1755,7 @@ class TimezonesCard extends Card {
                 result.error === 'notfound' ? `No results found · select from list below` :
                     'Web call failed · select from list below';
 
-            const matches = this.#searchCurated(query);
-            const list = matches.length ? matches : Config.timeZones;
-
+            const list = Config.timeZones;
             this.curatedSelect.innerHTML = '<option value="">— select —</option>' +
                 list.map(z => `<option value="${z.tz}">${z.label} · ${z.zone}</option>`).join('');
             this.curatedEl.style.display = '';
