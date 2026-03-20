@@ -226,18 +226,115 @@
                     </svg></button>
             </div>
 
-            <div class="row-full label-group">
+            <div class="label-group">
                 <label>Foreign Currency</label>
                 <select id="rate-currency">
                 </select>
             </div>
-            <div class="row-full label-group">
+            <div class="label-group">
                 <label id="rate-label">X</label>
                 <input id="rate" type="number" step="0.01" min="1">
             </div>
             <div class="row-flex">
                 <div id="rate-hint"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- CHECKLIST -->
+    <div class="card" id="card-checklist">
+        <div class="header">
+            <svg class="icon">
+                <use href="#icon-checklist" />
+            </svg>
+            Checklist
+            <span class="summary"></span>
+            <button class="collapse-btn" title="Collapse">
+                <svg>
+                    <use href="#icon-close" />
+                </svg>
+            </button>
+        </div>
+        <div class="body">
+
+            <!-- List selector -->
+            <div class="toolbar">
+                <button id="checklist-new-btn" title="New checklist">
+                    <svg>
+                        <use href="#icon-add" />
+                    </svg>
+                </button>
+                <select id="checklist-select" style="flex:1"></select>
+                <button class="red" id="checklist-delete-btn" title="Delete list">
+                    <svg>
+                        <use href="#icon-delete" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- New list form -->
+            <div id="checklist-form" class="checklist-form form">
+                <div class="row-full">
+                    <input type="checkbox" id="checklist-use-template">
+                    <label for="checklist-use-template">Start from template</label>
+                </div>
+                <select id="checklist-template-row" style="display:none"></select>
+                <div class="row-equation">
+                    <div class="label-group" style="flex:1">
+                        <label>Name</label>
+                        <input type="text" id="checklist-name" placeholder="My List">
+                    </div>
+                    <div class="arrow-label"></div>
+                    <button id="checklist-add-btn">
+                        <svg>
+                            <use href="#icon-add" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="toolbar" id="checklist-toolbar">
+                <div class="tab">
+                    <button class="checklist-mode-btn active" data-mode="check">
+                        <svg>
+                            <use href="#icon-check" />
+                        </svg>
+                    </button>
+                    <button class="checklist-mode-btn" data-mode="edit">
+                        <svg>
+                            <use href="#icon-edit" />
+                        </svg>
+                    </button>
+                </div>
+                <button id="checklist-add-item-btn" title="Add item" style="display:none">
+                    <svg>
+                        <use href="#icon-add" />
+                    </svg>
+                </button>
+                <button id="checklist-select-all-btn" title="Select all" style="display:none">
+                    <svg>
+                        <use href="#icon-check" />
+                    </svg>
+                </button>
+                <button class="red" id="checklist-delete-items-btn" title="Delete selected" style="display:none">
+                    <svg>
+                        <use href="#icon-delete" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Item list -->
+            <div id="checklist-list"></div>
+
+            <!-- Progress -->
+            <div class="checklist-progress" id="checklist-progress">
+                <div class="checklist-progress-bar">
+                    <div class="checklist-progress-fill" id="checklist-progress-fill"></div>
+                </div>
+                <span id="checklist-progress-label"></span>
+            </div>
+
         </div>
     </div>
 
@@ -563,7 +660,7 @@
             </div>
 
             <!-- Tip presets -->
-            <div class="row-full" id="tip-options">
+            <div id="tip-options">
                 <div class="label-group">
                     <label>Tip</label>
                     <div class="options row-flex">

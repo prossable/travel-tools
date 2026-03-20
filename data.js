@@ -1,4 +1,42 @@
 class Config {
+    static checklists = [
+        {
+            id: 'clothes',
+            name: 'Clothes',
+            items: ['T-shirts', 'Pants', 'Underwear', 'Socks', 'Jacket', 'Swimsuit', 'Pajamas']
+        },
+        {
+            id: 'toiletries',
+            name: 'Toiletries',
+            items: ['Toothbrush', 'Toothpaste', 'Deodorant', 'Shampoo', 'Sunscreen', 'Razor', 'Medications']
+        },
+        {
+            id: 'gear',
+            name: 'Gear',
+            items: ['Backpack', 'Day bag', 'Power bank', 'Chargers', 'Adapter', 'Headphones', 'Camera']
+        },
+        {
+            id: 'entertainment',
+            name: 'Entertainment',
+            items: ['Books', 'Playing cards', 'Download shows', 'Spotify offline', 'Journal']
+        },
+        {
+            id: 'camping',
+            name: 'Camping',
+            items: ['Tent', 'Sleeping bag', 'Sleeping pad', 'Headlamp', 'Matches', 'First aid kit']
+        },
+        {
+            id: 'kitchen',
+            name: 'Kitchen',
+            items: ['Camp stove', 'Fuel', 'Cookware', 'Utensils', 'Plates', 'Cups', 'Dish soap']
+        },
+        {
+            id: 'food',
+            name: 'Food',
+            items: ['Coffee', 'Snacks', 'Cooking oil', 'Salt and pepper', 'Spices']
+        },
+    ];
+    
     static timeZones = [
         { label: 'Honolulu', zone: 'Hawaii', tz: 'Pacific/Honolulu' },
         { label: 'Anchorage', zone: 'Alaska', tz: 'America/Anchorage' },
@@ -106,14 +144,35 @@ class Config {
 }
 
 class StorageService {
+
+    // ── Private keys ──────────────────────────────────
+
     static #STORED_RATE = 'storedRate';
     static #AUTO_FETCH_RATE = 'autoFetchRate';
     static #FOREIGN_CURRENCY = 'foreignCurrency';
 
-    static #toBool(value, defaultVal = true) { return value === null ? defaultVal : value === 'true'; }
+    // ── Init ──────────────────────────────────────────
 
-    static deleteStoredRate() { localStorage.removeItem(StorageService.#STORED_RATE); }
-    static getStoredRate() { return JSON.parse(localStorage.getItem(StorageService.#STORED_RATE)); }
+    constructor() { throw new Error('StorageService is static'); }
+
+    static async init() {
+        await DatabaseService.init();
+    }
+
+    // ── Helpers ───────────────────────────────────────
+
+    static #toBool(value, defaultVal = true) {
+        return value === null ? defaultVal : value === 'true';
+    }
+
+    // ── Rate ──────────────────────────────────────────
+
+    static deleteStoredRate() {
+        localStorage.removeItem(StorageService.#STORED_RATE);
+    }
+    static getStoredRate() {
+        return JSON.parse(localStorage.getItem(StorageService.#STORED_RATE));
+    }
     static setStoredRate(rate, isCustom) {
         localStorage.setItem(StorageService.#STORED_RATE, JSON.stringify({
             rate,
@@ -123,11 +182,208 @@ class StorageService {
         }));
     }
 
-    static getAutoFetchRate() { return StorageService.#toBool(localStorage.getItem(StorageService.#AUTO_FETCH_RATE)); }
-    static setAutoFetchRate(value) { localStorage.setItem(StorageService.#AUTO_FETCH_RATE, value); }
+    // ── Settings ──────────────────────────────────────
 
-    static getForeignCode() { return localStorage.getItem(StorageService.#FOREIGN_CURRENCY) || 'MXN'; }
-    static setForeignCode(value) { localStorage.setItem(StorageService.#FOREIGN_CURRENCY, value); }
+    static getAutoFetchRate() {
+        return StorageService.#toBool(localStorage.getItem(StorageService.#AUTO_FETCH_RATE));
+    }
+    static setAutoFetchRate(value) {
+        localStorage.setItem(StorageService.#AUTO_FETCH_RATE, value);
+    }
+
+    static getForeignCode() {
+        return localStorage.getItem(StorageService.#FOREIGN_CURRENCY) || 'MXN';
+    }
+    static setForeignCode(value) {
+        localStorage.setItem(StorageService.#FOREIGN_CURRENCY, value);
+    }
+
+    // ── Checklists ────────────────────────────────────
+
+    static async getChecklists() {
+        return DatabaseService.getLists();
+    }
+
+    static async addChecklist(name) {
+        return DatabaseService.addList(name);
+    }
+
+    static async deleteChecklist(id) {
+        return DatabaseService.deleteList(id);
+    }
+
+    // ── Checklist Items ───────────────────────────────
+
+    static async getChecklistItems(listId) {
+        return DatabaseService.getItems(listId);
+    }
+
+    static async addChecklistItem(listId, name) {
+        return DatabaseService.addItem(listId, name);
+    }
+
+    static async addChecklistItems(listId, names) {
+        return DatabaseService.addItems(listId, names);
+    }
+
+    static async updateChecklistItem(item) {
+        return DatabaseService.updateItem(item);
+    }
+
+    static async deleteChecklistItem(id) {
+        return DatabaseService.deleteItem(id);
+    }
+
+    static async deleteChecklistItems(ids) {
+        return DatabaseService.deleteItems(ids);
+    }
+}
+
+class DatabaseService {
+    static #DB_NAME = 'tripkit';
+    static #DB_VERSION = 1;
+    static #db = null;
+
+    static #STORE_CHECKLISTS = 'checklists';
+    static #STORE_ITEMS = 'checklistItems';
+
+    constructor() { throw new Error('DatabaseService is static'); }
+
+    static async init() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(DatabaseService.#DB_NAME, DatabaseService.#DB_VERSION);
+
+            req.onupgradeneeded = (e) => {
+                const db = e.target.result;
+
+                if (!db.objectStoreNames.contains(DatabaseService.#STORE_CHECKLISTS)) {
+                    db.createObjectStore(DatabaseService.#STORE_CHECKLISTS, {
+                        keyPath: 'id',
+                        autoIncrement: true
+                    });
+                }
+
+                if (!db.objectStoreNames.contains(DatabaseService.#STORE_ITEMS)) {
+                    const items = db.createObjectStore(DatabaseService.#STORE_ITEMS, {
+                        keyPath: 'id',
+                        autoIncrement: true
+                    });
+                    items.createIndex('listId', 'listId', { unique: false });
+                }
+            };
+
+            req.onsuccess = (e) => {
+                DatabaseService.#db = e.target.result;
+                resolve();
+            };
+            req.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    // ── Generic helpers ───────────────────────────────
+
+    static #tx(store, mode = 'readonly') {
+        return DatabaseService.#db
+            .transaction(store, mode)
+            .objectStore(store);
+    }
+
+    static #wrap(request) {
+        return new Promise((resolve, reject) => {
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    // ── Checklists ────────────────────────────────────
+
+    static async getLists() {
+        return DatabaseService.#wrap(
+            DatabaseService.#tx(DatabaseService.#STORE_CHECKLISTS).getAll()
+        );
+    }
+
+    static async addList(name) {
+        const id = await DatabaseService.#wrap(
+            DatabaseService.#tx(DatabaseService.#STORE_CHECKLISTS, 'readwrite').add({ name })
+        );
+        return { id, name };
+    }
+
+    static async deleteList(id) {
+        // delete list and all its items in one transaction
+        return new Promise((resolve, reject) => {
+            const tx = DatabaseService.#db.transaction(
+                [DatabaseService.#STORE_CHECKLISTS, DatabaseService.#STORE_ITEMS],
+                'readwrite'
+            );
+            tx.objectStore(DatabaseService.#STORE_CHECKLISTS).delete(id);
+
+            const index = tx.objectStore(DatabaseService.#STORE_ITEMS).index('listId');
+            const request = index.openCursor(IDBKeyRange.only(id));
+            request.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) { cursor.delete(); cursor.continue(); }
+            };
+
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    // ── Items ─────────────────────────────────────────
+
+    static async getItems(listId) {
+        return DatabaseService.#wrap(
+            DatabaseService.#tx(DatabaseService.#STORE_ITEMS)
+                .index('listId')
+                .getAll(IDBKeyRange.only(listId))
+        );
+    }
+
+    static async addItem(listId, name) {
+        const id = await DatabaseService.#wrap(
+            DatabaseService.#tx(DatabaseService.#STORE_ITEMS, 'readwrite')
+                .add({ listId, name, checked: false })
+        );
+        return { id, listId, name, checked: false };
+    }
+
+    static async addItems(listId, names) {
+        return new Promise((resolve, reject) => {
+            const tx = DatabaseService.#db.transaction(DatabaseService.#STORE_ITEMS, 'readwrite');
+            const store = tx.objectStore(DatabaseService.#STORE_ITEMS);
+            const items = [];
+            names.forEach(name => {
+                const req = store.add({ listId, name, checked: false });
+                req.onsuccess = (e) => items.push({ id: e.target.result, listId, name, checked: false });
+            });
+            tx.oncomplete = () => resolve(items);
+            tx.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    static async updateItem(item) {
+        return DatabaseService.#wrap(
+            DatabaseService.#tx(DatabaseService.#STORE_ITEMS, 'readwrite').put(item)
+        );
+    }
+
+    static async deleteItem(id) {
+        return DatabaseService.#wrap(
+            DatabaseService.#tx(DatabaseService.#STORE_ITEMS, 'readwrite').delete(id)
+        );
+    }
+
+    static async deleteItems(ids) {
+        return new Promise((resolve, reject) => {
+            const tx = DatabaseService.#db.transaction(DatabaseService.#STORE_ITEMS, 'readwrite');
+            const store = tx.objectStore(DatabaseService.#STORE_ITEMS);
+            ids.forEach(id => store.delete(id));
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => reject(e.target.error);
+        });
+    }
 }
 
 class RateService {

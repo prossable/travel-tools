@@ -20,12 +20,57 @@ class InputHelper {
     };
 }
 
+class InputSelector {
+    #selectElement;
+    #items = [];
+    #onChanged = null;
+
+    constructor(selectElement, onChanged) {
+        this.#selectElement = selectElement;
+        this.#onChanged = onChanged ?? null;
+
+        this.#selectElement.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.#onChanged?.(this.getValue());
+        });
+    }
+
+    addItem(label, value) {
+        this.#items.push({ label, value });
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = label;
+        this.#selectElement.appendChild(opt);
+    }
+
+    addItems(items) {
+        items.forEach(i => this.addItem(i.label, i.value));
+    }
+
+    clearValue() {
+        this.#selectElement.value = '';
+    }
+
+    setValue(value) {
+        this.#selectElement.value = value;
+    }
+
+    getValue() {
+        return this.#selectElement.value;
+    }
+
+    empty() {
+        this.#items = [];
+        this.#selectElement.innerHTML = '';
+    }
+}
+
 class SelectionManager {
     #activeIds = new Set();
     #items = [];
     #onChanged = null;
 
-    /**
+    /** 
      * @param {object} config
      * @param {HTMLElement} config.selectAllBtn
      * @param {HTMLElement} config.deleteBtn
