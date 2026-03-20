@@ -6,6 +6,8 @@ const ASSETS = [
     '/travel-tools/index.htm',
     '/travel-tools/styles.css',
     '/travel-tools/script.js',
+    '/travel-tools/data.js',
+    '/travel-tools/tools.js',
     '/travel-tools/site.webmanifest',
     '/travel-tools/favicon.ico',
     '/travel-tools/favicon-16x16.png',
