@@ -1962,6 +1962,7 @@ class ChecklistCard extends Card {
     #mode = 'check';
     #selection;
 
+    #listSelector;
     #templateSelector;
 
     constructor() {
@@ -1984,12 +1985,14 @@ class ChecklistCard extends Card {
         this.progressEl = document.getElementById('checklist-progress');
         this.progressFill = document.getElementById('checklist-progress-fill');
         this.progressLabel = document.getElementById('checklist-progress-label');
-        this.listSelect = document.getElementById('checklist-select');
 
         // template selector        
+        const listSelect = document.getElementById('checklist-select');
+        this.#listSelector = new InputSelector(listSelect, (val) => { this.#selectList(val); });
+
+        // template selector
         const templateSelect = document.getElementById('checklist-template-row');
         this.#templateSelector = new InputSelector(templateSelect, (val) => {
-            console.log(val);
             const template = Config.checklists.find(t => t.id === val);
             this.nameInput.value = template ? template.name : '';
         });
@@ -2083,12 +2086,6 @@ class ChecklistCard extends Card {
             e.stopPropagation();
             await this.#addItem();
         });
-
-        this.listSelect.addEventListener('change', async (e) => {
-            e.stopPropagation();
-            if (!e.target.value) return;
-            await this.#selectList(parseInt(e.target.value));
-        });
     }
 
     // ── Private ───────────────────────────────────────
@@ -2103,9 +2100,12 @@ class ChecklistCard extends Card {
     }
 
     async #selectList(id) {
+        id = parseInt(id);
+        if (!id) return;
+
         this.#activeList = this.#lists.find(l => l.id === id) ?? null;
         if (!this.#activeList) return;
-        this.listSelect.value = String(id);
+        this.#listSelector.setValue(id);
         this.#items = await StorageService.getChecklistItems(id);
         this.#renderAll();
     }
@@ -2156,9 +2156,8 @@ class ChecklistCard extends Card {
     }
 
     #syncListSelector() {
-        this.listSelect.innerHTML = this.#lists
-            .map(l => `<option value="${l.id}">${l.name}</option>`)
-            .join('');
+        this.#listSelector.clearItems();
+        this.#listSelector.addItems(this.#lists.map(l => ({ value: l.id, label: l.name })));
         const hasLists = this.#lists.length > 0;
         this.deleteListBtn.disabled = !hasLists;
         this.toolbar.style.display = hasLists ? '' : 'none';

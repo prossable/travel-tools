@@ -29,6 +29,7 @@ class InputSelector {
         this.#selectElement = selectElement;
         this.#onChanged = onChanged ?? null;
 
+        this.#selectElement.disabled = true;
         this.#selectElement.addEventListener('change', (e) => {
             e.stopPropagation();
             this.#onChanged?.(this.getValue());
@@ -36,6 +37,7 @@ class InputSelector {
     }
 
     addItem(label, value) {
+        this.#selectElement.disabled = false;
         this.#items.push({ label, value });
         const opt = document.createElement('option');
         opt.value = value;
@@ -47,8 +49,10 @@ class InputSelector {
         items.forEach(i => this.addItem(i.label, i.value));
     }
 
-    clearValue() {
-        this.#selectElement.value = '';
+    clearItems() {
+        this.#items = [];
+        this.#selectElement.innerHTML = '';
+        this.#selectElement.disabled = true;
     }
 
     setValue(value) {
@@ -59,9 +63,8 @@ class InputSelector {
         return this.#selectElement.value;
     }
 
-    empty() {
-        this.#items = [];
-        this.#selectElement.innerHTML = '';
+    clearValue() {
+        this.#selectElement.value = '';
     }
 }
 
