@@ -2147,9 +2147,6 @@ class ChecklistCard extends Card {
         const itemEl = el.firstElementChild;
         this.listElement.appendChild(itemEl);
         this.#wireListeners(itemEl, item.id);
-
-        // focus name input in edit mode
-        itemEl.querySelector('.checklist-item-name').focus();
         this.#updateProgress();
         this.#updateSummary();
     }

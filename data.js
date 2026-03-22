@@ -204,56 +204,64 @@ class StorageService {
     // ── Checklists ────────────────────────────────────
 
     static async getChecklists() {
-        return DatabaseService.getEntries(StorageService.#CHECKLISTS_LISTS);
+        const [result] = await DatabaseService.transaction()
+            .getEntries(StorageService.#CHECKLISTS_LISTS)
+            .run();
+        return result;
     }
 
     static async addChecklist(name) {
-        return DatabaseService.addEntry(StorageService.#CHECKLISTS_LISTS, { name });
+        const [result] = await DatabaseService.transaction()
+            .addEntry(StorageService.#CHECKLISTS_LISTS, { name })
+            .run();
+        return result;
     }
 
     static async deleteChecklist(id) {
-        // delete list's items
-        console.log("Deleting checklist", id);
-        await DatabaseService.deleteEntriesByIndex(StorageService.#CHECKLISTS_ITEMS, 'listId', id);
-        console.log("Deleting checklist items done");
-        await DatabaseService.deleteEntry(StorageService.#CHECKLISTS_LISTS, id);
-        console.log("Deleting checklist list done");
+        await DatabaseService.transaction()
+            .deleteEntriesByIndex(StorageService.#CHECKLISTS_ITEMS, 'listId', id)
+            .deleteEntry(StorageService.#CHECKLISTS_LISTS, id)
+            .run();
     }
 
     static async getChecklistItems(listId) {
-        return DatabaseService.getEntriesByIndex(StorageService.#CHECKLISTS_ITEMS, 'listId', listId);
+        const [items] = await DatabaseService.transaction()
+            .getEntriesByIndex(StorageService.#CHECKLISTS_ITEMS, 'listId', listId)
+            .run();
+        return items;
     }
 
     static async addChecklistItem(listId, name) {
-        return DatabaseService.addEntry(StorageService.#CHECKLISTS_ITEMS, { listId, name, checked: false });
+        const [result] = await DatabaseService.transaction()
+            .addEntry(StorageService.#CHECKLISTS_ITEMS, { listId, name, checked: false })
+            .run();
+        return result;
     }
 
     static async addChecklistItems(listId, names) {
-        // refactor
-        return DatabaseService.addItems(listId, names);
+        const [result] = await DatabaseService.transaction()
+            .addEntries(StorageService.#CHECKLISTS_ITEMS, names.map(name => ({ listId, name, checked: false })))
+            .run();
+        return result;
     }
 
     static async updateChecklistItem(obj) {
-        return DatabaseService.updateEntry(StorageService.#CHECKLISTS_ITEMS, obj);
-    }
-
-    static async deleteChecklistItem(id) {
-        return DatabaseService.deleteEntry(StorageService.#CHECKLISTS_ITEMS, id);
+        await DatabaseService.transaction()
+            .updateEntry(StorageService.#CHECKLISTS_ITEMS, obj)
+            .run();
     }
 
     static async deleteChecklistItems(ids) {
-        // refactor
-        return DatabaseService.deleteItems(StorageService.#CHECKLISTS_ITEMS, ids);
+        await DatabaseService.transaction()
+            .deleteEntries(StorageService.#CHECKLISTS_ITEMS, ids)
+            .run();
     }
 }
 
 class DatabaseService {
-    static #READ_MODE = 'readonly';
-    static #WRITE_MODE = 'readwrite';
-
     static #DB_NAME = 'tripkit';
     static #DB_VERSION = 1;
-    static #db = null;
+    static DB = null;
 
     static #CHECKLISTS_LISTS = 'checklists';
     static #CHECKLISTS_ITEMS = 'checklistItems';
@@ -284,156 +292,201 @@ class DatabaseService {
             };
 
             req.onsuccess = (e) => {
-                DatabaseService.#db = e.target.result;
+                DatabaseService.DB = e.target.result;
                 resolve();
             };
             req.onerror = (e) => reject(e.target.error);
         });
     }
 
-    // ── Generic helpers ───────────────────────────────
+    static transaction() {
+        return new DBTransaction();
+    }
+}
 
-    static #tx(store, mode = DatabaseService.#READ_MODE) {
-        return DatabaseService.#db.transaction(store, mode)
-            .objectStore(store);
+class DBTransaction {
+    static #debug = false;
+
+    #write = false;
+    #stores = [];
+    #operations = [];
+
+    // ── Logging ───────────────────────────────────────
+
+    static #log(type, msg, data) {
+        if (!DBTransaction.#debug) return;
+        console.log(`DB.${type}: ${msg}`, data);
     }
 
-    static #wrap(request, msg = '') {
+    // ── Store tracking ────────────────────────────────
+
+    #addStore(store, write = false) {
+        this.#stores.push(store);
+        if (write) this.#write = true;
+    }
+
+    // ── Read operations ───────────────────────────────
+
+    getEntry(store, id) {
+        this.#addStore(store);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                const req = tx.objectStore(store).get(id);
+                req.onsuccess = (e) => { DBTransaction.#log('success', `getEntry ${id} from ${store}`, e.target.result); resolve(e.target.result); };
+                req.onerror = (e) => { DBTransaction.#log('error', `getEntry ${id} from ${store}`, e.target.error); reject(e.target.error); };
+            })
+        );
+        return this;
+    }
+
+    getEntries(store) {
+        this.#addStore(store);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                const req = tx.objectStore(store).getAll();
+                req.onsuccess = (e) => { DBTransaction.#log('success', `getEntries from ${store}`, e.target.result); resolve(e.target.result); };
+                req.onerror = (e) => { DBTransaction.#log('error', `getEntries from ${store}`, e.target.error); reject(e.target.error); };
+            })
+        );
+        return this;
+    }
+
+    getEntriesByIndex(store, indexName, indexValue) {
+        this.#addStore(store);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                const req = tx.objectStore(store).index(indexName).getAll(IDBKeyRange.only(indexValue));
+                req.onsuccess = (e) => { DBTransaction.#log('success', `getEntriesByIndex ${indexName}=${indexValue} from ${store}`, e.target.result); resolve(e.target.result); };
+                req.onerror = (e) => { DBTransaction.#log('error', `getEntriesByIndex ${indexName}=${indexValue} from ${store}`, e.target.error); reject(e.target.error); };
+            })
+        );
+        return this;
+    }
+
+    // ── Write operations ──────────────────────────────
+
+    addEntry(store, obj) {
+        this.#addStore(store, true);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                const req = tx.objectStore(store).add(obj);
+                req.onsuccess = (e) => { DBTransaction.#log('success', `addEntry to ${store}`, e.target.result); resolve({ ...obj, id: e.target.result }); };
+                req.onerror = (e) => { DBTransaction.#log('error', `addEntry to ${store}`, e.target.error); reject(e.target.error); };
+            })
+        );
+        return this;
+    }
+
+    addEntries(store, objs) {
+        this.#addStore(store, true);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                if (objs.length === 0) { resolve([]); return; }
+                const results = [];
+                const storeObj = tx.objectStore(store);
+                let completed = 0;
+                objs.forEach(obj => {
+                    const req = storeObj.add(obj);
+                    req.onsuccess = (e) => {
+                        DBTransaction.#log('success', `addEntries item to ${store}`, e.target.result);
+                        results.push({ ...obj, id: e.target.result });
+                        if (++completed === objs.length) resolve(results);
+                    };
+                    req.onerror = (e) => { DBTransaction.#log('error', `addEntries item to ${store}`, e.target.error); reject(e.target.error); };
+                });
+            })
+        );
+        return this;
+    }
+
+    updateEntry(store, obj) {
+        this.#addStore(store, true);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                const req = tx.objectStore(store).put(obj);
+                req.onsuccess = (e) => { DBTransaction.#log('success', `updateEntry ${obj.id} in ${store}`, e.target.result); resolve({ ...obj, id: e.target.result }); };
+                req.onerror = (e) => { DBTransaction.#log('error', `updateEntry ${obj.id} in ${store}`, e.target.error); reject(e.target.error); };
+            })
+        );
+        return this;
+    }
+
+    deleteEntry(store, id) {
+        this.#addStore(store, true);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                const req = tx.objectStore(store).delete(id);
+                req.onsuccess = (e) => { DBTransaction.#log('success', `deleteEntry ${id} from ${store}`, e.target.result); resolve(undefined); };
+                req.onerror = (e) => { DBTransaction.#log('error', `deleteEntry ${id} from ${store}`, e.target.error); reject(e.target.error); };
+            })
+        );
+        return this;
+    }
+
+    deleteEntries(store, ids) {
+        this.#addStore(store, true);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                if (ids.length === 0) { resolve(undefined); return; }
+                const storeObj = tx.objectStore(store);
+                let completed = 0;
+                ids.forEach(id => {
+                    const req = storeObj.delete(id);
+                    req.onsuccess = (e) => {
+                        DBTransaction.#log('success', `deleteEntries item ${id} from ${store}`, e.target.result);
+                        if (++completed === ids.length) resolve(undefined);
+                    };
+                    req.onerror = (e) => { DBTransaction.#log('error', `deleteEntries item ${id} from ${store}`, e.target.error); reject(e.target.error); };
+                });
+            })
+        );
+        return this;
+    }
+
+    deleteEntriesByIndex(store, indexName, indexValue) {
+        this.#addStore(store, true);
+        this.#operations.push((tx) =>
+            new Promise((resolve, reject) => {
+                const request = tx.objectStore(store).index(indexName).openCursor(IDBKeyRange.only(indexValue));
+                request.onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if (cursor) {
+                        const req = cursor.delete();
+                        req.onsuccess = () => { DBTransaction.#log('success', `deleteEntriesByIndex cursor ${indexName}=${indexValue} from ${store}`, undefined); };
+                        req.onerror = (e) => { DBTransaction.#log('error', `deleteEntriesByIndex cursor ${indexName}=${indexValue} from ${store}`, e.target.error); reject(e.target.error); };
+                        cursor.continue();
+                    } else {
+                        DBTransaction.#log('success', `deleteEntriesByIndex ${indexName}=${indexValue} from ${store} complete`, undefined);
+                        resolve(undefined);
+                    }
+                };
+                request.onerror = (e) => { DBTransaction.#log('error', `deleteEntriesByIndex ${indexName}=${indexValue} from ${store}`, e.target.error); reject(e.target.error); };
+            })
+        );
+        return this;
+    }
+
+    // ── Execute ───────────────────────────────────────
+
+    run() {
         return new Promise((resolve, reject) => {
-            request.onsuccess = (e) => {
-                console.log("DB.success: ", msg, e.target.result);
-                resolve(e.target.result);
-            }
-            request.onerror = (e) => {
-                console.log("DB.error: ", msg, e.target.error);
-                reject(e.target.error);
-            }
-        });
-    }
+            const uniqueStores = [...new Set(this.#stores)];
+            const mode = this.#write ? 'readwrite' : 'readonly';
+            const tx = DatabaseService.DB.transaction(uniqueStores, mode);
+            const results = [];
 
-    static async getEntry(store, id) {
-        return DatabaseService.#wrap(
-            DatabaseService.#tx(store, DatabaseService.#READ_MODE).get(id),
-            `get from ${store} id ${id}`
-        );
-    }
+            Promise.all(
+                this.#operations.map(op => {
+                    const result = op(tx);
+                    return result instanceof Promise
+                        ? result.then(r => results.push(r))
+                        : Promise.resolve(results.push(undefined));
+                })
+            ).catch(reject);
 
-    static async getEntries(store) {
-        return DatabaseService.#wrap(
-            DatabaseService.#tx(store, DatabaseService.#READ_MODE).getAll(),
-            `get all from ${store}`
-        );
-    }
-
-    static async getEntriesByIndex(store, indexName, indexValue) {
-        return DatabaseService.#wrap(
-            DatabaseService.#tx(store, DatabaseService.#READ_MODE)
-                .index(indexName)
-                .getAll(IDBKeyRange.only(indexValue)),
-            `get items for ${indexName} ${indexValue}`
-        );
-    }
-
-    static async addEntry(store, value) {
-        const id = await DatabaseService.#wrap(
-            DatabaseService.#tx(store, DatabaseService.#WRITE_MODE).add(value),
-            `add to ${store}`
-        );
-        return { ...value, id };
-    }
-
-    static async updateEntry(store, obj) {
-        return DatabaseService.#wrap(
-            DatabaseService.#tx(store, DatabaseService.#WRITE_MODE).put(obj),
-            `update ${store} id ${obj.id}`
-        );
-    }
-
-    static async deleteEntry(store, id) {
-        await DatabaseService.#wrap(
-            DatabaseService.#tx(store, DatabaseService.#WRITE_MODE).delete(id),
-            `delete from ${store} id ${id}`
-        );
-    }
-
-    static async deleteEntriesByIndex(store, indexName, indexValue) {
-        return new Promise((resolve, reject) => {
-            console.log("1");
-            const tx = DatabaseService.#db.transaction(store, DatabaseService.#WRITE_MODE);
-            console.log("2", tx);
-            const index = tx.objectStore(store).index(indexName);
-
-            console.log("3", index);
-            const request = index.openCursor(IDBKeyRange.only(indexValue));
-
-            console.log("4", request);
-            request.onsuccess = (e) => {
-
-                console.log("5", e);
-                const cursor = e.target.result;
-                if (cursor) { cursor.delete(); cursor.continue(); }
-            };
-
-            tx.oncomplete = (e) => {
-                console.log("DB.success: ", "deleteEntriesByIndex", e.target.result);
-                resolve(e.target.result);
-            }
-            tx.onerror = (e) => {
-                console.log("DB.error: ", "deleteEntriesByIndex", e.target.error);
-                reject(e.target.error);
-            }
-            console.log("6 end");
-        });
-    }
-
-    // ── OLD ────────────────────────────────────
-
-    static async deleteItems(store, ids) {
-        return new Promise((resolve, reject) => {
-            const tx = DatabaseService.#db.transaction(store, DatabaseService.#WRITE_MODE);
-            const store = tx.objectStore(DatabaseService.#CHECKLISTS_ITEMS);
-
-            ids.forEach(id => objStore.delete(id));
-            tx.oncomplete = () => resolve();
-            tx.onerror = (e) => {
-                console.log("DB.success: ", `delete items from ${store}`, e.target.result);
-                resolve(e.target.result);
-            }
-        });
-    }
-
-    static async deleteList(id) {
-        // delete list and all its items in one transaction
-        return new Promise((resolve, reject) => {
-            const tx = DatabaseService.#db.transaction(
-                [DatabaseService.#CHECKLISTS_LISTS, DatabaseService.#CHECKLISTS_ITEMS],
-                'readwrite'
-            );
-            tx.objectStore(DatabaseService.#CHECKLISTS_LISTS).delete(id);
-
-            const index = tx.objectStore(DatabaseService.#CHECKLISTS_ITEMS).index('listId');
-            const request = index.openCursor(IDBKeyRange.only(id));
-            request.onsuccess = (e) => {
-                const cursor = e.target.result;
-                if (cursor) { cursor.delete(); cursor.continue(); }
-            };
-
-            tx.oncomplete = () => resolve();
-            tx.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    static async addItems(listId, names) {
-        return new Promise((resolve, reject) => {
-            const tx = DatabaseService.#db.transaction(DatabaseService.#CHECKLISTS_ITEMS, 'readwrite');
-            const store = tx.objectStore(DatabaseService.#CHECKLISTS_ITEMS);
-            const items = [];
-            names.forEach(name => {
-                const req = store.add({ listId, name, checked: false });
-                req.onsuccess = (e) => items.push({ id: e.target.result, listId, name, checked: false });
-            });
-            tx.oncomplete = () => resolve(items);
-            tx.onerror = (e) => reject(e.target.error);
+            tx.oncomplete = () => { DBTransaction.#log('complete', '', results); resolve(results); };
+            tx.onerror = (e) => { DBTransaction.#log('error', '', e.target.error); reject(e.target.error); };
+            tx.onabort = (e) => { DBTransaction.#log('aborted', '', e.target.error); reject(e.target.error); };
         });
     }
 }
