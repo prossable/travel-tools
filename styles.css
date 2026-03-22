@@ -289,6 +289,10 @@ div.tab {
     overflow: hidden;
     flex: auto;
 
+    &.narrow {
+        flex: none;
+    }
+
     >button {
         letter-spacing: 0.08em;
         width: fit-content;
@@ -296,14 +300,11 @@ div.tab {
         color: var(--ele-inactive);
         background: var(--btn-inactive);
         flex: 1;
+        padding: 0 8px;
 
         &.active {
             background: var(--btn-normal);
             color: var(--ele-normal);
-        }
-
-        &.narrow {
-            padding: 8px;
         }
 
         @media (hover: hover) {
@@ -391,14 +392,13 @@ div.options {
 div.form {
     background-color: var(--card-form);
     transition: background 0.2s, display 0.2s, fill 0.2s, transform 0.3s ease-in-out;
-    border-radius: 0 0 20px 20px;
 }
 
 body .card .body div.toolbar {
     display: flex;
     padding: 10px 20px;
     background-color: var(--card-tool);
-    gap: 10px;
+    gap: 12px;
 }
 
 /* ROWS */
@@ -406,7 +406,7 @@ div {
     .row-list {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 12px;
         padding-top: 20px;
     }
 
@@ -496,7 +496,7 @@ header {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 14px;
+        gap: 12px;
 
         img {
             width: 60px;
@@ -517,7 +517,7 @@ header {
     .buttons {
         margin-top: 10px;
         display: inline-flex;
-        gap: 8px;
+        gap: 12px;
         justify-content: center;
 
         #install-banner {
@@ -622,10 +622,7 @@ header {
 #card-checklist {
     .checklist-form {
         display: none;
-        padding-bottom: 14px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 4px;
-        gap: 10px;
+        gap: 12px;
 
         &.visible {
             display: flex;
@@ -634,14 +631,9 @@ header {
     }
 
     .checklist-item {
-        display: grid;
+        display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--border);
-
-        /* check mode */
-        grid-template-columns: 1fr auto;
+        gap: 12px;
 
         &.checked .checklist-item-name {
             opacity: 0.4;
@@ -667,15 +659,12 @@ header {
 
     &.edit-mode {
         .checklist-item {
-            grid-template-columns: auto 1fr auto;
-
             .checklist-select {
                 display: block;
             }
 
             .checklist-item-name {
                 pointer-events: auto;
-                border-color: var(--border);
                 background: var(--input-bg);
                 padding: 10px;
             }
@@ -689,9 +678,7 @@ header {
     .checklist-progress {
         display: none;
         align-items: center;
-        gap: 10px;
-        padding-top: 10px;
-        border-top: 1px solid var(--border);
+        gap: 12px;
 
         &.visible {
             display: flex;
@@ -700,7 +687,7 @@ header {
         .checklist-progress-bar {
             flex: 1;
             height: 6px;
-            background: var(--border);
+            background: var(--input-inactive);
             border-radius: 3px;
             overflow: hidden;
         }
@@ -708,19 +695,13 @@ header {
         .checklist-progress-fill {
             height: 100%;
             width: 0%;
-            background: var(--accent2);
+            background: var(--color1);
             border-radius: 3px;
             transition: width 0.3s;
 
             &.complete {
-                background: var(--accent);
+                background: var(--color2);
             }
-        }
-
-        span {
-            font-size: 0.7rem;
-            color: var(--muted);
-            white-space: nowrap;
         }
     }
 }
@@ -795,7 +776,7 @@ header {
                 bottom: 8px;
                 right: 8px;
                 display: flex;
-                gap: 6px;
+                gap: 12px;
             }
         }
 
@@ -822,7 +803,7 @@ header {
     .tz-form {
         display: none;
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
 
         &.visible {
             display: flex;
@@ -894,7 +875,7 @@ header {
             align-items: center;
             display: grid;
             grid-template-columns: auto 1fr 1fr auto;
-            gap: 8px;
+            gap: 12px;
 
             .tally-price {
                 text-align: right;
@@ -928,7 +909,7 @@ header {
         display: grid;
         grid-template-columns: 1.5fr 80px 1fr 1fr 30px;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
         padding: 4px 0;
 
         .split-currency-btn {
@@ -957,7 +938,7 @@ header {
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
 
     &.settled .info {
         opacity: 0.4;
@@ -978,7 +959,7 @@ header {
         display: none;
         padding: 10px 20px;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
 
         &.visible {
             display: flex;
@@ -1012,7 +993,7 @@ header {
         display: grid;
         grid-template-columns: auto 1fr auto;
         align-items: center;
-        gap: 10px;
+        gap: 12px;
         white-space: pre;
     }
 

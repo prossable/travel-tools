@@ -301,17 +301,9 @@
 
             <!-- Toolbar -->
             <div class="toolbar" id="checklist-toolbar">
-                <div class="tab">
-                    <button class="checklist-mode-btn active" data-mode="check">
-                        <svg>
-                            <use href="#icon-check" />
-                        </svg>
-                    </button>
-                    <button class="checklist-mode-btn" data-mode="edit">
-                        <svg>
-                            <use href="#icon-edit" />
-                        </svg>
-                    </button>
+                <div class="tab narrow">
+                    <button class="checklist-mode-btn active" data-mode="check">Check</button>
+                    <button class="checklist-mode-btn" data-mode="edit">Edit</button>
                 </div>
                 <button id="checklist-add-item-btn" title="Add item" style="display:none">
                     <svg>
@@ -331,7 +323,7 @@
             </div>
 
             <!-- Item list -->
-            <div id="checklist-list"></div>
+            <div id="checklist-list" class="row-list"></div>
 
             <!-- Progress -->
             <div class="checklist-progress" id="checklist-progress">
@@ -504,11 +496,11 @@
                 <div class="label-group">
                     <label>Quantity</label>
                     <div class="tab">
-                        <button id="cost-qty-minus" class="narrow"><svg>
+                        <button id="cost-qty-minus"><svg>
                                 <use href="#icon-minus" />
                             </svg></button>
                         <input id="cost-qty" type="number" class="inner" value="1" min="1">
-                        <button id="cost-qty-plus" class="narrow"><svg>
+                        <button id="cost-qty-plus"><svg>
                                 <use href="#icon-add" />
                             </svg></button>
                     </div>
@@ -646,11 +638,11 @@
                 <div class="label-group">
                     <label>Split between</label>
                     <div class="tab">
-                        <button class="narrow" id="bill-people-minus"><svg>
+                        <button id="bill-people-minus"><svg>
                                 <use href="#icon-minus" />
                             </svg></button>
                         <input type="number" class="inner" id="bill-people" value="1" min="1">
-                        <button class="narrow" id="bill-people-plus"><svg>
+                        <button id="bill-people-plus"><svg>
                                 <use href="#icon-add" />
                             </svg></button>
                     </div>

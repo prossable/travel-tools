@@ -2032,7 +2032,7 @@ class ChecklistCard extends Card {
         this.deleteListBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
             if (!this.#activeList) return;
-            if (confirm(`Delete "${this.#activeList.name}"?`)) {
+            if (confirm(`Delete checklist "${this.#activeList.name}"?`)) {
                 await StorageService.deleteChecklist(this.#activeList.id);
                 this.#lists = this.#lists.filter(l => l.id !== this.#activeList.id);
                 this.#activeList = null;
@@ -2195,9 +2195,9 @@ class ChecklistCard extends Card {
                        class="checklist-item-name" 
                        value="${item.name}" 
                        placeholder="Item">
-                <div class="tab checklist-toggle">
+                <div class="toggle checklist-toggle">
                     <button class="${!item.checked ? 'active' : ''}">
-                        <svg><use href="#icon-circle"/></svg>
+                        <svg><use href="#icon-close"/></svg>
                     </button>
                     <button class="${item.checked ? 'active' : ''}">
                         <svg><use href="#icon-check"/></svg>
