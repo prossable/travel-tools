@@ -36,7 +36,7 @@ class Config {
             items: ['Coffee', 'Snacks', 'Cooking oil', 'Salt and pepper', 'Spices']
         },
     ];
-    
+
     static timeZones = [
         { label: 'Honolulu', zone: 'Hawaii', tz: 'Pacific/Honolulu' },
         { label: 'Anchorage', zone: 'Alaska', tz: 'America/Anchorage' },
@@ -151,6 +151,9 @@ class StorageService {
     static #AUTO_FETCH_RATE = 'autoFetchRate';
     static #FOREIGN_CURRENCY = 'foreignCurrency';
 
+    static #CHECKLISTS_LISTS = 'checklists';
+    static #CHECKLISTS_ITEMS = 'checklistItems';
+
     // ── Init ──────────────────────────────────────────
 
     constructor() { throw new Error('StorageService is static'); }
@@ -201,51 +204,59 @@ class StorageService {
     // ── Checklists ────────────────────────────────────
 
     static async getChecklists() {
-        return DatabaseService.getLists();
+        return DatabaseService.getEntries(StorageService.#CHECKLISTS_LISTS);
     }
 
     static async addChecklist(name) {
-        return DatabaseService.addList(name);
+        return DatabaseService.addEntry(StorageService.#CHECKLISTS_LISTS, { name });
     }
 
     static async deleteChecklist(id) {
-        return DatabaseService.deleteList(id);
+        // delete list's items
+        console.log("Deleting checklist", id);
+        await DatabaseService.deleteEntriesByIndex(StorageService.#CHECKLISTS_ITEMS, 'listId', id);
+        console.log("Deleting checklist items done");
+        await DatabaseService.deleteEntry(StorageService.#CHECKLISTS_LISTS, id);
+        console.log("Deleting checklist list done");
     }
 
-    // ── Checklist Items ───────────────────────────────
-
     static async getChecklistItems(listId) {
-        return DatabaseService.getItems(listId);
+        return DatabaseService.getEntriesByIndex(StorageService.#CHECKLISTS_ITEMS, 'listId', listId);
     }
 
     static async addChecklistItem(listId, name) {
-        return DatabaseService.addItem(listId, name);
+        return DatabaseService.addEntry(StorageService.#CHECKLISTS_ITEMS, { listId, name, checked: false });
     }
 
     static async addChecklistItems(listId, names) {
+        // refactor
         return DatabaseService.addItems(listId, names);
     }
 
-    static async updateChecklistItem(item) {
-        return DatabaseService.updateItem(item);
+    static async updateChecklistItem(obj) {
+        return DatabaseService.updateEntry(StorageService.#CHECKLISTS_ITEMS, obj);
     }
 
     static async deleteChecklistItem(id) {
-        return DatabaseService.deleteItem(id);
+        return DatabaseService.deleteEntry(StorageService.#CHECKLISTS_ITEMS, id);
     }
 
     static async deleteChecklistItems(ids) {
-        return DatabaseService.deleteItems(ids);
+        // refactor
+        return DatabaseService.deleteItems(StorageService.#CHECKLISTS_ITEMS, ids);
     }
 }
 
 class DatabaseService {
+    static #READ_MODE = 'readonly';
+    static #WRITE_MODE = 'readwrite';
+
     static #DB_NAME = 'tripkit';
     static #DB_VERSION = 1;
     static #db = null;
 
-    static #STORE_CHECKLISTS = 'checklists';
-    static #STORE_ITEMS = 'checklistItems';
+    static #CHECKLISTS_LISTS = 'checklists';
+    static #CHECKLISTS_ITEMS = 'checklistItems';
 
     constructor() { throw new Error('DatabaseService is static'); }
 
@@ -256,15 +267,15 @@ class DatabaseService {
             req.onupgradeneeded = (e) => {
                 const db = e.target.result;
 
-                if (!db.objectStoreNames.contains(DatabaseService.#STORE_CHECKLISTS)) {
-                    db.createObjectStore(DatabaseService.#STORE_CHECKLISTS, {
+                if (!db.objectStoreNames.contains(DatabaseService.#CHECKLISTS_LISTS)) {
+                    db.createObjectStore(DatabaseService.#CHECKLISTS_LISTS, {
                         keyPath: 'id',
                         autoIncrement: true
                     });
                 }
 
-                if (!db.objectStoreNames.contains(DatabaseService.#STORE_ITEMS)) {
-                    const items = db.createObjectStore(DatabaseService.#STORE_ITEMS, {
+                if (!db.objectStoreNames.contains(DatabaseService.#CHECKLISTS_ITEMS)) {
+                    const items = db.createObjectStore(DatabaseService.#CHECKLISTS_ITEMS, {
                         keyPath: 'id',
                         autoIncrement: true
                     });
@@ -282,44 +293,125 @@ class DatabaseService {
 
     // ── Generic helpers ───────────────────────────────
 
-    static #tx(store, mode = 'readonly') {
-        return DatabaseService.#db
-            .transaction(store, mode)
+    static #tx(store, mode = DatabaseService.#READ_MODE) {
+        return DatabaseService.#db.transaction(store, mode)
             .objectStore(store);
     }
 
-    static #wrap(request) {
+    static #wrap(request, msg = '') {
         return new Promise((resolve, reject) => {
-            request.onsuccess = (e) => resolve(e.target.result);
-            request.onerror = (e) => reject(e.target.error);
+            request.onsuccess = (e) => {
+                console.log("DB.success: ", msg, e.target.result);
+                resolve(e.target.result);
+            }
+            request.onerror = (e) => {
+                console.log("DB.error: ", msg, e.target.error);
+                reject(e.target.error);
+            }
         });
     }
 
-    // ── Checklists ────────────────────────────────────
-
-    static async getLists() {
+    static async getEntry(store, id) {
         return DatabaseService.#wrap(
-            DatabaseService.#tx(DatabaseService.#STORE_CHECKLISTS).getAll()
+            DatabaseService.#tx(store, DatabaseService.#READ_MODE).get(id),
+            `get from ${store} id ${id}`
         );
     }
 
-    static async addList(name) {
-        const id = await DatabaseService.#wrap(
-            DatabaseService.#tx(DatabaseService.#STORE_CHECKLISTS, 'readwrite').add({ name })
+    static async getEntries(store) {
+        return DatabaseService.#wrap(
+            DatabaseService.#tx(store, DatabaseService.#READ_MODE).getAll(),
+            `get all from ${store}`
         );
-        return { id, name };
+    }
+
+    static async getEntriesByIndex(store, indexName, indexValue) {
+        return DatabaseService.#wrap(
+            DatabaseService.#tx(store, DatabaseService.#READ_MODE)
+                .index(indexName)
+                .getAll(IDBKeyRange.only(indexValue)),
+            `get items for ${indexName} ${indexValue}`
+        );
+    }
+
+    static async addEntry(store, value) {
+        const id = await DatabaseService.#wrap(
+            DatabaseService.#tx(store, DatabaseService.#WRITE_MODE).add(value),
+            `add to ${store}`
+        );
+        return { ...value, id };
+    }
+
+    static async updateEntry(store, obj) {
+        return DatabaseService.#wrap(
+            DatabaseService.#tx(store, DatabaseService.#WRITE_MODE).put(obj),
+            `update ${store} id ${obj.id}`
+        );
+    }
+
+    static async deleteEntry(store, id) {
+        await DatabaseService.#wrap(
+            DatabaseService.#tx(store, DatabaseService.#WRITE_MODE).delete(id),
+            `delete from ${store} id ${id}`
+        );
+    }
+
+    static async deleteEntriesByIndex(store, indexName, indexValue) {
+        return new Promise((resolve, reject) => {
+            console.log("1");
+            const tx = DatabaseService.#db.transaction(store, DatabaseService.#WRITE_MODE);
+            console.log("2", tx);
+            const index = tx.objectStore(store).index(indexName);
+
+            console.log("3", index);
+            const request = index.openCursor(IDBKeyRange.only(indexValue));
+
+            console.log("4", request);
+            request.onsuccess = (e) => {
+
+                console.log("5", e);
+                const cursor = e.target.result;
+                if (cursor) { cursor.delete(); cursor.continue(); }
+            };
+
+            tx.oncomplete = (e) => {
+                console.log("DB.success: ", "deleteEntriesByIndex", e.target.result);
+                resolve(e.target.result);
+            }
+            tx.onerror = (e) => {
+                console.log("DB.error: ", "deleteEntriesByIndex", e.target.error);
+                reject(e.target.error);
+            }
+            console.log("6 end");
+        });
+    }
+
+    // ── OLD ────────────────────────────────────
+
+    static async deleteItems(store, ids) {
+        return new Promise((resolve, reject) => {
+            const tx = DatabaseService.#db.transaction(store, DatabaseService.#WRITE_MODE);
+            const store = tx.objectStore(DatabaseService.#CHECKLISTS_ITEMS);
+
+            ids.forEach(id => objStore.delete(id));
+            tx.oncomplete = () => resolve();
+            tx.onerror = (e) => {
+                console.log("DB.success: ", `delete items from ${store}`, e.target.result);
+                resolve(e.target.result);
+            }
+        });
     }
 
     static async deleteList(id) {
         // delete list and all its items in one transaction
         return new Promise((resolve, reject) => {
             const tx = DatabaseService.#db.transaction(
-                [DatabaseService.#STORE_CHECKLISTS, DatabaseService.#STORE_ITEMS],
+                [DatabaseService.#CHECKLISTS_LISTS, DatabaseService.#CHECKLISTS_ITEMS],
                 'readwrite'
             );
-            tx.objectStore(DatabaseService.#STORE_CHECKLISTS).delete(id);
+            tx.objectStore(DatabaseService.#CHECKLISTS_LISTS).delete(id);
 
-            const index = tx.objectStore(DatabaseService.#STORE_ITEMS).index('listId');
+            const index = tx.objectStore(DatabaseService.#CHECKLISTS_ITEMS).index('listId');
             const request = index.openCursor(IDBKeyRange.only(id));
             request.onsuccess = (e) => {
                 const cursor = e.target.result;
@@ -331,56 +423,16 @@ class DatabaseService {
         });
     }
 
-    // ── Items ─────────────────────────────────────────
-
-    static async getItems(listId) {
-        return DatabaseService.#wrap(
-            DatabaseService.#tx(DatabaseService.#STORE_ITEMS)
-                .index('listId')
-                .getAll(IDBKeyRange.only(listId))
-        );
-    }
-
-    static async addItem(listId, name) {
-        const id = await DatabaseService.#wrap(
-            DatabaseService.#tx(DatabaseService.#STORE_ITEMS, 'readwrite')
-                .add({ listId, name, checked: false })
-        );
-        return { id, listId, name, checked: false };
-    }
-
     static async addItems(listId, names) {
         return new Promise((resolve, reject) => {
-            const tx = DatabaseService.#db.transaction(DatabaseService.#STORE_ITEMS, 'readwrite');
-            const store = tx.objectStore(DatabaseService.#STORE_ITEMS);
+            const tx = DatabaseService.#db.transaction(DatabaseService.#CHECKLISTS_ITEMS, 'readwrite');
+            const store = tx.objectStore(DatabaseService.#CHECKLISTS_ITEMS);
             const items = [];
             names.forEach(name => {
                 const req = store.add({ listId, name, checked: false });
                 req.onsuccess = (e) => items.push({ id: e.target.result, listId, name, checked: false });
             });
             tx.oncomplete = () => resolve(items);
-            tx.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    static async updateItem(item) {
-        return DatabaseService.#wrap(
-            DatabaseService.#tx(DatabaseService.#STORE_ITEMS, 'readwrite').put(item)
-        );
-    }
-
-    static async deleteItem(id) {
-        return DatabaseService.#wrap(
-            DatabaseService.#tx(DatabaseService.#STORE_ITEMS, 'readwrite').delete(id)
-        );
-    }
-
-    static async deleteItems(ids) {
-        return new Promise((resolve, reject) => {
-            const tx = DatabaseService.#db.transaction(DatabaseService.#STORE_ITEMS, 'readwrite');
-            const store = tx.objectStore(DatabaseService.#STORE_ITEMS);
-            ids.forEach(id => store.delete(id));
-            tx.oncomplete = () => resolve();
             tx.onerror = (e) => reject(e.target.error);
         });
     }

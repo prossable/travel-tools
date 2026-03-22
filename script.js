@@ -1996,7 +1996,6 @@ class ChecklistCard extends Card {
             const template = Config.checklists.find(t => t.id === val);
             this.nameInput.value = template ? template.name : '';
         });
-        this.#templateSelector.addItem("— empty list —");
         this.#templateSelector.addItems(Config.checklists.map(t => ({ value: t.id, label: t.name })));
 
         // selection manager
@@ -2222,7 +2221,7 @@ class ChecklistCard extends Card {
         });
 
         // name edit
-        nameInput.addEventListener('input', async () => {
+        nameInput.addEventListener('blur', async () => {
             const item = this.#items.find(i => i.id === id);
             if (!item) return;
             item.name = nameInput.value;
