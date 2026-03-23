@@ -176,6 +176,8 @@ input[type="checkbox"] {
     position: relative;
     flex-shrink: 0;
     transition: background 0.2s, border-color 0.2s;
+    user-select: none;
+    -webkit-user-select: none;
 
     &:checked {
         &::after {
@@ -466,6 +468,11 @@ div {
 }
 
 /* GENERIC */
+label {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 .highlight {
     color: var(--color2);
 }
@@ -628,6 +635,15 @@ header {
             display: flex;
             flex-direction: column;
         }
+
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+    }
+
+    .field-error {
+        color: var(--red)
     }
 
     .checklist-item {
@@ -650,10 +666,6 @@ header {
             background: transparent;
             padding: 0;
             transition: opacity 0.2s;
-        }
-
-        .checklist-toggle {
-            flex-shrink: 0;
         }
     }
 

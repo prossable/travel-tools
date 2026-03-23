@@ -1,5 +1,3 @@
-
-
 class InputHelper {
     static setupToggle(container, initialState, onChange) {
         InputHelper.updateToggle(container, initialState);
@@ -65,6 +63,10 @@ class InputSelector {
 
     clearValue() {
         this.#selectElement.value = '';
+    }
+
+    querySelector(id) {
+        return this.#selectElement.querySelector(`option[value="${id}"]`);
     }
 }
 

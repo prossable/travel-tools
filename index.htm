@@ -271,7 +271,7 @@
                     </svg>
                 </button>
                 <select id="checklist-select" style="flex:1"></select>
-                <button class="red" id="checklist-delete-btn" title="Delete list">
+                <button class="red" id="checklist-delete-list-btn" title="Delete list" disabled>
                     <svg>
                         <use href="#icon-delete" />
                     </svg>
@@ -280,17 +280,22 @@
 
             <!-- New list form -->
             <div id="checklist-form" class="checklist-form form">
+                <div class="label-group">
+                    <label>Name <span id="checklist-name-error" class="field-error"></span></label>
+                    <input type="text" id="checklist-name" placeholder="My List">
+                </div>
                 <div class="row-full">
                     <input type="checkbox" id="checklist-use-template">
                     <label for="checklist-use-template">Start from template</label>
                 </div>
-                <select id="checklist-template-row" style="display:none"></select>
-                <div class="row-equation">
-                    <div class="label-group" style="flex:1">
-                        <label>Name</label>
-                        <input type="text" id="checklist-name" placeholder="My List">
-                    </div>
-                    <div class="arrow-label"></div>
+                <div class="row-full" id="checklist-template-row">
+                    <select id="checklist-template-select"></select>
+                </div>
+                <div class="label-group" id="checklist-paste-row">
+                    <label>Paste items (comma, tab, or newline separated)</label>
+                    <textarea id="checklist-paste" placeholder="Shirts, Pants, Socks…" rows="3"></textarea>
+                </div>
+                <div class="row-right">
                     <button id="checklist-add-btn">
                         <svg>
                             <use href="#icon-add" />
@@ -300,7 +305,7 @@
             </div>
 
             <!-- Toolbar -->
-            <div class="toolbar" id="checklist-toolbar">
+            <div class="toolbar" id="checklist-toolbar" style="display:none">
                 <div class="tab narrow">
                     <button class="checklist-mode-btn active" data-mode="check">Check</button>
                     <button class="checklist-mode-btn" data-mode="edit">Edit</button>
@@ -320,6 +325,12 @@
                         <use href="#icon-delete" />
                     </svg>
                 </button>
+            </div>
+
+            <!-- Rename in edit mode -->
+            <div id="checklist-rename-row" class="label-group form" style="display:none">
+                <label>List Name <span id="checklist-rename-error" class="field-error"></span></label>
+                <input type="text" id="checklist-rename" placeholder="List name">
             </div>
 
             <!-- Item list -->

@@ -212,9 +212,15 @@ class StorageService {
 
     static async addChecklist(name) {
         const [result] = await DatabaseService.transaction()
-            .addEntry(StorageService.#CHECKLISTS_LISTS, { name })
+            .addEntry(StorageService.#CHECKLISTS_LISTS, { name, checkedCount: 0, totalCount: 0 })
             .run();
         return result;
+    }
+
+    static async updateChecklist(list) {
+        await DatabaseService.transaction()
+            .updateEntry(StorageService.#CHECKLISTS_LISTS, list)
+            .run();
     }
 
     static async deleteChecklist(id) {
@@ -239,8 +245,13 @@ class StorageService {
     }
 
     static async addChecklistItems(listId, names) {
+        const objs = names
+            .map(n => n.trim())
+            .filter(n => n.length > 0)
+            .map(name => ({ listId, name, checked: false }));
+        if (!objs.length) return [];
         const [result] = await DatabaseService.transaction()
-            .addEntries(StorageService.#CHECKLISTS_ITEMS, names.map(name => ({ listId, name, checked: false })))
+            .addEntries(StorageService.#CHECKLISTS_ITEMS, objs)
             .run();
         return result;
     }
@@ -260,7 +271,7 @@ class StorageService {
 
 class DatabaseService {
     static #DB_NAME = 'tripkit';
-    static #DB_VERSION = 1;
+    static #DB_VERSION = 2;
     static DB = null;
 
     static #CHECKLISTS_LISTS = 'checklists';
@@ -291,10 +302,7 @@ class DatabaseService {
                 }
             };
 
-            req.onsuccess = (e) => {
-                DatabaseService.DB = e.target.result;
-                resolve();
-            };
+            req.onsuccess = (e) => { DatabaseService.DB = e.target.result; resolve(); };
             req.onerror = (e) => reject(e.target.error);
         });
     }
