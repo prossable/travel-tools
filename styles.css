@@ -26,6 +26,7 @@
     --ele-normal: hsl(from var(--color1) h calc(s * .2) calc(l * .15));
     --ele-hover: var(--text);
     --ele-inactive: hsl(from var(--color1) h calc(s * .2) 80%);
+    --ele-muted: hsl(from var(--color1) h calc(s * .2) 30%);
 
     --card-head: var(--color1);
     --card-bg1: hsl(from var(--color1) h calc(s * .2) calc(l * .15));
@@ -278,7 +279,7 @@ div.toggle {
         padding: 8px 0;
         border-radius: 0;
         flex: 1;
-        color: var(--ele-inactive);
+        color: var(--ele-muted);
         background: var(--btn-inactive);
 
         &.active {
@@ -595,14 +596,14 @@ header {
         }
 
         div.form {
-            padding: 16px 20px;
+            padding: 12px 20px;
             background-color: var(--card-form);
             transition: background 0.2s, display 0.2s, fill 0.2s, transform 0.3s ease-in-out;
         }
 
         div.toolbar {
             display: flex;
-            padding: 16px 20px;
+            padding: 12px 20px;
             background-color: var(--card-tool);
             gap: 12px;
         }
@@ -690,13 +691,9 @@ header {
     }
 
     .checklist-progress {
-        display: none;
+        display: flex;
         align-items: center;
         gap: 12px;
-
-        &.visible {
-            display: flex;
-        }
 
         .checklist-progress-bar {
             flex: 1;

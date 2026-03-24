@@ -2108,7 +2108,7 @@ class ChecklistCard extends Card {
         });
 
         // progress
-        this.progressEl = document.getElementById('checklist-progress');
+        this.progressEl = UIDisplay.create(document.getElementById('checklist-progress'), false);
         this.progressFill = document.getElementById('checklist-progress-fill');
         this.progressLabel = document.getElementById('checklist-progress-label');
 
@@ -2259,6 +2259,7 @@ class ChecklistCard extends Card {
         this.deleteListBtn.disabled = !hasLists;
         this.renameListBtn.disabled = !hasLists;
         this.toolbar.setDisplay(hasLists);
+        this.progressEl.setDisplay(hasLists);
     }
 
     #syncToolbarMode() {
@@ -2280,7 +2281,7 @@ class ChecklistCard extends Card {
 
     #updateProgress() {
         if (!this.#activeList) {
-            this.progressEl.classList.remove('visible');
+            this.progressEl.close();
             return;
         }
         const total = this.#activeList.totalCount;
@@ -2290,7 +2291,7 @@ class ChecklistCard extends Card {
         this.progressFill.style.width = `${pct}%`;
         this.progressFill.classList.toggle('complete', pct === 100 && total > 0);
         this.progressLabel.textContent = `${checked} / ${total}`;
-        this.progressEl.classList.toggle('visible', total > 0);
+        this.progressEl.setDisplay(total > 0);
     }
 
     #updateSummary() {
