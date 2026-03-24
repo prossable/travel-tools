@@ -3,38 +3,53 @@ class Config {
         {
             id: 'clothes',
             name: 'Clothes',
-            items: ['T-shirts', 'Pants', 'Underwear', 'Socks', 'Jacket', 'Swimsuit', 'Pajamas']
+            items: ['Shirts / Tops', 'Pants / Shorts', 'Underwear', 'Socks', 'Jacket / Sweater', 'Pajamas', 'Shoes', 'Hat / Cap']
+        },
+        {
+            id: 'beach',
+            name: 'Beach',
+            items: ['Swimsuit', 'Water shoes / Sandal', 'Sun hat', 'Beach / Pack towel', 'Sunscreen', 'Beach umbrella', 'Snorkel gear', 'Floaties', 'Beach toys', 'Cooler', 'Dry bag']
         },
         {
             id: 'toiletries',
             name: 'Toiletries',
-            items: ['Toothbrush', 'Toothpaste', 'Deodorant', 'Shampoo', 'Sunscreen', 'Razor', 'Medications']
+            items: ['Toothbrush', 'Toothpaste', 'Deodorant', 'Shampoo', 'Sunscreen', 'Razor', 'Medications', 'Allergy meds', 'Pain relievers', 'Charcoal pills', 'Eyemask', 'Ear plugs', 'Washcloth', 'Feminine products', 'Makeup', 'Hairbrush / Comb', 'Hair ties', 'Nail clippers', 'Tweezers', 'First aid supplies', 'Hand sanitizer', 'Tissues', 'Travel toilet paper']
         },
+        {
+            id: 'daypack',
+            name: 'Daypack',
+            items: ['Water bottle', 'Snacks', 'Sunglasses', 'Camera', 'Guidebook / Map', 'Light jacket', 'Notebook / Pen', 'Cash / Cards', 'ID / Passport', 'Grocery bags', 'Small Towel / Bandanna']
+        }
         {
             id: 'gear',
             name: 'Gear',
-            items: ['Backpack', 'Day bag', 'Power bank', 'Chargers', 'Adapter', 'Headphones', 'Camera']
+            items: ['Day bag', 'Power bank', 'Chargers / Cables', 'Travel Adapter', 'Batteries', 'Headphones', 'Camera', 'Laptop / Tablet', 'Travel pillow']
         },
         {
             id: 'entertainment',
             name: 'Entertainment',
-            items: ['Books', 'Playing cards', 'Download shows', 'Spotify offline', 'Journal']
+            items: ['Books', 'Journal', 'Games', 'Music / Speakers', 'Download shows', 'Streaming device']
         },
         {
-            id: 'camping',
-            name: 'Camping',
-            items: ['Tent', 'Sleeping bag', 'Sleeping pad', 'Headlamp', 'Matches', 'First aid kit']
+            id: 'camp_gear',
+            name: 'Camp Gear',
+            items: ['Tent / Tarp', 'Sleeping bags', 'Sleeping pads / Pump', 'Pillows / Stuff sack', 'Chairs', 'Headlamp / Flashlight', 'Lantern', 'Hammock', 'First aid kit', 'Backpack', 'Mallet / Hatchet', 'Firestarter', 'Matches / Lighter', 'Fire extinguisher', 'Multi-tool', 'Rope / Paracord', 'Duct tape', 'Trekking poles', 'Insect repellent', 'Toilet paper']
         },
         {
-            id: 'kitchen',
-            name: 'Kitchen',
-            items: ['Camp stove', 'Fuel', 'Cookware', 'Utensils', 'Plates', 'Cups', 'Dish soap']
+            id: 'camp_kitchen',
+            name: 'Camp Kitchen',
+            items: ['Stove / Fuel', 'Cookware', ' Cooking Utensils', 'Eating Utensils', 'Grill tools', 'Cutting board', 'Knife', 'Can opener', 'Plates / Bowls', 'Cups / Mugs', 'Marshmallow roasting sticks', 'Cooler', 'Food storage containers / Bags', 'Aluminum foil', 'Paper towels', 'Portable coffee/tea maker', 'Biodegradable soap', 'Sponge / Scrubber', 'Collapsible sink / basin', 'Trash bags']
         },
         {
-            id: 'food',
-            name: 'Food',
-            items: ['Coffee', 'Snacks', 'Cooking oil', 'Salt and pepper', 'Spices']
+            id: 'camp_food',
+            name: 'Camp Food',
+            items: ['Spices', 'Cooking oil', 'Sugar / Sweetener', 'Condiments', 'Instant coffee / Tea', 'Dehydrated meals', 'Canned goods', 'Pasta / Rice', 'Grains / Beans', 'Snacks', 'Breakfast items', 'Fresh produce', 'Meat / Protein', 'Bread / Tortillas', 'Dairy / Eggs']
         },
+        {
+            id: 'cocktail_kit',
+            name: 'Cocktail Kit',
+            items: ['Shaker', 'Strainer', 'Jigger', 'Muddler', 'Bar spoon', 'Citrus juicer', 'Bottle opener', 'Corkscrew', 'Cutting board', 'Knife', 'Ice cube tray', 'Spirits', 'Mixers', 'Bitters']
+        }
     ];
 
     static timeZones = [
@@ -245,10 +260,7 @@ class StorageService {
     }
 
     static async addChecklistItems(listId, names) {
-        const objs = names
-            .map(n => n.trim())
-            .filter(n => n.length > 0)
-            .map(name => ({ listId, name, checked: false }));
+        const objs = names.map(name => ({ listId, name, checked: false }));
         if (!objs.length) return [];
         const [result] = await DatabaseService.transaction()
             .addEntries(StorageService.#CHECKLISTS_ITEMS, objs)
