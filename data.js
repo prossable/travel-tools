@@ -19,7 +19,7 @@ class Config {
             id: 'daypack',
             name: 'Daypack',
             items: ['Water bottle', 'Snacks', 'Sunglasses', 'Camera', 'Guidebook / Map', 'Light jacket', 'Notebook / Pen', 'Cash / Cards', 'ID / Passport', 'Grocery bags', 'Small Towel / Bandanna']
-        }
+        },
         {
             id: 'gear',
             name: 'Gear',
