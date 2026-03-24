@@ -1968,35 +1968,54 @@ class ChecklistCard extends Card {
     constructor() {
         super('card-checklist');
 
-        // elements
-        this.newBtn = document.getElementById('checklist-new-btn');
-        this.deleteListBtn = document.getElementById('checklist-delete-list-btn');
-        this.formElement = document.getElementById('checklist-form');
-        this.nameInput = document.getElementById('checklist-name');
-        this.nameError = document.getElementById('checklist-name-error');
-        this.useTemplateCheck = document.getElementById('checklist-use-template');
-        this.templateRow = document.getElementById('checklist-template-row');
-        this.pasteRow = document.getElementById('checklist-paste-row');
-        this.pasteInput = document.getElementById('checklist-paste');
-        this.addBtn = document.getElementById('checklist-add-btn');
-        this.toolbar = document.getElementById('checklist-toolbar');
-        this.modeBtns = document.querySelectorAll('.checklist-mode-btn');
-        this.addItemBtn = document.getElementById('checklist-add-item-btn');
-        this.selectAllBtn = document.getElementById('checklist-select-all-btn');
-        this.deleteItemsBtn = document.getElementById('checklist-delete-items-btn');
-        this.renameRow = document.getElementById('checklist-rename-row');
-        this.renameInput = document.getElementById('checklist-rename');
-        this.renameError = document.getElementById('checklist-rename-error');
-        this.listElement = document.getElementById('checklist-list');
-        this.progressEl = document.getElementById('checklist-progress');
-        this.progressFill = document.getElementById('checklist-progress-fill');
-        this.progressLabel = document.getElementById('checklist-progress-label');
+        // list toolbar
+        this.newListBtn = document.getElementById('checklist-new-btn');
+        this.newListBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.listForm.toggleDisplay();
+            if (this.listForm.isOpen()) this.renameForm.close();
+        });
 
-        // template selector        
         const listSelect = document.getElementById('checklist-select');
         this.#listSelector = new InputSelector(listSelect, (val) => { this.#selectList(val); });
 
-        // template selector
+        this.renameListBtn = document.getElementById('checklist-rename-btn');
+        this.renameListBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.renameForm.toggleDisplay();
+            if (this.renameForm.isOpen()) this.listForm.close();
+        });
+
+        this.deleteListBtn = document.getElementById('checklist-delete-btn');
+        this.deleteListBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#deleteList();
+        });
+
+        // list form
+        this.listForm = UIDisplay.create(document.getElementById('checklist-form'), false);
+
+        this.nameInput = document.getElementById('checklist-name');
+        this.nameInput.addEventListener('input', (e) => {
+            e.stopPropagation();
+            this.nameError.textContent = '';
+        });
+        this.nameError = document.getElementById('checklist-name-error');
+
+        this.useTemplateCheck = document.getElementById('checklist-use-template');
+        this.useTemplateCheck.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const useTemplate = this.useTemplateCheck.checked;
+            this.#templateSelector.setDisplay(useTemplate);
+            if (useTemplate) {
+                const templateId = this.#templateSelector.getValue();
+                const template = Config.checklists.find(t => t.id === templateId);
+                if (template) this.nameInput.value = template.name;
+            } else {
+                this.nameInput.value = '';
+            }
+        });
+
         const templateSelect = document.getElementById('checklist-template-select');
         this.#templateSelector = new InputSelector(templateSelect, (val) => {
             const template = Config.checklists.find(t => t.id === val);
@@ -2006,7 +2025,70 @@ class ChecklistCard extends Card {
         const templates = Config.checklists.sort((a, b) => a.name.localeCompare(b.name));
         this.#templateSelector.addItems(templates.map(t => ({ value: t.id, label: t.name })));
 
-        // selection manager
+        this.addBtn = document.getElementById('checklist-add-btn');
+        this.addBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.#addList();
+        });
+
+        // rename form
+        this.renameForm = UIDisplay.create(document.getElementById('checklist-rename-form'), false);
+        this.renameInput = document.getElementById('checklist-rename');
+        this.renameInput.addEventListener('input', () => {
+            this.renameError.textContent = '';
+        });
+        this.renameInput.addEventListener('change', async () => {
+            await this.#renameList(this.renameInput.value.trim());
+        });
+        this.renameError = document.getElementById('checklist-rename-error');
+
+        // item toolbar
+        this.toolbar = UIDisplay.create(document.getElementById('checklist-toolbar'), false);
+
+        this.modeBtns = document.querySelectorAll('.checklist-mode-btn');
+        this.modeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.#mode = btn.dataset.mode;
+                this.modeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.cardElement.classList.toggle('edit-mode', this.#mode === 'edit');
+                this.#syncToolbarMode();
+            });
+        });
+
+        this.addItemBtn = document.getElementById('checklist-add-item-btn');
+        this.addItemBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.#addItems(['']);
+        });
+
+        this.addItemsBtn = document.getElementById('checklist-add-items-btn');
+        this.addItemsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.pasteForm.toggleDisplay();
+        });
+
+        this.selectAllBtn = document.getElementById('checklist-select-all-btn');
+        this.deleteItemsBtn = document.getElementById('checklist-delete-items-btn');
+
+        // items form
+        this.pasteForm = UIDisplay.create(document.getElementById('checklist-paste-form'), false);
+        this.pasteInput = document.getElementById('checklist-paste');
+
+        this.pasteAddBtn = document.getElementById('checklist-paste-items-btn');
+        this.pasteAddBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const names = this.pasteInput.value
+                .split(/[\n\r\t,]+/)
+                .map(n => n.trim())
+                .filter(n => n.length > 0);
+            this.#addItems(names);
+        });
+
+        // list element
+        this.listElement = document.getElementById('checklist-list');
+
         this.#selection = new SelectionManager({
             selectAllBtn: this.selectAllBtn,
             deleteBtn: this.deleteItemsBtn,
@@ -2025,95 +2107,13 @@ class ChecklistCard extends Card {
             }
         });
 
+        // progress
+        this.progressEl = document.getElementById('checklist-progress');
+        this.progressFill = document.getElementById('checklist-progress-fill');
+        this.progressLabel = document.getElementById('checklist-progress-label');
+
         // init
         this.#init();
-
-        // new list button
-        this.newBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const visible = this.formElement.classList.toggle('visible');
-            if (visible) {
-                this.nameInput.focus();
-            } else {
-                this.#resetForm();
-            }
-        });
-
-        // delete list button
-        this.deleteListBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!this.#activeList) return;
-            if (confirm(`Delete checklist "${this.#activeList.name}"?`)) {
-                await StorageService.deleteChecklist(this.#activeList.id);
-                this.#lists = this.#lists.filter(l => l.id !== this.#activeList.id);
-                this.#activeList = null;
-                this.#items = [];
-                this.listElement.innerHTML = '';
-                this.#syncListSelector();
-                this.#updateProgress();
-                this.#updateSummary();
-                if (this.#lists.length > 0) await this.#selectList(this.#lists[0].id);
-            }
-        });
-
-        // template checkbox
-        this.useTemplateCheck.addEventListener('change', (e) => {
-            e.stopPropagation();
-            const useTemplate = this.useTemplateCheck.checked;
-            this.templateRow.style.display = useTemplate ? '' : 'none';
-            this.pasteRow.style.display = useTemplate ? 'none' : '';
-            if (useTemplate) {
-                // prefill name from first template option
-                const first = Config.checklists[0];
-                if (first) this.nameInput.value = first.name;
-                this.nameError.textContent = '';
-            } else {
-                this.nameInput.value = '';
-                this.pasteInput.value = '';
-            }
-        });
-
-        // name input — clear error on type
-        this.nameInput.addEventListener('input', () => {
-            this.nameError.textContent = '';
-        });
-
-        // add list
-        this.addBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await this.#addList();
-        });
-
-        this.nameInput.addEventListener('keydown', async (e) => {
-            if (e.key === 'Enter') { e.stopPropagation(); await this.#addList(); }
-        });
-
-        // mode buttons
-        this.modeBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.#mode = btn.dataset.mode;
-                this.modeBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.cardElement.classList.toggle('edit-mode', this.#mode === 'edit');
-                this.#syncToolbarMode();
-            });
-        });
-
-        // add item
-        this.addItemBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await this.#addItem();
-        });
-
-        // rename
-        this.renameInput.addEventListener('input', () => {
-            this.renameError.textContent = '';
-        });
-
-        this.renameInput.addEventListener('change', async () => {
-            await this.#renameList(this.renameInput.value.trim());
-        });
     }
 
     // ── Private ───────────────────────────────────────
@@ -2125,6 +2125,7 @@ class ChecklistCard extends Card {
         if (this.#lists.length > 0) await this.#selectList(this.#lists[0].id);
         this.#updateSummary();
         this.#resetForm();
+        this.#syncToolbarMode();
     }
 
     async #selectList(id) {
@@ -2135,6 +2136,9 @@ class ChecklistCard extends Card {
 
         this.#items = await StorageService.getChecklistItems(id);
         this.renameInput.value = this.#activeList.name;
+        this.listForm.close();
+        this.renameForm.close();
+        this.pasteForm.close();
         this.#renderAll();
     }
 
@@ -2148,52 +2152,42 @@ class ChecklistCard extends Card {
             return;
         }
 
+        // insert list
         const list = await StorageService.addChecklist(name);
+        this.#lists.push(list);
+        this.#lists.sort((a, b) => a.name.localeCompare(b.name));
+        this.#syncListSelector();
+        await this.#selectList(list.id);
+        this.#updateSummary();
 
         // add items from template or paste
         if (this.useTemplateCheck.checked) {
             const templateId = this.#templateSelector.getValue();
             const template = Config.checklists.find(t => t.id === templateId);
-            if (template?.items.length) {
-                await StorageService.addChecklistItems(list.id, template.items);
-                list.totalCount = template.items.length;
-                await StorageService.updateChecklist(list);
-            }
-        } else if (this.pasteInput.value.trim()) {
-            const names = this.pasteInput.value
-                .split(/[\n\r\t,]+/)
-                .map(n => n.trim())
-                .filter(n => n.length > 0);
-            if (names.length) {
-                await StorageService.addChecklistItems(list.id, names);
-                list.totalCount = names.length;
-                await StorageService.updateChecklist(list);
-            }
+            this.#addItems(template.items);
         }
 
-        // insert sorted
-        this.#lists.push(list);
-        this.#lists.sort((a, b) => a.name.localeCompare(b.name));
-        this.#syncListSelector();
-        await this.#selectList(list.id);
         this.#resetForm();
-        this.formElement.classList.remove('visible');
-        this.#updateSummary();
+        this.listForm.close();
     }
 
-    async #addItem(name = '') {
-        if (!this.#activeList) return;
-        const item = await StorageService.addChecklistItem(this.#activeList.id, name);
-        this.#items.push(item);
+    async #addItems(names) {
+        if (!this.#activeList || !names || !names.length) return;
+        const items = await StorageService.addChecklistItems(this.#activeList.id, names);
+        this.#items = [...this.#items, ...items];
         this.#selection.setItems(this.#items);
-        await this.#updateListCounts();
 
-        const el = document.createElement('div');
-        el.innerHTML = this.#itemHTML(item);
-        const itemEl = el.firstElementChild;
-        this.listElement.appendChild(itemEl);
-        this.#wireListeners(itemEl, item.id);
-        itemEl.querySelector('.checklist-item-name').focus();
+        items.forEach((item, index) => {
+            const el = document.createElement('div');
+            el.innerHTML = this.#itemHTML(item);
+            const itemEl = el.firstElementChild;
+            this.listElement.appendChild(itemEl);
+            this.#wireListeners(itemEl, item.id);
+        });
+
+        this.pasteInput.value = '';
+        this.pasteForm.close();
+        await this.#updateListCounts();
         this.#updateProgress();
         this.#updateSummary();
     }
@@ -2213,6 +2207,21 @@ class ChecklistCard extends Card {
         this.#lists.sort((a, b) => a.name.localeCompare(b.name));
         this.#syncListSelector();
         this.#updateSummary();
+    }
+
+    async #deleteList() {
+        if (!this.#activeList) return;
+        if (confirm(`Delete checklist "${this.#activeList.name}"?`)) {
+            await StorageService.deleteChecklist(this.#activeList.id);
+            this.#lists = this.#lists.filter(l => l.id !== this.#activeList.id);
+            this.#activeList = null;
+            this.#items = [];
+            this.listElement.innerHTML = '';
+            this.#syncListSelector();
+            this.#updateProgress();
+            this.#updateSummary();
+            if (this.#lists.length > 0) await this.#selectList(this.#lists[0].id);
+        }
     }
 
     async #updateListCounts() {
@@ -2244,32 +2253,29 @@ class ChecklistCard extends Card {
         const currentValue = this.#listSelector.getValue();
         this.#listSelector.clearItems();
         this.#listSelector.addItems(this.#lists.map(l => ({ value: l.id, label: this.#listLabel(l) })));
-
-        // restore selection without firing change
         if (currentValue) this.#listSelector.setValue(currentValue);
 
         const hasLists = this.#lists.length > 0;
         this.deleteListBtn.disabled = !hasLists;
-        this.toolbar.style.display = hasLists ? '' : 'none';
+        this.renameListBtn.disabled = !hasLists;
+        this.toolbar.setDisplay(hasLists);
     }
 
     #syncToolbarMode() {
         const isEdit = this.#mode === 'edit';
-        this.addItemBtn.style.display = isEdit ? '' : 'none';
-        this.selectAllBtn.style.display = isEdit ? '' : 'none';
-        this.deleteItemsBtn.style.display = isEdit ? '' : 'none';
-        this.renameRow.style.display = isEdit ? '' : 'none';
+        UIDisplay.setVisible(this.addItemBtn, isEdit);
+        UIDisplay.setVisible(this.addItemsBtn, isEdit);
+        UIDisplay.setVisible(this.selectAllBtn, isEdit);
+        UIDisplay.setVisible(this.deleteItemsBtn, isEdit);
         if (!isEdit) this.#selection.clear();
     }
 
     #resetForm() {
         this.nameInput.value = '';
         this.nameError.textContent = '';
-        this.pasteInput.value = '';
         this.useTemplateCheck.checked = false;
-        this.templateRow.style.display = 'none';
+        this.#templateSelector.setDisplay(false);
         this.#templateSelector.clearValue();
-        this.pasteRow.style.display = '';
     }
 
     #updateProgress() {

@@ -1,3 +1,63 @@
+class UIDisplay {
+    static show(el) { el.classList.remove('hidden'); }
+    static hide(el) { el.classList.add('hidden'); }
+    static setVisible(el, value) { el.classList.toggle('hidden', !value); }
+    static isVisible(el) { return !el.classList.contains('hidden'); }
+
+    #element;
+    #isOpen;
+    #displayClass;
+
+    // ── Static convenience factories ──────────────────
+
+    static create(element, isOpen = true, className = 'hidden') {
+        return new UIDisplay().setupDisplay(element, isOpen, className);
+    }
+
+    // ── Private ───────────────────────────────────────
+
+    #apply() {
+        this.#element.classList.toggle(this.#displayClass, !this.#isOpen);
+    }
+
+    // ── Public ────────────────────────────────────────
+
+    /**
+     * @param {HTMLElement} element
+     * @param {boolean} isOpen=true
+     * @param {string} className=''
+     */
+    setupDisplay(element, isOpen = true, className = 'hidden') {
+        this.#element = element;
+        this.#isOpen = isOpen;
+        this.#displayClass = className;
+        this.#apply();
+        return this;
+    }
+
+    isOpen() {
+        return this.#isOpen;
+    }
+
+    open() {
+        this.setDisplay(true);
+    }
+
+    close() {
+        this.setDisplay(false);
+    }
+
+    toggleDisplay() {
+        this.setDisplay(!this.#isOpen);
+        return this.#isOpen;
+    }
+
+    setDisplay(value) {
+        this.#isOpen = value;
+        this.#apply();
+    }
+}
+
 class InputHelper {
     static setupToggle(container, initialState, onChange) {
         InputHelper.updateToggle(container, initialState);
@@ -18,12 +78,14 @@ class InputHelper {
     };
 }
 
-class InputSelector {
+class InputSelector extends UIDisplay {
     #selectElement;
     #items = [];
     #onChanged = null;
 
     constructor(selectElement, onChanged) {
+        super();
+        this.setupDisplay(selectElement);
         this.#selectElement = selectElement;
         this.#onChanged = onChanged ?? null;
 

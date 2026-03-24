@@ -56,6 +56,10 @@ body {
     background-attachment: fixed;
 }
 
+.hidden {
+    display: none !important;
+}
+
 /* INPUT */
 
 input,
@@ -391,18 +395,6 @@ div.options {
     }
 }
 
-div.form {
-    background-color: var(--card-form);
-    transition: background 0.2s, display 0.2s, fill 0.2s, transform 0.3s ease-in-out;
-}
-
-body .card .body div.toolbar {
-    display: flex;
-    padding: 10px 20px;
-    background-color: var(--card-tool);
-    gap: 12px;
-}
-
 /* ROWS */
 div {
     .row-list {
@@ -601,6 +593,19 @@ header {
                 padding-bottom: 20px;
             }
         }
+
+        div.form {
+            padding: 16px 20px;
+            background-color: var(--card-form);
+            transition: background 0.2s, display 0.2s, fill 0.2s, transform 0.3s ease-in-out;
+        }
+
+        div.toolbar {
+            display: flex;
+            padding: 16px 20px;
+            background-color: var(--card-tool);
+            gap: 12px;
+        }
     }
 
     &.open {
@@ -628,22 +633,19 @@ header {
 /* CHECKLIST */
 #card-checklist {
     .checklist-form {
-        display: none;
+        display: flex;
         gap: 12px;
+        flex-direction: column;
+    }
 
-        &.visible {
-            display: flex;
-            flex-direction: column;
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
+    textarea {
+        resize: vertical;
+        min-height: 60px;
     }
 
     .field-error {
-        color: var(--red)
+        color: var(--red);
+        text-transform: none;
     }
 
     .checklist-item {
