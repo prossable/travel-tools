@@ -311,7 +311,6 @@ class MarketWeightCard extends Card {
 
 class BillCard extends Card {
     lastBillPercent = null;
-    #mode = 'even';
     #splitRows = [];
 
     constructor(rateService) {
@@ -335,25 +334,16 @@ class BillCard extends Card {
         this.totalForeignOutput = document.getElementById('bill-foreign-total-val');
         this.totalLocalLabel = document.getElementById('bill-local-total-label');
         this.totalLocalOutput = document.getElementById('bill-local-total-val');
-        this.modeButtons = document.querySelectorAll('.bill-mode-btn');
-        this.splitList = document.getElementById('split-list');
+        this.splitList = UIDisplay.create(document.getElementById('split-list'), false);
         this.splitRowsEl = document.getElementById('split-rows');
         this.splitOffsetLabel = document.getElementById('split-offset-label');
 
-        // init
-        this.#updateLabels();
-
         // listeners
-        this.modeButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.#mode = btn.dataset.mode;
-                this.modeButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.#syncRows();
-                this.#updateValues();
-            });
+        this.modeInput = new InputTab(document.getElementById('bill-mode'), 'even', (e) => {
+            this.#syncRows();
+            this.#updateValues();
         });
+
         this.foreignInput.addEventListener('input', () => {
             if (this.foreignInput.value === '') { this.localInput.value = ''; return; }
             this.#updateValues();
@@ -398,6 +388,9 @@ class BillCard extends Card {
             this.#updateLabels();
             this.#updateValues();
         });
+
+        // init
+        this.#updateLabels();
     }
 
     // ── Split rows ────────────────────────────────────
@@ -419,7 +412,7 @@ class BillCard extends Card {
         });
 
         // toggle uneven list
-        this.splitList.style.display = (this.#mode === 'uneven' && this.#getPeople() > 1) ? '' : 'none';
+        this.splitList.setDisplay(this.modeInput.getValue() === 'uneven' && this.#getPeople() > 1);
     }
 
     #buildRow(index) {
@@ -525,7 +518,7 @@ class BillCard extends Card {
         const finalL = RateService.toLocal(finalF);
 
         // even mode outputs
-        if (people == 1 || this.#mode === 'uneven') {
+        if (people == 1 || this.modeInput.getValue() === 'uneven') {
             this.tipForeignOutput.value = RateService.formatForeignSymbol(tipF);
             this.tipLocalOutput.value = RateService.formatLocalSymbol(tipL);
             this.totalForeignOutput.value = RateService.formatForeignSymbol(foreign + tipF);
@@ -540,7 +533,7 @@ class BillCard extends Card {
         }
 
         // uneven mode
-        if (this.#mode === 'uneven') this.#updateSplitRows(foreign, tipF);
+        if (this.modeInput.getValue() === 'uneven') this.#updateSplitRows(foreign, tipF);
     }
 
     #updateSplitRows(foreign, tipF) {
@@ -928,10 +921,10 @@ class NotesCard extends Card {
     }
 
     #updateCollapseState() {
-        this.listElement.querySelectorAll('.note').forEach(b => b.classList.remove('open'));
+        this.listElement.querySelectorAll('.note').forEach(b => UIDisplay.hide(b));
         if (this.#activeNoteId !== null) {
             const noteElement = document.getElementById(`note-${this.#activeNoteId}`);
-            noteElement.classList.add('open');
+            UIDisplay.show(noteElement);
             const textarea = noteElement.querySelector('textarea');
             this.#autoResize(textarea);
         }
@@ -954,7 +947,7 @@ class NotesCard extends Card {
 
     #noteHTML(note) {
         return `
-            <div class="note" id="note-${note.id}" data-id="${note.id}">
+            <div class="note" id="note-${note.id}" data-id="${note.id}" data-hide="close">
                 <div class="header">
                     <button class="toggle" title="Toggle"><svg><use href="#icon-collapse"/></svg></button>
                     <input type="text" class="title" value="${note.title}" placeholder="Note title">
@@ -1043,7 +1036,7 @@ class DebtCard extends Card {
 
         // elements
         this.listElement = document.getElementById('debt-list');
-        this.formElement = document.getElementById('debt-form');
+        this.formElement = UIDisplay.create(document.getElementById('debt-form'), false);
         this.personInput = document.getElementById('debt-person');
         this.noteInput = document.getElementById('debt-note');
         this.foreignLabel = document.getElementById('debt-foreign-label');
@@ -1069,11 +1062,6 @@ class DebtCard extends Card {
                 this.#updateSummary();
             }
         });
-
-        // init
-        this.formElement.style.display = 'none';
-        this.#updateLabels();
-        this.#load();
 
         // listeners
         this.toggleButton.addEventListener('click', (e) => {
@@ -1122,14 +1110,18 @@ class DebtCard extends Card {
              if (e.detail.person) this.personInput.value = e.detail.person;
              if (e.detail.note) this.noteInput.value = e.detail.note;
          });*/
+
+        // init
+        this.#updateLabels();
+        this.#load();
     }
 
     // ── Private ───────────────────────────────────────
 
     #setFormVisible(visible) {
         this.#formVisible = visible;
-        this.formElement.style.display = visible ? '' : 'none';
-        if (visible) this.personInput.focus();
+        this.formElement.setDisplay(visible);
+        if (visible) this.personInput.focus({ preventScroll: true });
     }
 
     #addDebt() {
@@ -1343,7 +1335,7 @@ class TimezonesCard extends Card {
 
         // elements
         this.listElement = document.getElementById('tz-list');
-        this.formElement = document.getElementById('tz-form');
+        this.formElement = UIDisplay.create(document.getElementById('tz-form'), false);
         this.addBtn = document.getElementById('tz-add-btn');
         this.searchInput = document.getElementById('tz-search');
         this.searchBtn = document.getElementById('tz-search-btn');
@@ -1396,9 +1388,9 @@ class TimezonesCard extends Card {
     }
 
     #toggleForm() {
-        const visible = this.formElement.classList.toggle('visible');
-        if (visible) {
-            this.searchInput.focus();
+        this.formElement.toggleDisplay();
+        if (this.formElement.isVisible()) {
+            this.searchInput.focus({ preventScroll: true });
         } else {
             this.#resetForm();
         }
@@ -1499,7 +1491,7 @@ class TimezonesCard extends Card {
         this.#updateTime(zoneEl, zone.tz);
 
         this.#resetForm();
-        this.formElement.classList.remove('visible');
+        this.formElement.hide();
         this.#updateSummary();
     }
 
@@ -1643,7 +1635,7 @@ class BudgetCard extends Card {
         super('card-budget');
 
         // elements
-        this.formElement = document.getElementById('budget-form');
+        this.formElement = UIDisplay.create(document.getElementById('budget-form'), false);
         this.newBtn = document.getElementById('budget-new-btn');
         this.noteInput = document.getElementById('budget-note');
         this.dateTrigger = document.getElementById('budget-date-trigger');
@@ -1651,11 +1643,11 @@ class BudgetCard extends Card {
         this.amountForeignInput = document.getElementById('budget-amount-foreign');
         this.amountLocalInput = document.getElementById('budget-amount-local');
         this.addBtn = document.getElementById('budget-add');
+        this.budgetContent = UIDisplay.create(document.getElementById('budget-content'), false);
         this.listElement = document.getElementById('budget-list');
         this.selectAllBtn = document.getElementById('budget-select-all');
         this.deleteBtn = document.getElementById('budget-delete');
         this.totalEl = document.getElementById('budget-total');
-        this.progressEl = document.getElementById('budget-progress');
         this.progressFill = document.getElementById('budget-progress-fill');
         this.progressLabel = document.getElementById('budget-progress-label');
         this.targetInput = document.getElementById('budget-target');
@@ -1775,8 +1767,8 @@ class BudgetCard extends Card {
     // ── Private ───────────────────────────────────────
 
     #toggleForm() {
-        const visible = this.formElement.classList.toggle('visible');
-        if (visible) this.noteInput.focus();
+        const visible = this.formElement.toggleDisplay();
+        if (visible) this.noteInput.focus({ preventScroll: true });
     }
 
     #setDate(dateString) {
@@ -1817,7 +1809,7 @@ class BudgetCard extends Card {
         this.#save();
         this.#renderAll();
         this.#clearForm();
-        this.formElement.classList.remove('visible');
+        this.formElement.hide();
         this.update();
     }
 
@@ -1864,12 +1856,12 @@ class BudgetCard extends Card {
     #updateProgress() {
         const total = this.#items.reduce((sum, i) => sum + i.amount, 0);
 
-        if (!this.#targetAmount || this.#targetAmount <= 0) {
-            this.progressEl.classList.remove('visible');
+        if ((!this.#targetAmount || this.#targetAmount <= 0) && this.#items.length === 0) {
+            this.budgetContent.hide();
             return;
         }
 
-        this.progressEl.classList.add('visible');
+        this.budgetContent.show();
         const pct = Math.min((total / this.#targetAmount) * 100, 100);
         const left = this.#targetAmount - total;
         const isOver = total > this.#targetAmount;
@@ -1950,8 +1942,8 @@ class BudgetCard extends Card {
         this.amountLocalInput.value = RateService.formatLocalInput(amount);
         this.amountForeignInput.value = RateService.formatForeignInput(RateService.toForeign(amount));
         if (note) this.noteInput.value = note;
-        this.formElement.classList.add('visible');
-        this.noteInput.focus();
+        this.formElement.show();
+        this.noteInput.focus({ preventScroll: true });
     }
 }
 
@@ -1959,7 +1951,6 @@ class ChecklistCard extends Card {
     #lists = [];
     #activeList = null;
     #items = [];
-    #mode = 'check';
     #selection;
 
     #listSelector;
@@ -1973,7 +1964,7 @@ class ChecklistCard extends Card {
         this.newListBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.listForm.toggleDisplay();
-            if (this.listForm.isOpen()) this.renameForm.close();
+            if (this.listForm.isVisible()) this.renameForm.hide();
         });
 
         const listSelect = document.getElementById('checklist-select');
@@ -1983,7 +1974,7 @@ class ChecklistCard extends Card {
         this.renameListBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.renameForm.toggleDisplay();
-            if (this.renameForm.isOpen()) this.listForm.close();
+            if (this.renameForm.isVisible()) this.listForm.hide();
         });
 
         this.deleteListBtn = document.getElementById('checklist-delete-btn');
@@ -2045,16 +2036,9 @@ class ChecklistCard extends Card {
         // item toolbar
         this.toolbar = UIDisplay.create(document.getElementById('checklist-toolbar'), false);
 
-        this.modeBtns = document.querySelectorAll('.checklist-mode-btn');
-        this.modeBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.#mode = btn.dataset.mode;
-                this.modeBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.cardElement.classList.toggle('edit-mode', this.#mode === 'edit');
-                this.#syncToolbarMode();
-            });
+        this.modeInput = new InputTab(document.getElementById('checklist-mode'), 'check', (e) => {
+            this.cardElement.classList.toggle('edit-mode', this.modeInput.getValue() === 'edit');
+            this.#syncToolbarMode();
         });
 
         this.addItemBtn = document.getElementById('checklist-add-item-btn');
@@ -2087,6 +2071,7 @@ class ChecklistCard extends Card {
         });
 
         // list element
+        this.listContainer = UIDisplay.create(document.getElementById('checklist-content'), false);
         this.listElement = document.getElementById('checklist-list');
 
         this.#selection = new SelectionManager({
@@ -2107,8 +2092,15 @@ class ChecklistCard extends Card {
             }
         });
 
+        // bottom toolbar
+        this.toolbar2 = document.getElementById('checklist-toolbar2');
+        this.addItem2Btn = document.getElementById('checklist-add-item2-btn');
+        this.addItem2Btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.#addItems(['']);
+        });
+
         // progress
-        this.progressEl = UIDisplay.create(document.getElementById('checklist-progress'), false);
         this.progressFill = document.getElementById('checklist-progress-fill');
         this.progressLabel = document.getElementById('checklist-progress-label');
 
@@ -2136,9 +2128,9 @@ class ChecklistCard extends Card {
 
         this.#items = await StorageService.getChecklistItems(id);
         this.renameInput.value = this.#activeList.name;
-        this.listForm.close();
-        this.renameForm.close();
-        this.pasteForm.close();
+        this.listForm.hide();
+        this.renameForm.hide();
+        this.pasteForm.hide();
         this.#renderAll();
     }
 
@@ -2160,15 +2152,18 @@ class ChecklistCard extends Card {
         await this.#selectList(list.id);
         this.#updateSummary();
 
-        // add items from template or paste
+        // add items from template or just one empty item
         if (this.useTemplateCheck.checked) {
             const templateId = this.#templateSelector.getValue();
             const template = Config.checklists.find(t => t.id === templateId);
             this.#addItems(template.items);
+        } else {
+            this.#addItems(['']);
         }
+        this.modeInput.setValue('edit');
 
         this.#resetForm();
-        this.listForm.close();
+        this.listForm.hide();
     }
 
     async #addItems(names) {
@@ -2186,7 +2181,7 @@ class ChecklistCard extends Card {
         });
 
         this.pasteInput.value = '';
-        this.pasteForm.close();
+        this.pasteForm.hide();
         await this.#updateListCounts();
         this.#updateProgress();
         this.#updateSummary();
@@ -2259,15 +2254,16 @@ class ChecklistCard extends Card {
         this.deleteListBtn.disabled = !hasLists;
         this.renameListBtn.disabled = !hasLists;
         this.toolbar.setDisplay(hasLists);
-        this.progressEl.setDisplay(hasLists);
+        this.listContainer.setDisplay(hasLists);
     }
 
     #syncToolbarMode() {
-        const isEdit = this.#mode === 'edit';
+        const isEdit = this.modeInput.getValue() === 'edit';
         UIDisplay.setVisible(this.addItemBtn, isEdit);
         UIDisplay.setVisible(this.addItemsBtn, isEdit);
         UIDisplay.setVisible(this.selectAllBtn, isEdit);
         UIDisplay.setVisible(this.deleteItemsBtn, isEdit);
+        UIDisplay.setVisible(this.toolbar2, isEdit);
         if (!isEdit) this.#selection.clear();
     }
 
@@ -2281,7 +2277,6 @@ class ChecklistCard extends Card {
 
     #updateProgress() {
         if (!this.#activeList) {
-            this.progressEl.close();
             return;
         }
         const total = this.#activeList.totalCount;
@@ -2291,7 +2286,6 @@ class ChecklistCard extends Card {
         this.progressFill.style.width = `${pct}%`;
         this.progressFill.classList.toggle('complete', pct === 100 && total > 0);
         this.progressLabel.textContent = `${checked} / ${total}`;
-        this.progressEl.setDisplay(total > 0);
     }
 
     #updateSummary() {

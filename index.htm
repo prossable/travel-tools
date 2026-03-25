@@ -234,28 +234,35 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="toolbar row-flex">
-                <div class="row-flex">
-                    <input id="rate-auto-fetch" type="checkbox" checked>
-                    <label> Auto-fetch daily rate </label>
-                </div>
-                <button id="rate-refresh" title="Refresh rate"><svg>
-                        <use href="#icon-refresh" />
-                    </svg></button>
-            </div>
+            <section class="toolbar">
+                <div>
+                    <div class="row-flex">
+                        <div class="row-flex">
+                            <input id="rate-auto-fetch" type="checkbox" checked>
+                            <label> Auto-fetch daily rate </label>
+                        </div>
+                        <button id="rate-refresh" title="Refresh rate"><svg>
+                                <use href="#icon-refresh" />
+                            </svg></button>
+                    </div>
+            </section>
 
-            <div class="label-group">
-                <label>Foreign Currency</label>
-                <select id="rate-currency">
-                </select>
-            </div>
-            <div class="label-group">
-                <label id="rate-label">X</label>
-                <input id="rate" type="number" step="0.01" min="1">
-            </div>
-            <div class="row-flex">
-                <div id="rate-hint"></div>
-            </div>
+            <section class="content">
+                <div>
+                    <div class="label-group">
+                        <label>Foreign Currency</label>
+                        <select id="rate-currency">
+                        </select>
+                    </div>
+                    <div class="label-group">
+                        <label id="rate-label">X</label>
+                        <input id="rate" type="number" step="0.01" min="1">
+                    </div>
+                    <div class="row-flex">
+                        <div id="rate-hint"></div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -276,106 +283,135 @@
         <div class="body">
 
             <!-- List selector -->
-            <div class="toolbar">
-                <button id="checklist-new-btn" title="New checklist">
-                    <svg>
-                        <use href="#icon-add" />
-                    </svg>
-                </button>
-                <select id="checklist-select"></select>
-                <button id="checklist-rename-btn" title="Rename list">
-                    <svg>
-                        <use href="#icon-edit" />
-                    </svg>
-                </button>
-                <button class="red" id="checklist-delete-btn" title="Delete list" disabled>
-                    <svg>
-                        <use href="#icon-delete" />
-                    </svg>
-                </button>
-            </div>
+            <section class="toolbar">
+                <div>
+                    <div class="row-flex">
+                        <button id="checklist-new-btn" title="New checklist">
+                            <svg>
+                                <use href="#icon-add" />
+                            </svg>
+                        </button>
+                        <select id="checklist-select"></select>
+                        <button id="checklist-rename-btn" title="Rename list">
+                            <svg>
+                                <use href="#icon-edit" />
+                            </svg>
+                        </button>
+                        <button id="checklist-delete-btn" class="red" title="Delete list" disabled>
+                            <svg>
+                                <use href="#icon-delete" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
 
             <!-- New list form -->
-            <div id="checklist-form" class="checklist-form form">
-                <div class="label-group">
-                    <label>Name <span id="checklist-name-error" class="field-error"></span></label>
-                    <input type="text" id="checklist-name" placeholder="My List">
-                </div>
-                <div class="row-2col">
-                    <div class="row-full">
-                        <input type="checkbox" id="checklist-use-template">
-                        <label for="checklist-use-template">Use template</label>
+            <section id="checklist-form" class="form">
+                <div>
+                    <div class="label-group">
+                        <label>Name <span id="checklist-name-error" class="field-error"></span></label>
+                        <input id="checklist-name" type="text" placeholder="My List">
                     </div>
-                    <select id="checklist-template-select"></select>
+                    <div class="row-2col">
+                        <div class="row-full">
+                            <input id="checklist-use-template" type="checkbox">
+                            <label for="checklist-use-template">Use template</label>
+                        </div>
+                        <select id="checklist-template-select"></select>
+                    </div>
+                    <div class="row-right">
+                        <button id="checklist-add-btn">
+                            <svg>
+                                <use href="#icon-add" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="row-right">
-                    <button id="checklist-add-btn">
-                        <svg>
-                            <use href="#icon-add" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            </section>
 
             <!-- Rename form -->
-            <div id="checklist-rename-form" class="label-group form">
-                <label>List Name <span id="checklist-rename-error" class="field-error"></span></label>
-                <input type="text" id="checklist-rename" placeholder="List name">
-            </div>
+            <section id="checklist-rename-form" class="form">
+                <div>
+                    <div class="label-group">
+                        <label>List Name <span id="checklist-rename-error" class="field-error"></span></label>
+                        <input id="checklist-rename" type="text" placeholder="List name">
+                    </div>
+                </div>
+            </section>
 
             <!-- Toolbar -->
-            <div class="toolbar" id="checklist-toolbar">
-                <div class="tab narrow">
-                    <button class="checklist-mode-btn active" data-mode="check">Check</button>
-                    <button class="checklist-mode-btn" data-mode="edit">Edit</button>
+            <section id="checklist-toolbar" class="toolbar">
+                <div>
+                    <div class="row-full">
+                        <div id="checklist-mode" class="tab">
+                            <button data-value="check">Check</button>
+                            <button data-value="edit">Edit</button>
+                        </div>
+                        <button id="checklist-add-item-btn" title="Add item">
+                            <svg>
+                                <use href="#icon-add" />
+                            </svg>
+                        </button>
+                        <button id="checklist-add-items-btn" title="Add list">
+                            <svg>
+                                <use href="#icon-checklist-add" />
+                            </svg>
+                        </button>
+                        <button id="checklist-select-all-btn" title="Select all">
+                            <svg>
+                                <use href="#icon-check" />
+                            </svg>
+                        </button>
+                        <button id="checklist-delete-items-btn" class="red" title="Delete selected">
+                            <svg>
+                                <use href="#icon-delete" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <button id="checklist-add-item-btn" title="Add item">
-                    <svg>
-                        <use href="#icon-add" />
-                    </svg>
-                </button>
-                <button id="checklist-add-items-btn" title="Add list">
-                    <svg>
-                        <use href="#icon-checklist-add" />
-                    </svg>
-                </button>
-                <button id="checklist-select-all-btn" title="Select all">
-                    <svg>
-                        <use href="#icon-check" />
-                    </svg>
-                </button>
-                <button class="red" id="checklist-delete-items-btn" title="Delete selected">
-                    <svg>
-                        <use href="#icon-delete" />
-                    </svg>
-                </button>
-            </div>
+            </section>
 
             <!-- Add list form -->
-            <div class="checklist-form form" id="checklist-paste-form">
-                <div class="label-group">
-                    <label>Paste items (comma, tab, or newline separated)</label>
-                    <textarea id="checklist-paste" placeholder="Shirts, Pants, Socks…" rows="3"></textarea>
+            <section id="checklist-paste-form" class="form">
+                <div>
+                    <div class="label-group">
+                        <label>Paste items (comma, tab, or newline separated)</label>
+                        <textarea id="checklist-paste" placeholder="Shirts, Pants, Socks…" rows="3"></textarea>
+                    </div>
+                    <div class="row-right">
+                        <button id="checklist-paste-items-btn">
+                            <svg>
+                                <use href="#icon-add" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="row-right">
-                    <button id="checklist-paste-items-btn">
-                        <svg>
-                            <use href="#icon-add" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+            </section>
 
-            <!-- Item list -->
-            <div id="checklist-list" class="row-list"></div>
+            <section id="checklist-content" class="content">
+                <div>
+                    <!-- Item list -->
+                    <div id="checklist-list" class="row-list"></div>
 
-            <!-- Progress -->
-            <div class="checklist-progress" id="checklist-progress">
-                <div class="checklist-progress-bar">
-                    <div class="checklist-progress-fill" id="checklist-progress-fill"></div>
+                    <!-- Bottom toolbar -->
+                    <div id="checklist-toolbar2" class="row-right">
+                        <button id="checklist-add-item2-btn" title="Add item">
+                            <svg>
+                                <use href="#icon-add" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Progress -->
+                    <div id="checklist-progress" class="row-flex">
+                        <div class="checklist-progress-bar">
+                            <div id="checklist-progress-fill" class="checklist-progress-fill"></div>
+                        </div>
+                        <span id="checklist-progress-label"></span>
+                    </div>
                 </div>
-                <span id="checklist-progress-label"></span>
-            </div>
+            </section>
 
         </div>
     </div>
@@ -393,15 +429,17 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div>
-                <div id="reference-multiplier" class="tab">
-                    <button class="ref-mult-btn" data-mult="1">1×</button>
-                    <button class="ref-mult-btn" data-mult="10">10×</button>
-                    <button class="ref-mult-btn" data-mult="100">100×</button>
-                    <button class="ref-mult-btn" data-mult="1000">1000×</button>
+            <section class="content">
+                <div>
+                    <div id="reference-multiplier" class="tab">
+                        <button class="ref-mult-btn" data-mult="1">1×</button>
+                        <button class="ref-mult-btn" data-mult="10">10×</button>
+                        <button class="ref-mult-btn" data-mult="100">100×</button>
+                        <button class="ref-mult-btn" data-mult="1000">1000×</button>
+                    </div>
+                    <div id="reference-table" class="ref-table"></div>
                 </div>
-                <div id="reference-table" class="ref-table"></div>
-            </div>
+            </section>
         </div>
     </div>
 
@@ -417,7 +455,13 @@
                     <use href="#icon-close" />
                 </svg></button>
         </div>
-        <div class="body" id="conversions-list"></div>
+        <div class="body">
+            <section class="content">
+                <div id="conversions-list">
+
+                </div>
+            </section>
+        </div>
     </div>
 
     <!-- NOTES -->
@@ -433,15 +477,21 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="toolbar">
-                <button id="notes-add" title="Add note"><svg>
-                        <use href="#icon-add" />
-                    </svg></button>
-                <button id="notes-clear" class="red" title="Clear all"><svg>
-                        <use href="#icon-delete" />
-                    </svg></button>
-            </div>
-            <div id="notes-list" class="row-list"></div>
+            <section class="toolbar">
+                <div>
+                    <div class="row-full">
+                        <button id="notes-add" title="Add note"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
+                        <button id="notes-clear" class="red" title="Clear all"><svg>
+                                <use href="#icon-delete" />
+                            </svg></button>
+                    </div>
+                </div>
+            </section>
+            <section class="content">
+                <div id="notes-list" class="row-list"></div>
+            </section>
         </div>
     </div>
 
@@ -463,49 +513,55 @@
         <div class="body">
 
             <!-- Search form -->
-            <div id="tz-form" class="tz-form form">
-                <div class="row-flex">
-                    <div class="label-group">
-                        <label>City or Region</label>
-                        <input id="tz-search" type="text" placeholder="Austin TX, Tokyo, London…">
+            <section id="tz-form" class="form">
+                <div>
+                    <div class="row-flex">
+                        <div class="label-group">
+                            <label>City or Region</label>
+                            <input id="tz-search" type="text" placeholder="Austin TX, Tokyo, London…">
+                        </div>
+                        <div class="label-group">
+                            <label>&nbsp;</label>
+                            <button id="tz-search-btn" title="Search"><svg>
+                                    <use href="#icon-search" />
+                                </svg></button>
+                        </div>
                     </div>
-                    <div class="label-group">
-                        <label>&nbsp;</label>
-                        <button id="tz-search-btn" title="Search"><svg>
-                                <use href="#icon-search" />
-                            </svg></button>
+
+                    <!-- Result confirmation -->
+                    <div id="tz-result" class="tz-result">Enter a city, region, or landmark</div>
+
+                    <div id="tz-curated" class="tz-curated" style="display:none">
+                        <div class="label-group">
+                            <label>Choose a Time Zone</label>
+                            <select id="tz-curated-select">
+                                <option value="">— select —</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Custom label -->
+                    <div id="tz-label-row" class="row-flex" style="display:none">
+                        <div class="label-group">
+                            <label>Label</label>
+                            <input id="tz-label" type="text" placeholder="Home, Maria, Tokyo Office…">
+                        </div>
+                        <div class="label-group">
+                            <label>&nbsp;</label>
+                            <button id="tz-confirm-btn" title="Add"><svg>
+                                    <use href="#icon-add" />
+                                </svg></button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Result confirmation -->
-                <div id="tz-result" class="tz-result">Enter a city, region, or landmark</div>
-
-                <div id="tz-curated" class="tz-curated" style="display:none">
-                    <div class="label-group">
-                        <label>Choose a Time Zone</label>
-                        <select id="tz-curated-select">
-                            <option value="">— select —</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Custom label -->
-                <div id="tz-label-row" class="row-flex" style="display:none">
-                    <div class="label-group">
-                        <label>Label</label>
-                        <input id="tz-label" type="text" placeholder="Home, Maria, Tokyo Office…">
-                    </div>
-                    <div class="label-group">
-                        <label>&nbsp;</label>
-                        <button id="tz-confirm-btn" title="Add"><svg>
-                                <use href="#icon-add" />
-                            </svg></button>
-                    </div>
-                </div>
-            </div>
+            </section>
 
             <!-- Timezone list -->
-            <div id="tz-list"></div>
+            <section id="checklist-content" class="content">
+                <div>
+                    <div id="tz-list"></div>
+                </div>
+            </section>
 
         </div>
     </div>
@@ -523,40 +579,44 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="row-equation">
-                <div class="label-group">
-                    <label id="cost-foreign-label">X</label>
-                    <input id="cost-foreign-val" type="number" placeholder="0" min="0" step="any">
-                </div>
-                <div class="arrow-label"><svg>
-                        <use href="#icon-sync" />
-                    </svg></div>
-                <div class="label-group">
-                    <label id="cost-local-label">X</label>
-                    <input id="cost-local-val" placeholder="0">
-                </div>
-            </div>
-            <div class="row-equation">
-                <div class="label-group">
-                    <label>Quantity</label>
-                    <div class="tab">
-                        <button id="cost-qty-minus"><svg>
-                                <use href="#icon-minus" />
-                            </svg></button>
-                        <input id="cost-qty" type="number" class="inner" value="1" min="1">
-                        <button id="cost-qty-plus"><svg>
-                                <use href="#icon-add" />
-                            </svg></button>
+            <section class="content">
+                <div>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="cost-foreign-label">X</label>
+                            <input id="cost-foreign-val" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-sync" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="cost-local-label">X</label>
+                            <input id="cost-local-val" placeholder="0">
+                        </div>
+                    </div>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label>Quantity</label>
+                            <div class="tab">
+                                <button id="cost-qty-minus"><svg>
+                                        <use href="#icon-minus" />
+                                    </svg></button>
+                                <input id="cost-qty" type="number" class="inner" value="1" min="1">
+                                <button id="cost-qty-plus"><svg>
+                                        <use href="#icon-add" />
+                                    </svg></button>
+                            </div>
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-close" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="cost-total-label">X</label>
+                            <input id="cost-total-val" class="output" placeholder="—" readonly>
+                        </div>
                     </div>
                 </div>
-                <div class="arrow-label"><svg>
-                        <use href="#icon-close" />
-                    </svg></div>
-                <div class="label-group">
-                    <label id="cost-total-label">X</label>
-                    <input id="cost-total-val" class="output" placeholder="—" readonly>
-                </div>
-            </div>
+            </section>
         </div>
     </div>
 
@@ -573,32 +633,36 @@
                 </svg></button>
         </div>
         <div class="body">
-            <div class="row-equation">
-                <div class="label-group">
-                    <label id="market-rate-label">Pesos / kg</label>
-                    <input id="market-rate-val" type="number" placeholder="0" min="0" step="any">
+            <section class="content">
+                <div>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="market-rate-label">Pesos / kg</label>
+                            <input id="market-rate-val" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-close" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="market-weight-label">Kilograms</label>
+                            <input id="market-weight-val" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="market-foreign-label">Total (MXN)</label>
+                            <input id="market-foreign-val" class="output" placeholder="—" readonly>
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-arrow-forward" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="market-local-label">Total (USD)</label>
+                            <input id="market-local-val" class="output" placeholder="—" readonly>
+                        </div>
+                    </div>
                 </div>
-                <div class="arrow-label"><svg>
-                        <use href="#icon-close" />
-                    </svg></div>
-                <div class="label-group">
-                    <label id="market-weight-label">Kilograms</label>
-                    <input id="market-weight-val" type="number" placeholder="0" min="0" step="any">
-                </div>
-            </div>
-            <div class="row-equation">
-                <div class="label-group">
-                    <label id="market-foreign-label">Total (MXN)</label>
-                    <input id="market-foreign-val" class="output" placeholder="—" readonly>
-                </div>
-                <div class="arrow-label"><svg>
-                        <use href="#icon-arrow-forward" />
-                    </svg></div>
-                <div class="label-group">
-                    <label id="market-local-label">Total (USD)</label>
-                    <input id="market-local-val" class="output" placeholder="—" readonly>
-                </div>
-            </div>
+            </section>
         </div>
     </div>
 
@@ -617,33 +681,40 @@
         <div class="body">
 
             <!-- Toolbar -->
-            <div class="toolbar">
-                <button id="tally-add" title="Add item"><svg>
-                        <use href="#icon-add" />
-                    </svg></button>
-                <button id="tally-select" title="Select All"><svg>
-                        <use href="#icon-checkbox" />
-                    </svg></button>
-                <button class="red" id="tally-delete" title="Delete Selected"><svg>
-                        <use href="#icon-delete" />
-                    </svg></button>
-            </div>
+            <section class="toolbar">
+                <div>
+                    <div class="row-full">
+                        <button id="tally-add" title="Add item"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
+                        <button id="tally-select" title="Select All"><svg>
+                                <use href="#icon-checkbox" />
+                            </svg></button>
+                        <button id="tally-delete" class="red" title="Delete Selected"><svg>
+                                <use href="#icon-delete" />
+                            </svg></button>
+                    </div>
+                </div>
+            </section>
 
-            <!-- Item list -->
-            <div id="tally-list" class="row-list">
-            </div>
+            <section class="content">
+                <div>
+                    <!-- Item list -->
+                    <div id="tally-list" class="row-list">
+                    </div>
 
-            <!-- Totals -->
-            <div class="row-3col total">
-                <span>Remaining</span>
-                <span id="tally-remaining-foreign">—</span>
-                <span id="tally-remaining-local">—</span>
-            </div>
-            <div class="row-3col total">
-                <span>Spent</span>
-                <span id="tally-spent-foreign">—</span>
-                <span id="tally-spent-local">—</span>
-            </div>
+                    <!-- Totals -->
+                    <div class="row-3col total">
+                        <span>Remaining</span>
+                        <span id="tally-remaining-foreign">—</span>
+                        <span id="tally-remaining-local">—</span>
+                        <span>Spent</span>
+                        <span id="tally-spent-foreign">—</span>
+                        <span id="tally-spent-local">—</span>
+                    </div>
+
+                </div>
+            </section>
 
         </div>
     </div>
@@ -662,101 +733,108 @@
         </div>
         <div class="body">
 
-            <!-- Bill amount -->
-            <div class="row-equation">
-                <div class="label-group">
-                    <label id="bill-foreign-label">Bill (MXN)</label>
-                    <input id="bill-foreign-val" type="number" placeholder="0" min="0" step="any">
-                </div>
-                <div class="arrow-label"><svg>
-                        <use href="#icon-sync" />
-                    </svg></div>
-                <div class="label-group">
-                    <label id="bill-local-label">Bill (USD)</label>
-                    <input id="bill-local-val" type="number" placeholder="0" min="0" step="any">
-                </div>
-            </div>
-
-            <!-- People -->
-            <div class="row-2col">
-                <div class="label-group">
-                    <label>Split between</label>
-                    <div class="tab">
-                        <button id="bill-people-minus"><svg>
-                                <use href="#icon-minus" />
-                            </svg></button>
-                        <input type="number" class="inner" id="bill-people" value="1" min="1">
-                        <button id="bill-people-plus"><svg>
-                                <use href="#icon-add" />
-                            </svg></button>
+            <section class="content">
+                <div>
+                    <!-- Bill amount -->
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="bill-foreign-label">Bill (MXN)</label>
+                            <input id="bill-foreign-val" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-sync" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="bill-local-label">Bill (USD)</label>
+                            <input id="bill-local-val" type="number" placeholder="0" min="0" step="any">
+                        </div>
                     </div>
-                </div>
 
-                <div class="label-group">
-                    <label>Split</label>
-                    <div class="tab">
-                        <button class="bill-mode-btn active" data-mode="even">Even</button>
-                        <button class="bill-mode-btn" data-mode="uneven">Uneven</button>
+                    <!-- People -->
+                    <div class="row-2col">
+                        <div class="label-group">
+                            <label>Split between</label>
+                            <div class="tab">
+                                <button id="bill-people-minus"><svg>
+                                        <use href="#icon-minus" />
+                                    </svg></button>
+                                <input id="bill-people" type="number" class="inner" value="1" min="1">
+                                <button id="bill-people-plus"><svg>
+                                        <use href="#icon-add" />
+                                    </svg></button>
+                            </div>
+                        </div>
+
+                        <div class="label-group">
+                            <label>Split</label>
+                            <div id="bill-mode" class="tab">
+                                <button data-value="even">Even</button>
+                                <button data-value="uneven">Uneven</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Tip presets -->
-            <div id="tip-options">
-                <div class="label-group">
-                    <label>Tip</label>
-                    <div class="options row-flex">
-                        <button data-pct="0">0%</button>
-                        <button data-pct="10">10%</button>
-                        <button data-pct="15">15%</button>
-                        <button data-pct="20">20%</button>
-                        <input type="number" id="bill-tip-custom" placeholder="%" min="0" max="100">
+                    <!-- Tip presets -->
+                    <div id="tip-options">
+                        <div class="label-group">
+                            <label>Tip</label>
+                            <div class="options row-flex">
+                                <button data-pct="0">0%</button>
+                                <button data-pct="10">10%</button>
+                                <button data-pct="15">15%</button>
+                                <button data-pct="20">20%</button>
+                                <input id="bill-tip-custom" type="number" placeholder="%" min="0" max="100">
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Tip -->
-            <div class="row-equation">
-                <div class="label-group">
-                    <label id="bill-foreign-tip-label">Tip (MXN)</label>
-                    <input id="bill-foreign-tip-val" class="output" placeholder="—" readonly>
-                </div>
-                <div class="arrow-label"><svg>
-                        <use href="#icon-arrow-forward" />
-                    </svg></div>
-                <div class="label-group">
-                    <label id="bill-local-tip-label">Tip (USD)</label>
-                    <input id="bill-local-tip-val" class="output" placeholder="—" readonly>
-                </div>
-            </div>
+                    <!-- Tip -->
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="bill-foreign-tip-label">Tip (MXN)</label>
+                            <input id="bill-foreign-tip-val" class="output" placeholder="—" readonly>
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-arrow-forward" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="bill-local-tip-label">Tip (USD)</label>
+                            <input id="bill-local-tip-val" class="output" placeholder="—" readonly>
+                        </div>
+                    </div>
 
-            <!-- total -->
-            <div class="row-equation">
-                <div class="label-group">
-                    <label id="bill-foreign-total-label">Total (MXN)</label>
-                    <input id="bill-foreign-total-val" class="output" placeholder="—" readonly>
+                    <!-- total -->
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="bill-foreign-total-label">Total (MXN)</label>
+                            <input id="bill-foreign-total-val" class="output" placeholder="—" readonly>
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-arrow-forward" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="bill-local-total-label">Total (USD)</label>
+                            <input id="bill-local-total-val" class="output" placeholder="—" readonly>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="arrow-label"><svg>
-                        <use href="#icon-arrow-forward" />
-                    </svg></div>
-                <div class="label-group">
-                    <label id="bill-local-total-label">Total (USD)</label>
-                    <input id="bill-local-total-val" class="output" placeholder="—" readonly>
-                </div>
-            </div>
+            </section>
 
             <!-- Uneven Mode -->
-            <div id="split-list" style="display:none" class="form">
-                <div class="split-row split-header">
-                    <span>Name</span>
-                    <span id="split-offset-label">Offset</span>
-                    <span>Tip</span>
-                    <span>Total</span>
+            <section id="split-list" class="form">
+                <div>
+                    <div class="split-row split-header">
+                        <span>Name</span>
+                        <span id="split-offset-label">Offset</span>
+                        <span>Tip</span>
+                        <span>Total</span>
+                    </div>
+                    <div id="split-rows"></div>
+                    <div class="split-footer">Add an offset to adjust someone's share.<br />e.g. 80 for extra
+                        drinks<br />Offset is in foreign currency.</div>
                 </div>
-                <div id="split-rows"></div>
-                <div class="split-footer">Add an offset to adjust someone's share.<br />e.g. 80 for extra
-                    drinks<br />Offset is in foreign currency.</div>
-            </div>
+            </section>
         </div>
     </div>
 
@@ -775,65 +853,74 @@
         <div class="body">
 
             <!-- Toolbar -->
-            <div class="toolbar">
-                <button id="debt-toggle" title="Clear all"><svg>
-                        <use href="#icon-add" />
-                    </svg></button>
-                <button id="debt-select-all" title="Select all"><svg>
-                        <use href="#icon-checkbox" />
-                    </svg></button>
-                <button class="red" id="debt-clear" title="Clear all"><svg>
-                        <use href="#icon-delete" />
-                    </svg></button>
-            </div>
+            <section class="toolbar">
+                <div>
+                    <div class="row-full">
+                        <button id="debt-toggle" title="Clear all"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
+                        <button id="debt-select-all" title="Select all"><svg>
+                                <use href="#icon-checkbox" />
+                            </svg></button>
+                        <button id="debt-clear" class="red" title="Clear all"><svg>
+                                <use href="#icon-delete" />
+                            </svg></button>
+                    </div>
+                </div>
+            </section>
 
             <!-- Add form -->
-            <div id="debt-form" class="form row-list">
-                <div class="row-2col">
-                    <div class="label-group">
-                        <label>Person</label>
-                        <input type="text" id="debt-person" placeholder="Name">
-                    </div>
-                    <div class="label-group">
-                        <label>Note</label>
-                        <input type="text" id="debt-note" placeholder="Lunch, taxi…">
-                    </div>
-                </div>
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="debt-foreign-label">Amount (MXN)</label>
-                        <input id="debt-foreign-val" type="number" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-sync" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="debt-local-label">Amount (USD)</label>
-                        <input id="debt-local-val" type="number" placeholder="0" min="0" step="any">
-                    </div>
-                </div>
-                <div class="row-2col">
-                    <div class="label-group">
-                        <label>Direction</label>
-                        <div class="tab">
-                            <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
-                            <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
+            <section id="debt-form" class="form">
+                <div>
+                    <div class="row-2col">
+                        <div class="label-group">
+                            <label>Person</label>
+                            <input id="debt-person" type="text" placeholder="Name">
+                        </div>
+                        <div class="label-group">
+                            <label>Note</label>
+                            <input id="debt-note" type="text" placeholder="Lunch, taxi…">
                         </div>
                     </div>
-                    <div class="label-group">
-                        <label class="row-right">&nbsp;</label>
-                        <div class="row-right">
-                            <button id="debt-add"><svg>
-                                    <use href="#icon-add" />
-                                </svg></button>
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="debt-foreign-label">Amount (MXN)</label>
+                            <input id="debt-foreign-val" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-sync" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="debt-local-label">Amount (USD)</label>
+                            <input id="debt-local-val" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="row-2col">
+                        <div class="label-group">
+                            <label>Direction</label>
+                            <div class="tab">
+                                <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
+                                <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
+                            </div>
+                        </div>
+                        <div class="label-group">
+                            <label class="row-right">&nbsp;</label>
+                            <div class="row-right">
+                                <button id="debt-add"><svg>
+                                        <use href="#icon-add" />
+                                    </svg></button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- Entry list -->
-            <div id="debt-list" class="row-list"></div>
-
+            <section class="content">
+                <div>
+                    <div id="debt-list" class="row-list"></div>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -851,69 +938,79 @@
         </div>
         <div class="body">
 
-            <!-- Budget target -->
-            <div class="toolbar label-group">
-                <label>Budget</label>
-                <input type="number" id="budget-target" placeholder="0" min="0" step="any">
-            </div>
+            <section class="toolbar">
+                <div>
+                    <!-- Budget target -->
+                    <div class="label-group">
+                        <label>Budget</label>
+                        <input id="budget-target" type="number" placeholder="0" min="0" step="any">
+                    </div>
 
-            <!-- Toolbar -->
-            <div class="toolbar">
-                <button id="budget-new-btn" title="Add expense"><svg>
-                        <use href="#icon-add" />
-                    </svg></button>
-                <button id="budget-select-all" title="Select all"><svg>
-                        <use href="#icon-checkbox" />
-                    </svg></button>
-                <button class="red" id="budget-delete" title="Delete selected" disabled><svg>
-                        <use href="#icon-delete" />
-                    </svg></button>
-            </div>
+                    <!-- Toolbar -->
+                    <div class="row-full">
+                        <button id="budget-new-btn" title="Add expense"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
+                        <button id="budget-select-all" title="Select all"><svg>
+                                <use href="#icon-checkbox" />
+                            </svg></button>
+                        <button id="budget-delete" class="red" title="Delete selected" disabled><svg>
+                                <use href="#icon-delete" />
+                            </svg></button>
+                    </div>
+                </div>
+            </section>
 
             <!-- Add form -->
-            <div id="budget-form" class="budget-form form">
-                <div class="row-equation">
-                    <div class="label-group" style="flex:1">
-                        <label>Note</label>
-                        <input type="text" id="budget-note" placeholder="Lunch, taxi…">
+            <section id="budget-form" class="form">
+                <div>
+                    <div class="row-equation">
+                        <div class="label-group" style="flex:1">
+                            <label>Note</label>
+                            <input id="budget-note" type="text" placeholder="Lunch, taxi…">
+                        </div>
+                        <div class="arrow-label"></div>
+                        <div class="label-group">
+                            <label>Date</label>
+                            <div id="budget-date-trigger" class="date-trigger">—</div>
+                            <input id="budget-date" type="date">
+                        </div>
                     </div>
-                    <div class="arrow-label"></div>
-                    <div class="label-group">
-                        <label>Date</label>
-                        <div class="date-trigger" id="budget-date-trigger">—</div>
-                        <input type="date" id="budget-date">
+                    <div class="row-equation">
+                        <div class="label-group">
+                            <label id="budget-foreign-label">Amount (MXN)</label>
+                            <input id="budget-amount-foreign" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                        <div class="arrow-label"><svg>
+                                <use href="#icon-sync" />
+                            </svg></div>
+                        <div class="label-group">
+                            <label id="budget-local-label">Amount (USD)</label>
+                            <input id="budget-amount-local" type="number" placeholder="0" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="row-right">
+                        <button id="budget-add"><svg>
+                                <use href="#icon-add" />
+                            </svg></button>
                     </div>
                 </div>
-                <div class="row-equation">
-                    <div class="label-group">
-                        <label id="budget-foreign-label">Amount (MXN)</label>
-                        <input type="number" id="budget-amount-foreign" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="arrow-label"><svg>
-                            <use href="#icon-sync" />
-                        </svg></div>
-                    <div class="label-group">
-                        <label id="budget-local-label">Amount (USD)</label>
-                        <input type="number" id="budget-amount-local" placeholder="0" min="0" step="any">
-                    </div>
-                </div>
-                <div class="row-right">
-                    <button id="budget-add"><svg>
-                            <use href="#icon-add" />
-                        </svg></button>
-                </div>
-            </div>
+            </section>
 
-            <!-- List -->
-            <div id="budget-list" class="row-list"></div>
+            <section id="budget-content" class="content">
+                <div>
+                    <!-- List -->
+                    <div id="budget-list" class="row-list"></div>
 
-            <!-- Progress bar -->
-            <div id="budget-progress" class="budget-progress">
-                <div class="budget-progress-bar">
-                    <div class="budget-progress-fill" id="budget-progress-fill"></div>
+                    <!-- Progress bar -->
+                    <div id="budget-progress" class="budget-progress">
+                        <div class="budget-progress-bar">
+                            <div id="budget-progress-fill" class="budget-progress-fill"></div>
+                        </div>
+                        <div id="budget-progress-label" class="budget-progress-label"></div>
+                    </div>
                 </div>
-                <div class="budget-progress-label" id="budget-progress-label"></div>
-            </div>
+            </section>
 
         </div>
     </div>

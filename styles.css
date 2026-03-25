@@ -57,8 +57,42 @@ body {
     background-attachment: fixed;
 }
 
-.hidden {
+.hide_display {
     display: none !important;
+    pointer-events: none;
+}
+
+.hide_squishv {
+    display: grid;
+    overflow: hidden;
+    transition: grid-template-rows .4s ease-in-out;
+    grid-template-rows: 0fr !important;
+    pointer-events: none;
+
+    >* {
+        overflow: hidden;
+        transition: padding-top .4s ease-in-out, padding-bottom .4s ease-in-out;
+        min-width: 0;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+}
+
+.hide_squishh {
+    grid-template-columns: 0fr;
+    overflow: hidden;
+    pointer-events: none;
+    transition: grid-template-columns .4s ease-in-out;
+
+    >* {
+        min-height: 0;
+    }
+}
+
+.hide_fade {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .4s ease-in-out;
 }
 
 /* INPUT */
@@ -294,11 +328,7 @@ div.tab {
     border: none;
     border-radius: 10px;
     overflow: hidden;
-    flex: auto;
-
-    &.narrow {
-        flex: none;
-    }
+    flex: none;
 
     >button {
         letter-spacing: 0.08em;
@@ -402,7 +432,6 @@ div {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        padding-top: 20px;
     }
 
     .row-flex {
@@ -421,6 +450,7 @@ div {
     .row-2col {
         display: grid;
         grid-template-columns: 1fr 1fr;
+        align-items: center;
         gap: 12px;
     }
 
@@ -581,31 +611,42 @@ header {
     >.body {
         padding: 0;
         overflow: hidden;
-        background: linear-gradient(var(--card-bg1) 80%, var(--card-bg2) 100%);
+        background-color: #3a250d;
 
         >div {
             padding: 10px 20px;
-
-            &:first-child {
-                padding-top: 20px;
-            }
-
-            &:last-child {
-                padding-bottom: 20px;
-            }
+            overflow: hidden;
         }
 
-        div.form {
-            padding: 12px 20px;
-            background-color: var(--card-form);
-            transition: background 0.2s, display 0.2s, fill 0.2s, transform 0.3s ease-in-out;
-        }
+        section {
+            display: grid;
+            grid-template-rows: 1fr;
+            transition: grid-template-rows .4s ease-in-out;
 
-        div.toolbar {
-            display: flex;
-            padding: 12px 20px;
-            background-color: var(--card-tool);
-            gap: 12px;
+            >div {
+                display: grid;
+                overflow: hidden;
+                transition: padding-top .4s ease-in-out, padding-bottom .4s ease-in-out;
+                gap: 12px;
+                padding: 12px 20px;
+            }
+
+            &.form {
+                background-color: var(--card-form);
+            }
+
+            &.toolbar {
+                background-color: var(--card-tool);
+            }
+
+            &.content {
+                background: linear-gradient(var(--card-bg1) 80%, var(--card-bg2) 100%);
+
+                >div {
+                    gap: 20px;
+                    padding: 20px 20px;
+                }
+            }
         }
     }
 
@@ -633,12 +674,6 @@ header {
 
 /* CHECKLIST */
 #card-checklist {
-    .checklist-form {
-        display: flex;
-        gap: 12px;
-        flex-direction: column;
-    }
-
     textarea {
         resize: vertical;
         min-height: 60px;
@@ -679,7 +714,7 @@ header {
             }
 
             .checklist-item-name {
-                pointer-events: auto;
+                pointer-events: inherit;
                 background: var(--input-bg);
                 padding: 10px;
             }
@@ -690,36 +725,29 @@ header {
         }
     }
 
-    .checklist-progress {
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    .checklist-progress-bar {
+        flex: 1;
+        height: 6px;
+        background: var(--input-inactive);
+        border-radius: 3px;
+        overflow: hidden;
+    }
 
-        .checklist-progress-bar {
-            flex: 1;
-            height: 6px;
-            background: var(--input-inactive);
-            border-radius: 3px;
-            overflow: hidden;
-        }
+    .checklist-progress-fill {
+        height: 100%;
+        width: 0%;
+        background: var(--color1);
+        border-radius: 3px;
+        transition: width 0.3s;
 
-        .checklist-progress-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--color1);
-            border-radius: 3px;
-            transition: width 0.3s;
-
-            &.complete {
-                background: var(--color2);
-            }
+        &.complete {
+            background: var(--color2);
         }
     }
 }
 
 /* Table */
 .ref-table {
-    margin-top: 14px;
     display: grid;
     grid-template-columns: 1fr 1fr;
     border-radius: 16px;
@@ -745,13 +773,13 @@ header {
 /* NOTES */
 #notes-list {
     .note {
-        display: flex;
-        flex-direction: column;
-        gap: 0;
+        display: grid;
         border: none;
         border-radius: 20px;
         overflow: hidden;
         background: var(--input-inactive);
+        grid-template-rows: 46px 1fr !important;
+        transition: grid-template-rows .4s ease-in-out;
 
         .header {
             display: flex;
@@ -761,7 +789,7 @@ header {
 
             .toggle {
                 transition: transform 0.2s;
-                transform: rotate(-90deg);
+                transform: rotate(0deg);
             }
 
             >input {
@@ -770,7 +798,8 @@ header {
         }
 
         .body {
-            display: none;
+            display: grid;
+            overflow: hidden;
             position: relative;
 
             textarea {
@@ -779,7 +808,7 @@ header {
                 resize: none;
                 padding-bottom: 40px;
                 overflow: hidden;
-                display: none;
+                display: block;
             }
 
             .actions {
@@ -791,18 +820,14 @@ header {
             }
         }
 
-        &.open {
+        &.close {
+            display: grid;
+            overflow: hidden;
+            grid-template-rows: 46px 0fr !important;
+
             .header {
                 .toggle {
-                    transform: rotate(0deg);
-                }
-            }
-
-            .body {
-                display: block;
-
-                textarea {
-                    display: block;
+                    transform: rotate(-90deg);
                 }
             }
         }
@@ -811,16 +836,6 @@ header {
 
 /* TIME */
 #card-timezones {
-    .tz-form {
-        display: none;
-        flex-direction: column;
-        gap: 12px;
-
-        &.visible {
-            display: flex;
-        }
-    }
-
     .tz-result {
         font-size: 0.75rem;
         color: var(--color2);
@@ -839,6 +854,10 @@ header {
         margin: 10px 0;
         padding-bottom: 10px;
         border-bottom: 1px solid var(--color1);
+
+        &:first-child {
+            margin: 0;
+        }
 
         &:last-child {
             border-bottom: none;
@@ -894,12 +913,12 @@ header {
         }
     }
 
-    .total span:nth-child(2) {
+    .total span:nth-child(3n+2) {
         color: var(--color2);
         text-align: right;
     }
 
-    .total span:nth-child(3) {
+    .total span:nth-child(3n) {
         color: var(--color1);
         text-align: right;
     }
@@ -953,6 +972,7 @@ header {
 
     &.settled .info {
         opacity: 0.4;
+        text-decoration: line-through;
     }
 
     .direction.owe {
@@ -966,37 +986,26 @@ header {
 
 /* BUDGET */
 #card-budget {
-    .budget-form {
-        display: none;
-        padding: 10px 20px;
-        flex-direction: column;
-        gap: 12px;
+    #budget-date {
+        position: fixed;
+        opacity: 0;
+        pointer-events: none;
+        width: 0;
+        height: 0;
+    }
 
-        &.visible {
-            display: flex;
-        }
+    .date-trigger {
+        height: 30px;
+        background: var(--input-bg);
+        border-radius: 10px;
+        padding: 8px 10px;
+        cursor: pointer;
+        color: var(--text);
+        transition: border-color 0.2s;
+        white-space: nowrap;
 
-        #budget-date {
-            position: fixed;
-            opacity: 0;
-            pointer-events: none;
-            width: 0;
-            height: 0;
-        }
-
-        .date-trigger {
-            height: 30px;
-            background: var(--input-bg);
-            border-radius: 10px;
-            padding: 8px 10px;
-            cursor: pointer;
-            color: var(--text);
-            transition: border-color 0.2s;
-            white-space: nowrap;
-
-            &:hover {
-                border-color: var(--input-active);
-            }
+        &:hover {
+            border-color: var(--input-active);
         }
     }
 
@@ -1008,41 +1017,33 @@ header {
         white-space: pre;
     }
 
-    .budget-progress {
-        display: none;
+    .budget-progress-bar {
+        height: 6px;
+        background: var(--input-inactive);
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 4px;
+    }
 
-        &.visible {
-            display: block;
+    .budget-progress-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 3px;
+        background: var(--color1);
+        transition: width 0.3s, background 0.3s;
+
+        &.warning {
+            background: #e0a055;
         }
 
-        .budget-progress-bar {
-            height: 6px;
-            background: var(--input-inactive);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 4px;
+        &.over {
+            background: #e05555;
         }
+    }
 
-        .budget-progress-fill {
-            height: 100%;
-            width: 0%;
-            border-radius: 3px;
-            background: var(--color1);
-            transition: width 0.3s, background 0.3s;
-
-            &.warning {
-                background: #e0a055;
-            }
-
-            &.over {
-                background: #e05555;
-            }
-        }
-
-        .budget-progress-label {
-            color: var(--color2);
-            text-align: right;
-        }
+    .budget-progress-label {
+        color: var(--color2);
+        text-align: right;
     }
 }
 

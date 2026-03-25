@@ -1,59 +1,86 @@
 class UIDisplay {
-    static show(el) { el.classList.remove('hidden'); }
-    static hide(el) { el.classList.add('hidden'); }
-    static setVisible(el, value) { el.classList.toggle('hidden', !value); }
-    static isVisible(el) { return !el.classList.contains('hidden'); }
-
-    #element;
-    #isOpen;
-    #displayClass;
+    static HIDE = "hide_display";
+    static SQUISH_V = "hide_squishv";
+    static SQUISH_H = "hide_squishh";
+    static FADE = "hide_fade";
 
     // ── Static convenience factories ──────────────────
 
-    static create(element, isOpen = true, className = 'hidden') {
-        return new UIDisplay().setupDisplay(element, isOpen, className);
+    static create(element, isOpen = true, displayType = UIDisplay.SQUISH_V) {
+        return new UIDisplay().setupDisplay(element, isOpen, displayType);
     }
+
+    static getHideClass(element) {
+        return element.dataset.hide || UIDisplay.HIDE;
+    }
+
+    static show(el) {
+        el.classList.remove(UIDisplay.getHideClass(el));
+    }
+
+    static hide(el) {
+        el.classList.add(UIDisplay.getHideClass(el));
+    }
+
+    static setVisible(el, value) {
+        el.classList.toggle(UIDisplay.getHideClass(el), !value);
+    }
+
+    static isVisible(el) {
+        return !el.classList.contains(UIDisplay.getHideClass(el));
+    }
+
+    // ── Instance ──────────────────
+
+    #element;
+    #isVisible;
+    #displayClass;
 
     // ── Private ───────────────────────────────────────
 
     #apply() {
-        this.#element.classList.toggle(this.#displayClass, !this.#isOpen);
+        this.#element.classList.toggle(this.#displayClass, !this.#isVisible);
+        this.#setInteractivity(this.#isVisible);
+    }
+
+    #setInteractivity(enabled) {
+        if (!enabled) {
+            const focusedElement = this.#element.querySelector(':focus');
+            if (focusedElement) {
+                focusedElement.blur();
+            }
+        }
     }
 
     // ── Public ────────────────────────────────────────
 
-    /**
-     * @param {HTMLElement} element
-     * @param {boolean} isOpen=true
-     * @param {string} className=''
-     */
-    setupDisplay(element, isOpen = true, className = 'hidden') {
+    setupDisplay(element, isVisible = true, displayType = UIDisplay.SQUISH_V) {
         this.#element = element;
-        this.#isOpen = isOpen;
-        this.#displayClass = className;
+        this.#isVisible = isVisible;
+        this.#displayClass = displayType ?? this.#element.dataset.hide ?? UIDisplay.SQUISH_V;
         this.#apply();
         return this;
     }
 
-    isOpen() {
-        return this.#isOpen;
+    isVisible() {
+        return this.#isVisible;
     }
 
-    open() {
+    show() {
         this.setDisplay(true);
     }
 
-    close() {
+    hide() {
         this.setDisplay(false);
     }
 
     toggleDisplay() {
-        this.setDisplay(!this.#isOpen);
-        return this.#isOpen;
+        this.setDisplay(!this.#isVisible);
+        return this.#isVisible;
     }
 
     setDisplay(value) {
-        this.#isOpen = value;
+        this.#isVisible = value;
         this.#apply();
     }
 }
@@ -78,31 +105,71 @@ class InputHelper {
     };
 }
 
+class InputTab extends UIDisplay {
+    #element;
+    #buttons = [];
+    #value = null;
+    #onChanged;
+
+    constructor(element, initialValue = null, onChanged = null) {
+        super();
+        this.#element = element;
+        this.#buttons = [...element.children];
+        this.#onChanged = onChanged;
+        this.setupDisplay(element);
+
+        this.#element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const btn = e.target.closest('button[data-value]');
+            if (!btn) return;
+            this.setValue(btn.dataset.value);
+        });
+
+        this.setValue(initialValue, true);
+    }
+
+    // ── Public ────────────────────────────────────────
+
+    setValue(value, suppressEvent = false) {
+        const btn = this.#buttons.find(b => b.dataset.value === value)
+            ?? this.#buttons[0];
+        if (!btn) return;
+        this.#value = btn.dataset.value;
+        this.#buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (!suppressEvent) this.#onChanged?.(this.#value);
+    }
+
+    getValue() {
+        return this.#value;
+    }
+}
+
 class InputSelector extends UIDisplay {
-    #selectElement;
+    #element;
     #items = [];
     #onChanged = null;
 
     constructor(selectElement, onChanged) {
         super();
         this.setupDisplay(selectElement);
-        this.#selectElement = selectElement;
+        this.#element = selectElement;
         this.#onChanged = onChanged ?? null;
 
-        this.#selectElement.disabled = true;
-        this.#selectElement.addEventListener('change', (e) => {
+        this.#element.disabled = true;
+        this.#element.addEventListener('change', (e) => {
             e.stopPropagation();
             this.#onChanged?.(this.getValue());
         });
     }
 
     addItem(label, value) {
-        this.#selectElement.disabled = false;
+        this.#element.disabled = false;
         this.#items.push({ label, value });
         const opt = document.createElement('option');
         opt.value = value;
         opt.textContent = label;
-        this.#selectElement.appendChild(opt);
+        this.#element.appendChild(opt);
     }
 
     addItems(items) {
@@ -111,24 +178,24 @@ class InputSelector extends UIDisplay {
 
     clearItems() {
         this.#items = [];
-        this.#selectElement.innerHTML = '';
-        this.#selectElement.disabled = true;
+        this.#element.innerHTML = '';
+        this.#element.disabled = true;
     }
 
     setValue(value) {
-        this.#selectElement.value = value;
+        this.#element.value = value;
     }
 
     getValue() {
-        return this.#selectElement.value;
+        return this.#element.value;
     }
 
     clearValue() {
-        this.#selectElement.value = '';
+        this.#element.value = '';
     }
 
     querySelector(id) {
-        return this.#selectElement.querySelector(`option[value="${id}"]`);
+        return this.#element.querySelector(`option[value="${id}"]`);
     }
 }
 
