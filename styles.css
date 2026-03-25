@@ -910,6 +910,13 @@ header {
             .tally-price {
                 text-align: right;
             }
+
+            &.checked{
+                .tally-label {
+                    opacity: 0.4;
+                    text-decoration: line-through;
+                }
+            }
         }
     }
 
