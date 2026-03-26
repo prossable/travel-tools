@@ -254,6 +254,7 @@ button {
     display: inline-flex;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 
     @media (hover: hover) {
         &:hover {
@@ -672,6 +673,21 @@ header {
     }
 }
 
+/* DATA AND MODES */
+.checked .if-checked {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+
+.check-mode .if-edit-mode {
+    pointer-events: none;
+    border-color: transparent;
+    background: transparent;
+    padding: 0;
+    transition: opacity 0.2s;
+
+}
+
 /* CHECKLIST */
 #card-checklist {
     textarea {
@@ -689,21 +705,9 @@ header {
         align-items: center;
         gap: 12px;
 
-        &.checked .checklist-item-name {
-            opacity: 0.4;
-            text-decoration: line-through;
-        }
 
         .checklist-select {
             display: none;
-        }
-
-        .checklist-item-name {
-            pointer-events: none;
-            border-color: transparent;
-            background: transparent;
-            padding: 0;
-            transition: opacity 0.2s;
         }
     }
 
@@ -900,22 +904,37 @@ header {
 
 /* Tally */
 #card-tally {
-    #tally-list {
-        .tally-item {
-            align-items: center;
-            display: grid;
-            grid-template-columns: auto 1fr 1fr auto;
-            gap: 12px;
+    .tally-item {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 12px;
 
-            .tally-price {
-                text-align: right;
+        .tally-select {
+            display: none;
+        }
+
+        .tally-price {
+            text-align: right;
+        }
+    }
+
+    &.edit-mode {
+        .tally-item {
+            grid-template-columns: auto 1fr 1fr;
+
+            .tally-select {
+                display: block;
             }
 
-            &.checked{
-                .tally-label {
-                    opacity: 0.4;
-                    text-decoration: line-through;
-                }
+            .tally-label {
+                pointer-events: inherit;
+                background: var(--input-bg);
+                padding: 10px;
+            }
+
+            .tally-status {
+                display: none;
             }
         }
     }
@@ -976,11 +995,6 @@ header {
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 12px;
-
-    &.settled .info {
-        opacity: 0.4;
-        text-decoration: line-through;
-    }
 
     .direction.owe {
         color: var(--red);

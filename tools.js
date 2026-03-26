@@ -116,7 +116,7 @@ class InputTab extends UIDisplay {
         this.#element = element;
         this.#buttons = [...element.children];
         this.#onChanged = onChanged;
-        this.setupDisplay(element);
+        this.setupDisplay(element, true, UIDisplay.HIDE);
 
         this.#element.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -152,7 +152,7 @@ class InputSelector extends UIDisplay {
 
     constructor(selectElement, onChanged) {
         super();
-        this.setupDisplay(selectElement);
+        this.setupDisplay(selectElement, true, UIDisplay.HIDE);
         this.#element = selectElement;
         this.#onChanged = onChanged ?? null;
 
@@ -205,15 +205,14 @@ class SelectionManager {
     #onChanged = null;
 
     /** 
-     * @param {object} config
-     * @param {HTMLElement} config.selectAllBtn
-     * @param {HTMLElement} config.deleteBtn
-     * @param {string}      config.itemPrefix      — e.g. 'budget-', 'tally-', 'debt-'
-     * @param {string}      config.selectClass      — class on the checkbox e.g. 'budget-select'
-     * @param {function}    config.onDelete        — callback(ids: Set) when delete confirmed
-     * @param {function}    [config.onChanged]     — callback(ids: Set) on any selection change
+     * @param {HTMLElement} selectAllBtn
+     * @param {HTMLElement} deleteBtn
+     * @param {string}      itemPrefix      — e.g. 'budget-', 'tally-', 'debt-'
+     * @param {string}      selectClass      — class on the checkbox e.g. 'budget-select'
+     * @param {function}    onDelete        — callback(ids: Set) when delete confirmed
+     * @param {function}    [onChanged]     — callback(ids: Set) on any selection change
      */
-    constructor({ selectAllBtn, deleteBtn, itemPrefix, selectClass, onDelete, onChanged }) {
+    constructor(selectAllBtn, deleteBtn, itemPrefix, selectClass, onDelete, onChanged = null) {
         this.selectAllBtn = selectAllBtn;
         this.deleteBtn = deleteBtn;
         this.itemPrefix = itemPrefix;
@@ -226,7 +225,6 @@ class SelectionManager {
             allSelected ? this.#activeIds.clear() : this.#items.forEach(i => this.#activeIds.add(i.id));
             this.#syncStyles();
             this.#updateToolbar();
-            this.#onChanged?.(this.#activeIds);
         });
 
         deleteBtn.addEventListener('click', (e) => {
@@ -236,7 +234,6 @@ class SelectionManager {
                 onDelete(new Set(this.#activeIds));
                 this.#activeIds.clear();
                 this.#updateToolbar();
-                this.#onChanged?.(this.#activeIds);
             }
         });
     }
@@ -260,11 +257,11 @@ class SelectionManager {
             'active',
             this.#activeIds.size === this.#items.length && this.#items.length > 0
         );
+        this.#onChanged?.(this.#activeIds);
     }
 
     // ── Public ────────────────────────────────────────
 
-    /** Call whenever your items array changes */
     setItems(items) {
         this.#items = items;
         // clear any selected ids that no longer exist
@@ -274,25 +271,20 @@ class SelectionManager {
         this.#updateToolbar();
     }
 
-    /** Call from each row's checkbox change listener */
     setActive(id, active) {
         active ? this.#activeIds.add(id) : this.#activeIds.delete(id);
         document.getElementById(`${this.itemPrefix}${id}`)
             ?.classList.toggle('selected', active);
         this.#updateToolbar();
-        this.#onChanged?.(this.#activeIds);
     }
 
-    /** Call when a row is removed without going through onDelete */
     remove(id) {
         this.#activeIds.delete(id);
         this.#updateToolbar();
     }
 
-    /** Returns copy of active ids */
     getActiveIds() { return new Set(this.#activeIds); }
 
-    /** Clears selection without triggering delete */
     clear() {
         this.#activeIds.clear();
         this.#syncStyles();

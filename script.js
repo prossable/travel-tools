@@ -589,7 +589,7 @@ class BillCard extends Card {
 class MarketTallyCard extends Card {
     #items = [];
     #nextId = 1;
-    #activeIds = new Set(); // selected row ids
+    #selection;
 
     constructor() {
         super('card-tally');
@@ -599,15 +599,27 @@ class MarketTallyCard extends Card {
         this.addButton = document.getElementById('tally-add');
         this.selectAllButton = document.getElementById('tally-select');
         this.deleteButton = document.getElementById('tally-delete');
-        this.toDebtButton = document.getElementById('tally-debt');
         this.spentForeignOutput = document.getElementById('tally-spent-foreign');
         this.spentLocalOutput = document.getElementById('tally-spent-local');
         this.remainingForeignOutput = document.getElementById('tally-remaining-foreign');
         this.remainingLocalOutput = document.getElementById('tally-remaining-local');
 
-        // init
-        this.#load();
-        this.#updateToolbar();
+        // mode tab
+        this.modeInput = new InputTab(document.getElementById('tally-mode'), 'check', (value) => {
+            this.#syncToolbarMode();
+        });
+
+        // selection manager
+        this.#selection = new SelectionManager(this.selectAllButton, this.deleteButton, 'tally-', 'tally-select',
+            (ids) => {
+                ids.forEach(id => {
+                    this.#items = this.#items.filter(i => i.id !== id);
+                    document.getElementById(`tally-${id}`)?.remove();
+                });
+                this.#save();
+                this.update();
+            }
+        );
 
         // add
         this.addButton.addEventListener('click', (e) => {
@@ -615,79 +627,26 @@ class MarketTallyCard extends Card {
             this.#addItem();
         });
 
-        // select all / deselect all
-        this.selectAllButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const allSelected = this.#activeIds.size === this.#items.length;
-            if (allSelected) {
-                this.#activeIds.clear();
-            } else {
-                this.#items.forEach(i => this.#activeIds.add(i.id));
-            }
-            this.#syncSelectionStyles();
-            this.#updateToolbar();
-        });
-
-        // delete selected
-        this.deleteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!this.#activeIds.size) return;
-            if (confirm(`Delete ${this.#activeIds.size} item(s)?`)) {
-                this.#activeIds.forEach(id => {
-                    this.#items = this.#items.filter(i => i.id !== id);
-                    document.getElementById(`tally-${id}`)?.remove();
-                });
-                this.#activeIds.clear();
-                this.#save();
-                this.#updateToolbar();
-                this.update();
-            }
-        });
-
-        /*// to debt
-        this.toDebtButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!this.#activeIds.size) return;
-            const total = this.#items
-                .filter(i => this.#activeIds.has(i.id) && i.price)
-                .reduce((sum, i) => sum + i.price, 0);
-            if (total > 0) EventService.addToDebt(total);
-        });*/
-
+        // rate / currency
         RateService.onRateChanged(() => this.update());
         RateService.onCurrencyChanged(() => this.update());
+
+        // init
+        this.#load();
+        this.#syncToolbarMode();
     }
 
-    // ── Selection ─────────────────────────────────────
+    // ── Private ───────────────────────────────────────
 
-    #setActive(id, active) {
-        active ? this.#activeIds.add(id) : this.#activeIds.delete(id);
-        document.getElementById(`tally-${id}`)
-            ?.classList.toggle('selected', active);
-        this.#updateToolbar();
+    #syncToolbarMode() {
+        const isEdit = this.modeInput.getValue() === 'edit';
+        this.cardElement.classList.toggle('edit-mode', isEdit);
+        this.cardElement.classList.toggle('check-mode', !isEdit);
+        UIDisplay.setVisible(this.addButton, isEdit);
+        UIDisplay.setVisible(this.selectAllButton, isEdit);
+        UIDisplay.setVisible(this.deleteButton, isEdit);
+        if (!isEdit) this.#selection.clear();
     }
-
-    #syncSelectionStyles() {
-        this.#items.forEach(item => {
-            const row = document.getElementById(`tally-${item.id}`);
-            if (!row) return;
-            const isSelected = this.#activeIds.has(item.id);
-            row.classList.toggle('selected', isSelected);
-            row.querySelector('.tally-select').checked = isSelected; // add this
-        });
-    }
-
-    #updateToolbar() {
-        const hasSelection = this.#activeIds.size > 0;
-        this.deleteButton.disabled = !hasSelection;
-        //  this.toDebtButton.disabled = !hasSelection;
-        this.selectAllButton.classList.toggle(
-            'active',
-            this.#activeIds.size === this.#items.length && this.#items.length > 0
-        );
-    }
-
-    // ── Items ─────────────────────────────────────────
 
     #createItem(label = '', price = null, checked = false) {
         return { id: this.#nextId++, label, price, checked };
@@ -697,6 +656,7 @@ class MarketTallyCard extends Card {
         const item = this.#createItem(label, price);
         this.#items.push(item);
         this.#save();
+        this.#selection.setItems(this.#items);
 
         const el = document.createElement('div');
         el.innerHTML = this.#itemHTML(item);
@@ -704,7 +664,8 @@ class MarketTallyCard extends Card {
         this.listElement.appendChild(itemEl);
         this.#wireListeners(itemEl, item.id);
         this.update();
-        itemEl.querySelector('.tally-label').focus();
+
+        itemEl.querySelector('.tally-label').focus({ preventScroll: true });
     }
 
     #duplicateItem(id) {
@@ -713,6 +674,7 @@ class MarketTallyCard extends Card {
         const item = this.#createItem(source.label, source.price);
         this.#items.push(item);
         this.#save();
+        this.#selection.setItems(this.#items);
 
         const el = document.createElement('div');
         el.innerHTML = this.#itemHTML(item);
@@ -724,20 +686,9 @@ class MarketTallyCard extends Card {
 
     #removeItem(id) {
         this.#items = this.#items.filter(i => i.id !== id);
-        this.#activeIds.delete(id);
         document.getElementById(`tally-${id}`).remove();
-        this.#save();
-        this.#updateToolbar();
-        this.update();
-    }
-
-    #toggleItem(id) {
-        const item = this.#items.find(i => i.id === id);
-        if (!item) return;
-        item.toggleItem = !item.toggleItem;
-        const row = document.getElementById(`tally-${id}`);
-        row.classList.toggle('toggleItem', item.toggleItem);
-        //row.querySelectorAll('.tally-status-btn').forEach(btn => {btn.classList.toggle('active', btn.dataset.status === (item.got ? 'got' : 'need'));});
+        this.#selection.remove(id);
+        this.#selection.setItems(this.#items);
         this.#save();
         this.update();
     }
@@ -759,14 +710,13 @@ class MarketTallyCard extends Card {
 
     #itemHTML(item) {
         return `
-            <div class="tally-item ${item.checked ? 'checked' : ''}" 
-                 id="tally-${item.id}" data-id="${item.id}">
-                <input type="checkbox" class="tally-select" ${this.#activeIds.has(item.id) ? 'checked' : ''}>
-                <input type="text" class="tally-label" value="${item.label}" placeholder="Item">
-                <input type="number" class="tally-price" value="${item.price ?? ''}" placeholder="0" min="0" step="any">
+            <div class="tally-item ${item.checked ? 'checked' : ''}" id="tally-${item.id}" data-id="${item.id}">
+                <input type="checkbox" class="tally-select" ${this.#selection.isSelected(item.id) ? 'checked' : ''}>
+                <input type="text" class="tally-label if-edit-mode if-checked" value="${item.label}" placeholder="Item">
+                <input type="number" class="tally-price if-checked" value="${item.price ?? ''}" placeholder="0" min="0" step="any">
                 <div class="toggle tally-status">
-                    <button class="${!item.checked ? 'active' : ''}"><svg><use href="#icon-basket" /></svg></button>
-                    <button class="${item.checked ? 'active' : ''}"><svg><use href="#icon-check" /></svg></button>
+                    <button class="${!item.checked ? 'active' : ''}"><svg><use href="#icon-basket"/></svg></button>
+                    <button class="${item.checked ? 'active' : ''}"><svg><use href="#icon-check"/></svg></button>
                 </div>
             </div>`;
     }
@@ -775,21 +725,18 @@ class MarketTallyCard extends Card {
         const checkbox = row.querySelector('.tally-select');
         const labelInput = row.querySelector('.tally-label');
         const priceInput = row.querySelector('.tally-price');
-        const statusContainer = row.querySelector('.tally-status');
+        const toggle = row.querySelector('.tally-status');
 
-        // selection checkbox
         checkbox.addEventListener('change', (e) => {
             e.stopPropagation();
-            this.#setActive(id, checkbox.checked);
+            this.#selection.setActive(id, checkbox.checked);
         });
 
-        // label
         labelInput.addEventListener('input', () => {
             const item = this.#items.find(i => i.id === id);
             if (item) { item.label = labelInput.value; this.#save(); }
         });
 
-        // price
         priceInput.addEventListener('input', () => {
             const item = this.#items.find(i => i.id === id);
             if (item) {
@@ -799,16 +746,14 @@ class MarketTallyCard extends Card {
             }
         });
 
-        // toggle
-        const item = this.#items.find(i => i.id === id);
         InputHelper.setupToggle(
-            statusContainer,
-            item.checked,
-            (isGot) => {
+            toggle,
+            this.#items.find(i => i.id === id)?.checked ?? false,
+            (isChecked) => {
                 const item = this.#items.find(i => i.id === id);
                 if (!item) return;
-                item.checked = isGot;
-                document.getElementById(`tally-${id}`).classList.toggle('checked', isGot);
+                item.checked = isChecked;
+                document.getElementById(`tally-${id}`).classList.toggle('checked', isChecked);
                 this.#save();
                 this.update();
             }
@@ -820,6 +765,7 @@ class MarketTallyCard extends Card {
         this.listElement.querySelectorAll('.tally-item').forEach(row => {
             this.#wireListeners(row, parseInt(row.dataset.id));
         });
+        this.#selection.setItems(this.#items);
         this.update();
     }
 
@@ -1048,12 +994,8 @@ class DebtCard extends Card {
         this.toggleButton = document.getElementById('debt-toggle');
 
         // selection manager
-        this.#selection = new SelectionManager({
-            selectAllBtn: document.getElementById('debt-select-all'),
-            deleteBtn: document.getElementById('debt-clear'),
-            itemPrefix: 'debt-',
-            selectClass: 'debt-select',
-            onDelete: (ids) => {
+        this.#selection = new SelectionManager(document.getElementById('debt-select-all'), document.getElementById('debt-clear'), 'debt-', 'debt-select',
+            (ids) => {
                 ids.forEach(id => {
                     this.#debts = this.#debts.filter(d => d.id !== id);
                     document.getElementById(`debt-${id}`)?.remove();
@@ -1061,7 +1003,7 @@ class DebtCard extends Card {
                 this.#save();
                 this.#updateSummary();
             }
-        });
+        );
 
         // listeners
         this.toggleButton.addEventListener('click', (e) => {
@@ -1181,7 +1123,7 @@ class DebtCard extends Card {
         if (!debt) return;
         debt.settled = !debt.settled;
         const row = document.getElementById(`debt-${id}`);
-        row.classList.toggle('settled', debt.settled);
+        row.classList.toggle('checked', debt.settled);
         this.#save();
         this.#updateSummary();
     }
@@ -1212,9 +1154,9 @@ class DebtCard extends Card {
 
     #debtHTML(debt) {
         return `
-            <div class="debt-entry ${debt.settled ? 'settled' : ''}" id="debt-${debt.id}" data-id="${debt.id}">
+            <div class="debt-entry ${debt.settled ? 'checked' : ''}" id="debt-${debt.id}" data-id="${debt.id}">
                 <input type="checkbox" class="debt-select" ${this.#selection.isSelected(debt.id) ? 'checked' : ''}>
-                <div class="info">
+                <div class="info if-checked">
                     <span>${debt.person}</span>
                     <span class="direction ${debt.direction}">${debt.direction === 'owe' ? 'is owed' : 'owes me'}</span>
                     <span class="highlight">${RateService.formatLocalFull(debt.amount)}</span>
@@ -1245,7 +1187,7 @@ class DebtCard extends Card {
                 const debt = this.#debts.find(d => d.id === id);
                 if (!debt) return;
                 debt.settled = isSettled;
-                row.classList.toggle('settled', isSettled);
+                row.classList.toggle('checked', isSettled);
                 this.#save();
                 this.#updateSummary();
             }
@@ -2036,8 +1978,7 @@ class ChecklistCard extends Card {
         // item toolbar
         this.toolbar = UIDisplay.create(document.getElementById('checklist-toolbar'), false);
 
-        this.modeInput = new InputTab(document.getElementById('checklist-mode'), 'check', (e) => {
-            this.cardElement.classList.toggle('edit-mode', this.modeInput.getValue() === 'edit');
+        this.modeInput = new InputTab(document.getElementById('checklist-mode'), 'check', (value) => {
             this.#syncToolbarMode();
         });
 
@@ -2082,12 +2023,8 @@ class ChecklistCard extends Card {
         this.listContainer = UIDisplay.create(document.getElementById('checklist-content'), false);
         this.listElement = document.getElementById('checklist-list');
 
-        this.#selection = new SelectionManager({
-            selectAllBtn: this.selectAllBtn,
-            deleteBtn: this.deleteItemsBtn,
-            itemPrefix: 'cli-',
-            selectClass: 'checklist-select',
-            onDelete: async (ids) => {
+        this.#selection = new SelectionManager(this.selectAllBtn, this.deleteItemsBtn, 'cli-', 'checklist-select',
+            async (ids) => {
                 await StorageService.deleteChecklistItems([...ids]);
                 ids.forEach(id => {
                     this.#items = this.#items.filter(i => i.id !== id);
@@ -2097,8 +2034,11 @@ class ChecklistCard extends Card {
                 await this.#updateListCounts();
                 this.#updateProgress();
                 this.#updateSummary();
+            },
+            () => {
+                this.copyItemsBtn.disabled = this.#selection.getActiveIds().size === 0;
             }
-        });
+        );
 
         // bottom toolbar
         this.toolbar2 = document.getElementById('checklist-toolbar2');
@@ -2267,12 +2207,15 @@ class ChecklistCard extends Card {
 
     #syncToolbarMode() {
         const isEdit = this.modeInput.getValue() === 'edit';
+        this.cardElement.classList.toggle('edit-mode', isEdit);
+        this.cardElement.classList.toggle('check-mode', !isEdit);
         UIDisplay.setVisible(this.addItemBtn, isEdit);
         UIDisplay.setVisible(this.addItemsBtn, isEdit);
         UIDisplay.setVisible(this.selectAllBtn, isEdit);
         UIDisplay.setVisible(this.deleteItemsBtn, isEdit);
         UIDisplay.setVisible(this.copyItemsBtn, isEdit);
         UIDisplay.setVisible(this.toolbar2, isEdit);
+        this.pasteForm.hide();
         if (!isEdit) this.#selection.clear();
     }
 
@@ -2312,7 +2255,7 @@ class ChecklistCard extends Card {
         return `
             <div class="checklist-item ${item.checked ? 'checked' : ''}" id="cli-${item.id}" data-id="${item.id}">
                 <input type="checkbox" class="checklist-select">
-                <input type="text" class="checklist-item-name" value="${item.name}" placeholder="Item">
+                <input type="text" class="checklist-item-name if-edit-mode if-checked" value="${item.name}" placeholder="Item">
                 <div class="toggle checklist-toggle">
                     <button class="${!item.checked ? 'active' : ''}">
                         <svg><use href="#icon-close"/></svg>
