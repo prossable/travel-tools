@@ -2056,6 +2056,14 @@ class ChecklistCard extends Card {
         this.selectAllBtn = document.getElementById('checklist-select-all-btn');
         this.deleteItemsBtn = document.getElementById('checklist-delete-items-btn');
 
+        this.copyItemsBtn = document.getElementById('checklist-copy-items-btn');
+        this.copyItemsBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const ids = this.#selection.getActiveIds();
+            const data = this.#items.filter(obj => ids.has(obj.id)).map(obj => obj.name).join(', ');
+            await navigator.clipboard.writeText(data);
+        });
+
         // items form
         this.pasteForm = UIDisplay.create(document.getElementById('checklist-paste-form'), false);
         this.pasteInput = document.getElementById('checklist-paste');
@@ -2263,6 +2271,7 @@ class ChecklistCard extends Card {
         UIDisplay.setVisible(this.addItemsBtn, isEdit);
         UIDisplay.setVisible(this.selectAllBtn, isEdit);
         UIDisplay.setVisible(this.deleteItemsBtn, isEdit);
+        UIDisplay.setVisible(this.copyItemsBtn, isEdit);
         UIDisplay.setVisible(this.toolbar2, isEdit);
         if (!isEdit) this.#selection.clear();
     }
