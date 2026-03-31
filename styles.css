@@ -910,52 +910,13 @@ header {
         grid-template-columns: auto 1fr 1fr auto;
         gap: 12px;
 
-        .item-select {
-            display: none;
-        }
-
         .tally-price {
             text-align: right;
         }
-
-        .item-overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            border-radius: 10px;
-            align-items: center;
-            gap: 12px;
-            z-index: 10;
-
-            &::before {
-                content: '';
-                position: absolute;
-                inset: 0;
-                background: var(--card-bg1);
-                opacity: .75;
-                border-radius: 10px;
-                z-index: -1;
-                /* behind content */
-            }
-        }
-
-        &.overlay-open .item-overlay {
-            display: flex;
-
-            span {
-                flex: 1;
-            }
-        }
     }
 
-    .selection-mode {
-        .tally-item {
-            grid-template-columns: auto auto 1fr 1fr auto;
-
-            .item-select {
-                display: block;
-            }
-        }
+    .selection-mode .tally-item {
+        grid-template-columns: auto auto 1fr 1fr auto;
     }
 
     .total span:nth-child(3n+2) {
@@ -966,6 +927,45 @@ header {
     .total span:nth-child(3n) {
         color: var(--color1);
         text-align: right;
+    }
+}
+
+/* List */
+
+.item-select {
+    display: none;
+}
+
+.selection-mode .item-select {
+    display: block;
+}
+
+.item-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--card-bg1);
+        opacity: .75;
+        border-radius: 10px;
+        z-index: -1;
+        /* behind content */
+    }
+}
+
+.overlay-open .item-overlay {
+    display: flex;
+
+    span {
+        flex: 1;
     }
 }
 
@@ -1039,10 +1039,15 @@ header {
 
 /* DEBT */
 .debt-entry {
+    position: relative;
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
     gap: 12px;
+
+    &:has(.selection-mode) {
+        grid-template-columns: auto auto 1fr auto;
+    }
 
     .direction.owe {
         color: var(--red);
@@ -1051,6 +1056,11 @@ header {
     .direction.owedBy {
         color: #73d780;
     }
+}
+
+.selection-mode .debt-entry {
+    grid-template-columns: auto auto 1fr auto;
+
 }
 
 /* BUDGET */

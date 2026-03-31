@@ -658,26 +658,27 @@ class MarketTallyCard extends Card {
     #addItem(label = '', price = null) {
         const item = this.#createItem(label, price);
         this.#items.push(item);
-        this.#save();
         this.#listManager.setItems(this.#items);
 
         var element = this.#listManager.add(item);
         element.querySelector('.tally-label').focus({ preventScroll: true });
         this.#wireListeners(element, item.id);
-        this.update();
 
+        this.#save();
+        this.update();
     }
 
     #addItemAfter(id) {
         const index = this.#items.findIndex(i => i.id === id);
         const item = this.#createItem();
         this.#items.splice(index + 1, 0, item);
-        this.#save();
         this.#listManager.setItems(this.#items);
 
         var element = this.#listManager.add(item, id);
         element.querySelector('.tally-label').focus({ preventScroll: true });
         this.#wireListeners(element, item.id);
+
+        this.#save();
         this.update();
     }
 
@@ -719,7 +720,7 @@ class MarketTallyCard extends Card {
                 this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
         }
 
-        this.#items.forEach((item, index) => {
+        this.#items.forEach(item => {
             var element = this.#listManager.add(item);
             this.#wireListeners(element, item.id);
         });
@@ -767,7 +768,7 @@ class MarketTallyCard extends Card {
                 const item = this.#items.find(i => i.id === id);
                 if (!item) return;
                 item.checked = isChecked;
-                document.getElementById(`tally-${id}`).classList.toggle('checked', isChecked);
+                row.classList.toggle('checked', isChecked);
                 this.#save();
                 this.update();
             }
@@ -978,65 +979,75 @@ class NotesCard extends Card {
 }
 
 class DebtCard extends Card {
-    #debts = [];
+    #items = [];
     #nextId = 1;
-    #direction = 'owe';
-    #formVisible = false;
-    #selection;
+    #listManager;
 
     constructor() {
         super('card-debt');
 
-        // elements
-        this.listElement = document.getElementById('debt-list');
+        // toolbar
+        this.toggleButton = document.getElementById('debt-toggle');
+        this.toggleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#toggleForm();
+        });
+        this.deleteButton = document.getElementById('debt-clear');
+
+        // new item form
         this.formElement = UIDisplay.create(document.getElementById('debt-form'), false);
         this.personInput = document.getElementById('debt-person');
         this.noteInput = document.getElementById('debt-note');
+
         this.foreignLabel = document.getElementById('debt-foreign-label');
         this.foreignInput = document.getElementById('debt-foreign-val');
-        this.localLabel = document.getElementById('debt-local-label');
-        this.localInput = document.getElementById('debt-local-val');
-        this.dirButtons = document.querySelectorAll('.debt-dir-btn');
-        this.addButton = document.getElementById('debt-add');
-        this.toggleButton = document.getElementById('debt-toggle');
-
-        // selection manager
-        this.#selection = new SelectionManager(document.getElementById('debt-select-all'), document.getElementById('debt-clear'), 'debt-', 'debt-select',
-            (ids) => {
-                ids.forEach(id => {
-                    this.#debts = this.#debts.filter(d => d.id !== id);
-                    document.getElementById(`debt-${id}`)?.remove();
-                });
-                this.#save();
-                this.#updateSummary();
-            }
-        );
-
-        // listeners
-        this.toggleButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.#setFormVisible(!this.#formVisible);
-        });
-        this.dirButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.#direction = btn.dataset.dir;
-                this.dirButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
         this.foreignInput.addEventListener('input', () => {
             if (this.foreignInput.value === '') { this.localInput.value = ''; return; }
             this.localInput.value = RateService.formatLocalInput(RateService.toLocal(this.foreignInput.value));
         });
+
+        this.localLabel = document.getElementById('debt-local-label');
+        this.localInput = document.getElementById('debt-local-val');
         this.localInput.addEventListener('input', () => {
             if (this.localInput.value === '') { this.foreignInput.value = ''; return; }
             this.foreignInput.value = RateService.formatForeignInput(RateService.toForeign(this.localInput.value));
         });
+
+        this.modeInput = new InputTab(document.getElementById('debt-mode'), 'owe');
+
+        this.addButton = document.getElementById('debt-add');
         this.addButton.addEventListener('click', (e) => {
             e.stopPropagation();
             this.#addDebt();
         });
+
+        // list manager
+        this.listElement = document.getElementById('debt-list');
+        const listActions = [
+            //{ icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
+            //{ icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
+        ];
+        this.#listManager = new ListManager(this.listElement,
+            document.getElementById('debt-select-all'),
+            this.deleteButton,
+            'debt-',
+            null,
+            (item) => { return this.#itemHTML(item); },
+            (ids) => {
+                console.log("delete", ids);
+                if (confirm(`Delete ${ids.size} item(s)?`)) {
+                    ids.forEach(id => {
+                        this.#items = this.#items.filter(i => i.id !== id);
+                        this.#listManager.remove(id);
+                    });
+                    this.#listManager.setItems(this.#items);
+                    this.#listManager.clearSelection();
+                    this.#save();
+                    this.#update();
+                }
+            },
+            (ids) => { this.deleteButton.disabled = ids.size === 0; }
+        );
 
         // services
         RateService.onRateChanged(() => {
@@ -1050,15 +1061,6 @@ class DebtCard extends Card {
             this.foreignInput.value = '';
             this.localInput.value = '';
         });
-        /* EventService.onAddToDebt((e) => {
-             this.#setFormVisible(true);
-             this.localInput.value = RateService.formatLocalInput(e.detail.amount);
-             this.foreignInput.value = RateService.formatForeignInput(
-                 RateService.toForeign(e.detail.amount)
-             );
-             if (e.detail.person) this.personInput.value = e.detail.person;
-             if (e.detail.note) this.noteInput.value = e.detail.note;
-         });*/
 
         // init
         this.#updateLabels();
@@ -1067,10 +1069,17 @@ class DebtCard extends Card {
 
     // ── Private ───────────────────────────────────────
 
-    #setFormVisible(visible) {
-        this.#formVisible = visible;
-        this.formElement.setDisplay(visible);
-        if (visible) this.personInput.focus({ preventScroll: true });
+    #toggleForm() {
+        this.formElement.toggleDisplay();
+        if (this.formElement.isVisible) this.personInput.focus({ preventScroll: true });
+    }
+
+    #clearForm() {
+        this.personInput.value = '';
+        this.noteInput.value = '';
+        this.foreignInput.value = '';
+        this.localInput.value = '';
+        this.modeInput.setValue('owe');
     }
 
     #addDebt() {
@@ -1085,118 +1094,74 @@ class DebtCard extends Card {
             id: this.#nextId++,
             person,
             amount: RateService.toLocal(foreignVal),
-            direction: this.#direction,
+            direction: this.modeInput.getValue(),
             note,
             settled: false
         };
 
-        this.#debts.push(debt);
-        this.#save();
-        this.#selection.setItems(this.#debts);
+        this.#items.push(debt);
+        this.#listManager.setItems(this.#items);
 
-        // append single element
-        const el = document.createElement('div');
-        el.innerHTML = this.#debtHTML(debt);
-        const debtEl = el.firstElementChild;
-        this.listElement.appendChild(debtEl);
-        this.#wireListeners(debtEl, debt.id);
+        var element = this.#listManager.add(debt);
+        this.#wireListeners(element, debt.id);
 
         this.#clearForm();
-        this.#setFormVisible(false);
-        this.#updateSummary();
-    }
-
-    #clearForm() {
-        this.personInput.value = '';
-        this.noteInput.value = '';
-        this.foreignInput.value = '';
-        this.localInput.value = '';
-        this.dirButtons.forEach(b => b.classList.remove('active'));
-        this.dirButtons[0].classList.add('active');
-        this.#direction = 'owe';
-    }
-
-    #removeDebt(id) {
-        this.#debts = this.#debts.filter(d => d.id !== id);
-        document.getElementById(`debt-${id}`).remove();
-        this.#selection.remove(id);
-        this.#selection.setItems(this.#debts);
+        this.formElement.hide();
         this.#save();
-        this.#updateSummary();
-    }
-
-    #toggleSettled(id) {
-        const debt = this.#debts.find(d => d.id === id);
-        if (!debt) return;
-        debt.settled = !debt.settled;
-        const row = document.getElementById(`debt-${id}`);
-        row.classList.toggle('checked', debt.settled);
-        this.#save();
-        this.#updateSummary();
+        this.#update();
     }
 
     #save() {
-        localStorage.setItem('debts', JSON.stringify(this.#debts));
+        localStorage.setItem('debts', JSON.stringify(this.#items));
         localStorage.setItem('debtsNextId', this.#nextId);
     }
 
     #load() {
         const stored = localStorage.getItem('debts');
         if (stored) {
-            this.#debts = JSON.parse(stored);
+            this.#items = JSON.parse(stored);
             this.#nextId = parseInt(localStorage.getItem('debtsNextId')) ||
-                this.#debts.reduce((max, d) => Math.max(max, d.id), 0) + 1;
+                this.#items.reduce((max, d) => Math.max(max, d.id), 0) + 1;
         }
-        this.#renderAll();
-    }
 
-    #renderAll() {
-        this.listElement.innerHTML = this.#debts.map(d => this.#debtHTML(d)).join('');
-        this.listElement.querySelectorAll('.debt-entry').forEach(row => {
-            this.#wireListeners(row, parseInt(row.dataset.id));
+        this.#items.forEach(item => {
+            var element = this.#listManager.add(item);
+            this.#wireListeners(element, item.id);
         });
-        this.#selection.setItems(this.#debts);
-        this.#updateSummary();
+        this.#listManager.setItems(this.#items);
+        this.#update();
     }
 
-    #debtHTML(debt) {
+    #itemHTML(item) {
         return `
-            <div class="debt-entry ${debt.settled ? 'checked' : ''}" id="debt-${debt.id}" data-id="${debt.id}">
-                <input type="checkbox" class="debt-select" ${this.#selection.isSelected(debt.id) ? 'checked' : ''}>
-                <div class="info if-checked">
-                    <span>${debt.person}</span>
-                    <span class="direction ${debt.direction}">${debt.direction === 'owe' ? 'is owed' : 'owes me'}</span>
-                    <span class="highlight">${RateService.formatLocalFull(debt.amount)}</span>
-                    ${debt.note ? ` for ${debt.note}` : ''}
-                </div>
+            <div class="debt-entry ${item.settled ? 'checked' : ''}" id="debt-${item.id}" data-id="${item.id}">
+                <input type="checkbox" class="item-select" ${this.#listManager.isSelected(item.id) ? 'checked' : ''}>
                 <div class="toggle settled-toggle">
-                    <button class="${!debt.settled ? 'active' : ''}"><svg><use href="#icon-debt"/></svg></button>
-                    <button class="${debt.settled ? 'active' : ''}"><svg><use href="#icon-check"/></svg></button>
+                    <button class="${!item.settled ? 'active' : ''}"><svg><use href="#icon-debt"/></svg></button>
+                    <button class="${item.settled ? 'active' : ''}"><svg><use href="#icon-check"/></svg></button>
                 </div>
+                <div class="info if-checked">
+                    <span>${item.person}</span>
+                    <span class="direction ${item.direction}">${item.direction === 'owe' ? 'is owed' : 'owes me'}</span>
+                    <span class="highlight">${RateService.formatLocalFull(item.amount)}</span>
+                    ${item.note ? ` for ${item.note}` : ''}
+                </div>
+                <button class="item-handle" title="More"><svg><use href="#icon-menu"/></svg></button>
             </div>`;
     }
 
     #wireListeners(row, id) {
-        const checkbox = row.querySelector('.debt-select');
         const settledToggle = row.querySelector('.settled-toggle');
-
-        // selection
-        checkbox.addEventListener('change', (e) => {
-            e.stopPropagation();
-            this.#selection.setActive(id, checkbox.checked);
-        });
-
-        // settled toggle via InputHelper
         InputHelper.setupToggle(
             settledToggle,
-            this.#debts.find(d => d.id === id)?.settled ?? false,
+            this.#items.find(d => d.id === id)?.settled ?? false,
             (isSettled) => {
-                const debt = this.#debts.find(d => d.id === id);
+                const debt = this.#items.find(d => d.id === id);
                 if (!debt) return;
                 debt.settled = isSettled;
                 row.classList.toggle('checked', isSettled);
                 this.#save();
-                this.#updateSummary();
+                this.#update();
             }
         );
     }
@@ -1208,12 +1173,12 @@ class DebtCard extends Card {
         this.localLabel.textContent = `Amount (${local.code})`;
     }
 
-    #updateSummary() {
-        const active = this.#debts.filter(d => !d.settled);
+    #update() {
+        const active = this.#items.filter(d => !d.settled);
         const oweCount = active.filter(d => d.direction === 'owe').length;
         const owedCount = active.filter(d => d.direction === 'owedBy').length;
 
-        if (this.#debts.length === 0) {
+        if (this.#items.length === 0) {
             this.updateSummary('');
         } else if (oweCount === 0 && owedCount === 0) {
             this.updateSummary('All settled');

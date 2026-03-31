@@ -918,9 +918,9 @@
                     <div class="row-2col">
                         <div class="label-group">
                             <label>Direction</label>
-                            <div class="tab">
-                                <button class="debt-dir-btn active" data-dir="owe">I Owe</button>
-                                <button class="debt-dir-btn" data-dir="owedBy">They Owe</button>
+                            <div id="debt-mode" class="tab">
+                                <button data-value="owe">I Owe</button>
+                                <button data-value="owedBy">They Owe</button>
                             </div>
                         </div>
                         <div class="label-group">
@@ -938,7 +938,7 @@
             <!-- Entry list -->
             <section class="content">
                 <div>
-                    <div id="debt-list" class="row-list"></div>
+                    <div id="debt-list" class="list"></div>
                 </div>
             </section>
         </div>

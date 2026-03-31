@@ -307,7 +307,7 @@ class ListManager {
     constructor(listElement, selectAllBtn, deleteBtn, itemPrefix, actions, getHtml, onDelete, onSelectionChanged) {
         this.listElement = listElement;
         this.#itemPrefix = itemPrefix;
-        this.#actions = actions;
+        this.#actions = actions ?? [];
         this.#getHtml = getHtml;
         this.#onDelete = onDelete ?? null;
         this.#onSelectionChanged = onSelectionChanged ?? null;
