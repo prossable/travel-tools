@@ -1752,12 +1752,12 @@ class BudgetCard extends Card {
     }
 
     #itemHTML(item) {
-        const dateStr = InputDate.format(item.date).padEnd(6);
-        const amountStr = RateService.formatLocalSymbol(item.amount).padStart(10);
+        const dateStr = InputDate.format(item.date);
+        const amountStr = RateService.formatLocalSymbol(item.amount);
         return `
             <div class="budget-entry" id="budget-${item.id}" data-id="${item.id}">
                 <input type="checkbox" class="item-select" ${this.#listManager.isSelected(item.id) ? 'checked' : ''}>
-                <div>${dateStr}  <span class="highlight">${amountStr}</span>  ${item.note}</div>
+                <div><span class="accent">${dateStr}: </span><span class="highlight">${amountStr}</span>  ${item.note}</div>
                 <button class="item-handle" title="More"><svg><use href="#icon-menu"/></svg></button>
             </div>`;
     }

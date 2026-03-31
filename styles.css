@@ -521,6 +521,10 @@ label {
     -webkit-user-select: none;
 }
 
+.accent {
+    color: var(--color1);
+}
+
 .highlight {
     color: var(--color2);
 }
@@ -1094,7 +1098,6 @@ header {
         grid-template-columns: 1fr auto;
         align-items: center;
         gap: 12px;
-        white-space: pre-wrap;
     }
 
     .selection-mode .budget-entry {
