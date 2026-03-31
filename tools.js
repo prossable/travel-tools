@@ -145,6 +145,60 @@ class InputTab extends UIDisplay {
     }
 }
 
+class InputDate extends UIDisplay {
+    #input;
+    #trigger;
+    #value = null;
+    #onChanged;
+
+    constructor(inputElement, triggerElement, dateString = null, onChanged = null) {
+        super();
+        this.#input = inputElement;
+        this.#trigger = triggerElement;
+        this.#onChanged = onChanged;
+        this.setupDisplay(triggerElement, true, UIDisplay.HIDE);
+
+        this.#trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.#input.showPicker) {
+                this.#input.showPicker();
+            } else {
+                this.#input.style.pointerEvents = 'auto';
+                this.#input.focus();
+                this.#input.style.pointerEvents = 'none';
+            }
+        });
+
+        this.#input.addEventListener('change', () => {
+            this.setValue(this.#input.value);
+        });
+
+        this.setValue(dateString, true);
+    }
+
+    // ── Public ────────────────────────────────────────
+
+    setValue(dateString) {
+        this.#input.value = dateString;
+        this.#value = dateString;
+        this.#trigger.textContent = InputDate.format(this.#value);
+        this.#onChanged?.(this.#input.value);
+    }
+
+    getValue() {
+        return this.#value;
+    }
+
+    static format(dateString) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day).toLocaleDateString(
+            RateService.getLocalCurrency().locale, {
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+}
+
 class InputSelector extends UIDisplay {
     #element;
     #items = [];

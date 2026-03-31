@@ -1577,8 +1577,6 @@ class BudgetCard extends Card {
         this.formElement = UIDisplay.create(document.getElementById('budget-form'), false);
         this.newBtn = document.getElementById('budget-new-btn');
         this.noteInput = document.getElementById('budget-note');
-        this.dateTrigger = document.getElementById('budget-date-trigger');
-        this.dateInput = document.getElementById('budget-date');
         this.amountForeignInput = document.getElementById('budget-amount-foreign');
         this.amountLocalInput = document.getElementById('budget-amount-local');
         this.addBtn = document.getElementById('budget-add');
@@ -1592,9 +1590,6 @@ class BudgetCard extends Card {
         this.targetInput = document.getElementById('budget-target');
         this.foreignLabel = document.getElementById('budget-foreign-label');
         this.localLabel = document.getElementById('budget-local-label');
-
-        // init date to today
-        this.#setDate(RateService.getLocalDate());
 
         // restore target
         const savedTarget = localStorage.getItem('budgetTarget');
@@ -1614,20 +1609,9 @@ class BudgetCard extends Card {
         });
 
         // date trigger
-        this.dateTrigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (this.dateInput.showPicker) {
-                this.dateInput.showPicker();
-            } else {
-                this.dateInput.style.pointerEvents = 'auto';
-                this.dateInput.focus();
-                this.dateInput.style.pointerEvents = 'none';
-            }
-        });
-
-        this.dateInput.addEventListener('change', () => {
-            this.#setDate(this.dateInput.value);
-        });
+        this.dateInput = new InputDate(document.getElementById('budget-date'),
+            document.getElementById('budget-date-trigger'),
+            RateService.getLocalDate());
 
         // bidirectional amount
         this.amountForeignInput.addEventListener('input', () => {
@@ -1710,28 +1694,17 @@ class BudgetCard extends Card {
         if (visible) this.noteInput.focus({ preventScroll: true });
     }
 
-    #setDate(dateString) {
-        this.dateInput.value = dateString;
-        this.dateTrigger.textContent = this.#formatDateShort(dateString);
-    }
-
-    #formatDateShort(dateString) {
-        const [year, month, day] = dateString.split('-').map(Number);
-        return new Date(year, month - 1, day).toLocaleDateString(
-            RateService.getLocalCurrency().locale, {
-            month: 'short',
-            day: 'numeric'
-        });
-    }
-
-    #padAmount(formatted) {
-        return formatted.padStart(BudgetCard.#AMOUNT_WIDTH);
+    #clearForm() {
+        this.noteInput.value = '';
+        this.amountForeignInput.value = '';
+        this.amountLocalInput.value = '';
+        this.dateInput.setValue(RateService.getLocalDate());
     }
 
     #addItem() {
         const note = this.noteInput.value.trim();
         const localVal = parseFloat(this.amountLocalInput.value);
-        const date = this.dateInput.value || RateService.getLocalDate();
+        const date = this.dateInput.getValue() || RateService.getLocalDate();
 
         if (!note) { this.noteInput.focus(); return; }
         if (isNaN(localVal) || localVal <= 0) { this.amountForeignInput.focus(); return; }
@@ -1750,13 +1723,6 @@ class BudgetCard extends Card {
         this.#clearForm();
         this.formElement.hide();
         this.update();
-    }
-
-    #clearForm() {
-        this.noteInput.value = '';
-        this.amountForeignInput.value = '';
-        this.amountLocalInput.value = '';
-        this.#setDate(RateService.getLocalDate());
     }
 
     #updateLabels() {
@@ -1819,9 +1785,9 @@ class BudgetCard extends Card {
         }
     }
 
-    #entryHTML(item) {
-        const dateStr = this.#formatDateShort(item.date);
-        const amountStr = this.#padAmount(RateService.formatLocalSymbol(item.amount));
+    #itemHTML(item) {
+        const dateStr = InputDate.format(item.date).padEnd(6);
+        const amountStr = RateService.formatLocalSymbol(item.amount).padStart(10);
         return `
             <div class="budget-entry" id="budget-${item.id}" data-id="${item.id}">
                 <input type="checkbox" class="budget-select" ${this.#activeIds.has(item.id) ? 'checked' : ''}>
@@ -1838,7 +1804,7 @@ class BudgetCard extends Card {
     }
 
     #renderAll() {
-        this.listElement.innerHTML = this.#items.map(i => this.#entryHTML(i)).join('');
+        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
         this.listElement.querySelectorAll('.budget-entry').forEach(row => {
             this.#wireListeners(row, parseInt(row.dataset.id));
         });
