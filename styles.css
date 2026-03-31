@@ -612,7 +612,6 @@ header {
     >.body {
         padding: 0;
         overflow: hidden;
-        background-color: #3a250d;
 
         >div {
             padding: 10px 20px;
@@ -905,36 +904,56 @@ header {
 /* Tally */
 #card-tally {
     .tally-item {
+        position: relative;
         align-items: center;
         display: grid;
-        grid-template-columns: 1fr 1fr auto;
+        grid-template-columns: auto 1fr 1fr auto;
         gap: 12px;
 
-        .tally-select {
+        .item-select {
             display: none;
         }
 
         .tally-price {
             text-align: right;
         }
+
+        .item-overlay {
+            display: none;
+            position: absolute;
+            inset: 0;
+            border-radius: 10px;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+
+            &::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: var(--card-bg1);
+                opacity: .75;
+                border-radius: 10px;
+                z-index: -1;
+                /* behind content */
+            }
+        }
+
+        &.overlay-open .item-overlay {
+            display: flex;
+
+            span {
+                flex: 1;
+            }
+        }
     }
 
-    &.edit-mode {
+    .selection-mode {
         .tally-item {
-            grid-template-columns: auto 1fr 1fr;
+            grid-template-columns: auto auto 1fr 1fr auto;
 
-            .tally-select {
+            .item-select {
                 display: block;
-            }
-
-            .tally-label {
-                pointer-events: inherit;
-                background: var(--input-bg);
-                padding: 10px;
-            }
-
-            .tally-status {
-                display: none;
             }
         }
     }
@@ -947,6 +966,35 @@ header {
     .total span:nth-child(3n) {
         color: var(--color1);
         text-align: right;
+    }
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    max-height: 50vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    border-radius: 10px;
+    box-shadowX: inset 0 -25px 10px -15px rgba(60, 155, 215, .2);
+
+    background: linear-gradient(var(--card-bg1) 30%, rgba(0, 0, 0, 0)) center top,
+        linear-gradient(rgba(0, 0, 0, 0), var(--card-bg1) 70%) center bottom,
+        radial-gradient(farthest-side at 50% 0, rgba(60, 155, 215, .5), rgba(0, 0, 0, 0)) center top,
+        radial-gradient(farthest-side at 50% 100%, rgba(60, 155, 215, .5), rgba(0, 0, 0, 0)) center bottom;
+    background-repeat: no-repeat;
+    background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
+    background-attachment: local, local, scroll, scroll;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--color2) transparent;
+    scrollbar-gutter: stable;
+
+    &.at-bottom {
+        box-shadow: none;
     }
 }
 

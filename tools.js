@@ -293,3 +293,225 @@ class SelectionManager {
 
     isSelected(id) { return this.#activeIds.has(id); }
 }
+
+class ListManager {
+    #itemPrefix;
+    #items = [];
+    #activeIds = new Set();
+    #actions;
+    #getHtml;
+    #onDelete;
+    #onSelectionChanged;
+    #activeOverlayId = null;
+
+    constructor(listElement, selectAllBtn, deleteBtn, itemPrefix, actions, getHtml, onDelete, onSelectionChanged) {
+        this.listElement = listElement;
+        this.#itemPrefix = itemPrefix;
+        this.#actions = actions;
+        this.#getHtml = getHtml;
+        this.#onDelete = onDelete ?? null;
+        this.#onSelectionChanged = onSelectionChanged ?? null;
+
+        selectAllBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const allSelected = this.#activeIds.size === this.#items.length;
+            allSelected ? this.clearSelection() : this.selectAll();
+        });
+
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!this.#activeIds.size) return;
+            this.#onDelete?.(new Set(this.#activeIds));
+        });
+
+        document.addEventListener('click', () => this.#closeOverlay());
+
+        this.listElement.addEventListener('scroll', () => this.#checkFade());
+        this.#checkFade();
+    }
+
+    // ── Private ───────────────────────────────────────
+
+    #checkFade() {
+        const atBottom = this.listElement.scrollHeight - this.listElement.scrollTop
+            <= this.listElement.clientHeight + 2;
+        this.listElement.classList.toggle('at-bottom', atBottom);
+    };
+
+    #closeOverlay() {
+        if (this.#activeOverlayId === null) return;
+        const row = document.getElementById(`${this.#itemPrefix}${this.#activeOverlayId}`);
+        row?.classList.remove('overlay-open');
+        this.#activeOverlayId = null;
+    }
+
+    #openOverlay(id) {
+        this.#closeOverlay();
+        const row = document.getElementById(`${this.#itemPrefix}${id}`);
+        if (!row) return;
+        row.classList.add('overlay-open');
+        this.#activeOverlayId = id;
+    }
+
+    #enterSelectionMode() {
+        this.listElement.classList.add('selection-mode');
+    }
+
+    #exitSelectionMode() {
+        this.listElement.classList.remove('selection-mode');
+        this.#activeIds.clear();
+        this.#items.forEach(item => {
+            const row = document.getElementById(`${this.#itemPrefix}${item.id}`);
+            const cb = row?.querySelector('.item-select');
+            if (cb) cb.checked = false;
+        });
+        this.#onSelectionChanged?.(new Set());
+    }
+
+    #toggleSelection(id) {
+        if (this.#activeIds.has(id)) {
+            this.#activeIds.delete(id);
+        } else {
+            this.#activeIds.add(id);
+        }
+
+        const row = document.getElementById(`${this.#itemPrefix}${id}`);
+        const cb = row?.querySelector('.item-select');
+        if (cb) cb.checked = this.#activeIds.has(id);
+
+        if (this.#activeIds.size === 0) {
+            this.#exitSelectionMode();
+        }
+
+        this.#onSelectionChanged?.(new Set(this.#activeIds));
+    }
+
+    #overlayHTML() {
+        const actionButtons = this.#actions.map(a => `
+            <button class="overlay-action" data-action="${a.label}" title="${a.label}"><svg><use href="${a.icon}"/></svg></button>`).join('');
+
+        return `
+            <div class="item-overlay">
+                <button class="overlay-check" title="Select"><svg><use href="#icon-check"/></svg></button>
+                <button class="overlay-delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
+                ${actionButtons}
+                <span></span>
+                <button class="overlay-close" title="Close"><svg><use href="#icon-close"/></svg></button>
+            </div>`;
+    }
+
+    // ── Public ────────────────────────────────────────
+
+    setItems(items) {
+        this.#items = items;
+        this.#activeIds.forEach(id => {
+            if (!items.find(i => i.id === id)) this.#activeIds.delete(id);
+        });
+    }
+
+    getActiveIds() { return new Set(this.#activeIds); }
+
+    isSelected(id) { return this.#activeIds.has(id); }
+
+    remove(id) {
+        const row = document.getElementById(`${this.#itemPrefix}${id}`);
+        row?.remove();
+        this.#activeIds.delete(id);
+        this.#checkFade();
+    }
+
+    selectItem(id) {
+        if (!this.listElement.classList.contains('selection-mode')) {
+            this.#enterSelectionMode();
+        }
+        // force select this item
+        this.#activeIds.add(id);
+        const row = document.getElementById(`${this.#itemPrefix}${id}`);
+        const cb = row?.querySelector('.item-select');
+        if (cb) cb.checked = true;
+        this.#onSelectionChanged?.(new Set(this.#activeIds));
+    }
+
+    selectAll() {
+        if (!this.listElement.classList.contains('selection-mode')) {
+            this.#enterSelectionMode();
+        }
+        this.#items.forEach(item => {
+            this.#activeIds.add(item.id);
+            const row = document.getElementById(`${this.#itemPrefix}${item.id}`);
+            const cb = row?.querySelector('.item-select');
+            if (cb) cb.checked = true;
+        });
+        this.#onSelectionChanged?.(new Set(this.#activeIds));
+    }
+
+    clearSelection() {
+        this.#exitSelectionMode();
+    }
+
+    add(item, afterID = -1) {
+        const id = item.id;
+
+        // create and insert element
+        const el = document.createElement('div');
+        el.innerHTML = this.#getHtml(item);
+        const element = el.firstElementChild;
+        if (afterID === -1) {
+            this.listElement.appendChild(element);
+        } else {
+            document.getElementById(`${this.#itemPrefix}${afterID}`)
+                .insertAdjacentElement('afterend', element);
+        }
+
+        // wire row listeners
+        const checkbox = element.querySelector('.item-select');
+        const handle = element.querySelector('.item-handle');
+        checkbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.#toggleSelection(id);
+        });
+        handle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = this.#activeOverlayId === id;
+            this.#closeOverlay();
+            if (!isOpen) this.#openOverlay(id);
+        });
+
+        // add overlay
+        element.insertAdjacentHTML('beforeend', this.#overlayHTML());
+        const overlay = element.querySelector('.item-overlay');
+        const selectBtn = overlay.querySelector('.overlay-check');
+        const deleteBtn = overlay.querySelector('.overlay-delete');
+        const closeBtn = overlay.querySelector('.overlay-close');
+
+        // wire overlay listeners
+        selectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#closeOverlay();
+            this.selectItem(id)
+        });
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#onDelete?.(new Set([id]));
+        });
+        overlay.querySelectorAll('.overlay-action').forEach(btn => {
+            const action = this.#actions.find(a => a.label === btn.dataset.action);
+            if (!action) return;
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.#closeOverlay();
+                action.onClick(id);
+            });
+        });
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#closeOverlay();
+        });
+        overlay.addEventListener('click', (e) => e.stopPropagation());
+
+        this.#checkFade();
+
+        // return the element for any further customisation
+        return element;
+    }
+}

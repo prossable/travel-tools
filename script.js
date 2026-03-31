@@ -589,7 +589,7 @@ class BillCard extends Card {
 class MarketTallyCard extends Card {
     #items = [];
     #nextId = 1;
-    #selection;
+    #listManager;
 
     constructor() {
         super('card-tally');
@@ -604,21 +604,35 @@ class MarketTallyCard extends Card {
         this.remainingForeignOutput = document.getElementById('tally-remaining-foreign');
         this.remainingLocalOutput = document.getElementById('tally-remaining-local');
 
-        // mode tab
-        this.modeInput = new InputTab(document.getElementById('tally-mode'), 'check', (value) => {
-            this.#syncToolbarMode();
-        });
-
-        // selection manager
-        this.#selection = new SelectionManager(this.selectAllButton, this.deleteButton, 'tally-', 'tally-select',
+        // list manager
+        const listActions = [
+            { icon: '#icon-add', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
+            { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
+            { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
+        ];
+        this.#listManager = new ListManager(this.listElement,
+            this.selectAllButton,
+            this.deleteButton,
+            'tally-',
+            listActions,
+            (item) => { return this.#itemHTML(item); },
             (ids) => {
-                ids.forEach(id => {
-                    this.#items = this.#items.filter(i => i.id !== id);
-                    document.getElementById(`tally-${id}`)?.remove();
-                });
-                this.#save();
-                this.update();
-            }
+                const names = [...ids]
+                    .map(id => this.#items.find(i => i.id === id)?.label)
+                    .filter(Boolean)
+                    .join(', ');
+                if (confirm(`Delete basket items: ${names}?`)) {
+                    ids.forEach(id => {
+                        this.#items = this.#items.filter(i => i.id !== id);
+                        this.#listManager.remove(id);
+                    });
+                    this.#listManager.setItems(this.#items);
+                    this.#listManager.clearSelection();
+                    this.#save();
+                    this.update();
+                }
+            },
+            (ids) => { this.deleteButton.disabled = ids.size === 0; }
         );
 
         // add
@@ -633,20 +647,9 @@ class MarketTallyCard extends Card {
 
         // init
         this.#load();
-        this.#syncToolbarMode();
     }
 
     // ── Private ───────────────────────────────────────
-
-    #syncToolbarMode() {
-        const isEdit = this.modeInput.getValue() === 'edit';
-        this.cardElement.classList.toggle('edit-mode', isEdit);
-        this.cardElement.classList.toggle('check-mode', !isEdit);
-        UIDisplay.setVisible(this.addButton, isEdit);
-        UIDisplay.setVisible(this.selectAllButton, isEdit);
-        UIDisplay.setVisible(this.deleteButton, isEdit);
-        if (!isEdit) this.#selection.clear();
-    }
 
     #createItem(label = '', price = null, checked = false) {
         return { id: this.#nextId++, label, price, checked };
@@ -656,41 +659,51 @@ class MarketTallyCard extends Card {
         const item = this.#createItem(label, price);
         this.#items.push(item);
         this.#save();
-        this.#selection.setItems(this.#items);
+        this.#listManager.setItems(this.#items);
 
-        const el = document.createElement('div');
-        el.innerHTML = this.#itemHTML(item);
-        const itemEl = el.firstElementChild;
-        this.listElement.appendChild(itemEl);
-        this.#wireListeners(itemEl, item.id);
+        var element = this.#listManager.add(item);
+        element.querySelector('.tally-label').focus({ preventScroll: true });
+        this.#wireListeners(element, item.id);
         this.update();
 
-        itemEl.querySelector('.tally-label').focus({ preventScroll: true });
     }
 
-    #duplicateItem(id) {
-        const source = this.#items.find(i => i.id === id);
-        if (!source) return;
-        const item = this.#createItem(source.label, source.price);
-        this.#items.push(item);
+    #addItemAfter(id) {
+        const index = this.#items.findIndex(i => i.id === id);
+        const item = this.#createItem();
+        this.#items.splice(index + 1, 0, item);
         this.#save();
-        this.#selection.setItems(this.#items);
+        this.#listManager.setItems(this.#items);
 
-        const el = document.createElement('div');
-        el.innerHTML = this.#itemHTML(item);
-        const itemEl = el.firstElementChild;
-        document.getElementById(`tally-${id}`).insertAdjacentElement('afterend', itemEl);
-        this.#wireListeners(itemEl, item.id);
+        var element = this.#listManager.add(item, id);
+        element.querySelector('.tally-label').focus({ preventScroll: true });
+        this.#wireListeners(element, item.id);
         this.update();
     }
 
-    #removeItem(id) {
-        this.#items = this.#items.filter(i => i.id !== id);
-        document.getElementById(`tally-${id}`).remove();
-        this.#selection.remove(id);
-        this.#selection.setItems(this.#items);
+    #moveItem(id, direction) {
+        const index = this.#items.findIndex(i => i.id === id);
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= this.#items.length) return;
+
+        // swap in array
+        [this.#items[index], this.#items[newIndex]] =
+            [this.#items[newIndex], this.#items[index]];
+
+        // swap in DOM
+        const el = document.getElementById(`tally-${id}`);
+        const sibling = direction === -1
+            ? el.previousElementSibling
+            : el.nextElementSibling;
+        if (!sibling) return;
+        if (direction === -1) {
+            sibling.insertAdjacentElement('beforebegin', el);
+        } else {
+            sibling.insertAdjacentElement('afterend', el);
+        }
+
+        this.#listManager.setItems(this.#items);
         this.#save();
-        this.update();
     }
 
     #save() {
@@ -705,32 +718,33 @@ class MarketTallyCard extends Card {
             this.#nextId = parseInt(localStorage.getItem('tallyNextId')) ||
                 this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
         }
-        this.#renderAll();
+
+        this.#items.forEach((item, index) => {
+            var element = this.#listManager.add(item);
+            this.#wireListeners(element, item.id);
+        });
+        this.#listManager.setItems(this.#items);
+        this.update();
     }
 
     #itemHTML(item) {
         return `
             <div class="tally-item ${item.checked ? 'checked' : ''}" id="tally-${item.id}" data-id="${item.id}">
-                <input type="checkbox" class="tally-select" ${this.#selection.isSelected(item.id) ? 'checked' : ''}>
-                <input type="text" class="tally-label if-edit-mode if-checked" value="${item.label}" placeholder="Item">
-                <input type="number" class="tally-price if-checked" value="${item.price ?? ''}" placeholder="0" min="0" step="any">
+                <input type="checkbox" class="item-select" ${this.#listManager.isSelected(item.id) ? 'checked' : ''}>
                 <div class="toggle tally-status">
                     <button class="${!item.checked ? 'active' : ''}"><svg><use href="#icon-basket"/></svg></button>
                     <button class="${item.checked ? 'active' : ''}"><svg><use href="#icon-check"/></svg></button>
                 </div>
+                <input type="text" class="tally-label if-checked" value="${item.label}" placeholder="Item">
+                <input type="number" class="tally-price if-checked" value="${item.price ?? ''}" placeholder="0" min="0" step="any">
+                <button class="item-handle" title="More"><svg><use href="#icon-menu"/></svg></button>
             </div>`;
     }
 
     #wireListeners(row, id) {
-        const checkbox = row.querySelector('.tally-select');
         const labelInput = row.querySelector('.tally-label');
         const priceInput = row.querySelector('.tally-price');
         const toggle = row.querySelector('.tally-status');
-
-        checkbox.addEventListener('change', (e) => {
-            e.stopPropagation();
-            this.#selection.setActive(id, checkbox.checked);
-        });
 
         labelInput.addEventListener('input', () => {
             const item = this.#items.find(i => i.id === id);
@@ -760,18 +774,11 @@ class MarketTallyCard extends Card {
         );
     }
 
-    #renderAll() {
-        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
-        this.listElement.querySelectorAll('.tally-item').forEach(row => {
-            this.#wireListeners(row, parseInt(row.dataset.id));
-        });
-        this.#selection.setItems(this.#items);
-        this.update();
-    }
-
     // ── Public ────────────────────────────────────────
 
     update() {
+        this.deleteButton.disabled = this.#listManager.getActiveIds().size === 0;
+
         const withPrice = this.#items.filter(i => i.price !== null);
         const got = withPrice.filter(i => i.checked);
         const need = withPrice.filter(i => !i.checked);
