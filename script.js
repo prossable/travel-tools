@@ -1564,122 +1564,114 @@ class TimezonesCard extends Card {
 }
 
 class BudgetCard extends Card {
-    static #AMOUNT_WIDTH = 10;
     #items = [];
     #nextId = 1;
-    #activeIds = new Set();
     #targetAmount = null;
+    #listManager;
 
     constructor() {
         super('card-budget');
 
-        // elements
-        this.formElement = UIDisplay.create(document.getElementById('budget-form'), false);
-        this.newBtn = document.getElementById('budget-new-btn');
-        this.noteInput = document.getElementById('budget-note');
-        this.amountForeignInput = document.getElementById('budget-amount-foreign');
-        this.amountLocalInput = document.getElementById('budget-amount-local');
-        this.addBtn = document.getElementById('budget-add');
-        this.budgetContent = UIDisplay.create(document.getElementById('budget-content'), false);
-        this.listElement = document.getElementById('budget-list');
-        this.selectAllBtn = document.getElementById('budget-select-all');
-        this.deleteBtn = document.getElementById('budget-delete');
-        this.totalEl = document.getElementById('budget-total');
-        this.progressFill = document.getElementById('budget-progress-fill');
-        this.progressLabel = document.getElementById('budget-progress-label');
+        // toolbar
         this.targetInput = document.getElementById('budget-target');
-        this.foreignLabel = document.getElementById('budget-foreign-label');
-        this.localLabel = document.getElementById('budget-local-label');
-
-        // restore target
+        this.targetInput.addEventListener('input', () => {
+            this.#targetAmount = parseFloat(this.targetInput.value) || null;
+            localStorage.setItem('budgetTarget', this.#targetAmount ?? '');
+            this.update();
+        });
         const savedTarget = localStorage.getItem('budgetTarget');
         if (savedTarget) {
             this.#targetAmount = parseFloat(savedTarget);
             this.targetInput.value = this.#targetAmount;
         }
 
-        // load items
-        this.#load();
-        this.#updateLabels();
-
-        // toggle form
+        this.newBtn = document.getElementById('budget-new-btn');
         this.newBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.#toggleForm();
         });
 
-        // date trigger
+        this.selectAllButton = document.getElementById('budget-select-all');
+        this.deleteButton = document.getElementById('budget-delete');
+
+        // form
+        this.formElement = UIDisplay.create(document.getElementById('budget-form'), false);
+
+        this.noteInput = document.getElementById('budget-note');
+
         this.dateInput = new InputDate(document.getElementById('budget-date'),
             document.getElementById('budget-date-trigger'),
             RateService.getLocalDate());
 
-        // bidirectional amount
-        this.amountForeignInput.addEventListener('input', () => {
-            if (this.amountForeignInput.value === '') {
-                this.amountLocalInput.value = '';
+        this.foreignLabel = document.getElementById('budget-foreign-label');
+        this.foreignInput = document.getElementById('budget-amount-foreign');
+        this.localLabel = document.getElementById('budget-local-label');
+        this.localInput = document.getElementById('budget-amount-local');
+        this.foreignInput.addEventListener('input', () => {
+            if (this.foreignInput.value === '') {
+                this.localInput.value = '';
                 return;
             }
-            this.amountLocalInput.value = RateService.formatLocalInput(
-                RateService.toLocal(parseFloat(this.amountForeignInput.value))
+            this.localInput.value = RateService.formatLocalInput(
+                RateService.toLocal(parseFloat(this.foreignInput.value))
             );
         });
 
-        this.amountLocalInput.addEventListener('input', () => {
-            if (this.amountLocalInput.value === '') {
-                this.amountForeignInput.value = '';
+        this.localInput.addEventListener('input', () => {
+            if (this.localInput.value === '') {
+                this.foreignInput.value = '';
                 return;
             }
-            this.amountForeignInput.value = RateService.formatForeignInput(
-                RateService.toForeign(parseFloat(this.amountLocalInput.value))
+            this.foreignInput.value = RateService.formatForeignInput(
+                RateService.toForeign(parseFloat(this.localInput.value))
             );
         });
 
-        // add entry
+        this.addBtn = document.getElementById('budget-add');
         this.addBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.#addItem();
         });
 
-        this.noteInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.stopPropagation(); this.#addItem(); }
-        });
+        // content
+        this.budgetContent = UIDisplay.create(document.getElementById('budget-content'), false);
 
-        // target budget
-        this.targetInput.addEventListener('input', () => {
-            this.#targetAmount = parseFloat(this.targetInput.value) || null;
-            localStorage.setItem('budgetTarget', this.#targetAmount ?? '');
-            this.update();
-        });
+        // list manager
+        this.#listManager = new ListManager(document.getElementById('budget-list'),
+            this.selectAllButton,
+            this.deleteButton,
+            'budget-',
+            null,
+            (item) => { return this.#itemHTML(item); },
+            (ids) => {
+                const names = [...ids]
+                    .map(id => this.#items.find(i => i.id === id)?.note)
+                    .filter(Boolean)
+                    .join(', ');
+                if (confirm(`Delete budget items: ${names}?`)) {
+                    ids.forEach(id => {
+                        this.#items = this.#items.filter(i => i.id !== id);
+                        this.#listManager.remove(id);
+                    });
+                    this.#listManager.setItems(this.#items);
+                    this.#listManager.clearSelection();
+                    this.#save();
+                    this.update();
+                }
+            },
+            (ids) => { this.deleteButton.disabled = ids.size === 0; }
+        );
 
-        // select all
-        this.selectAllBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const allSelected = this.#activeIds.size === this.#items.length;
-            if (allSelected) {
-                this.#activeIds.clear();
-            } else {
-                this.#items.forEach(i => this.#activeIds.add(i.id));
-            }
-            this.#syncSelectionStyles();
-            this.#updateToolbar();
-        });
+        // progress
+        this.totalEl = document.getElementById('budget-total');
+        this.progressFill = document.getElementById('budget-progress-fill');
+        this.progressLabel = document.getElementById('budget-progress-label');
 
-        // delete selected
-        this.deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!this.#activeIds.size) return;
-            if (confirm(`Delete ${this.#activeIds.size} item(s)?`)) {
-                this.#activeIds.forEach(id => {
-                    this.#items = this.#items.filter(i => i.id !== id);
-                    document.getElementById(`budget-${id}`)?.remove();
-                });
-                this.#activeIds.clear();
-                this.#save();
-                this.#updateToolbar();
-                this.update();
-            }
-        });
+        // init
+        this.#load();
+        this.#updateLabels();
 
+        // rate changes
         RateService.onRateChanged(() => this.update());
         RateService.onCurrencyChanged(() => {
             this.#updateLabels();
@@ -1696,18 +1688,18 @@ class BudgetCard extends Card {
 
     #clearForm() {
         this.noteInput.value = '';
-        this.amountForeignInput.value = '';
-        this.amountLocalInput.value = '';
+        this.foreignInput.value = '';
+        this.localInput.value = '';
         this.dateInput.setValue(RateService.getLocalDate());
     }
 
     #addItem() {
         const note = this.noteInput.value.trim();
-        const localVal = parseFloat(this.amountLocalInput.value);
+        const localVal = parseFloat(this.localInput.value);
         const date = this.dateInput.getValue() || RateService.getLocalDate();
 
         if (!note) { this.noteInput.focus(); return; }
-        if (isNaN(localVal) || localVal <= 0) { this.amountForeignInput.focus(); return; }
+        if (isNaN(localVal) || localVal <= 0) { this.foreignInput.focus(); return; }
 
         const item = {
             id: this.#nextId++,
@@ -1730,32 +1722,6 @@ class BudgetCard extends Card {
         const local = RateService.getLocalCurrency();
         this.foreignLabel.textContent = `Amount (${foreign.code})`;
         this.localLabel.textContent = `Amount (${local.code})`;
-    }
-
-    #setActive(id, active) {
-        active ? this.#activeIds.add(id) : this.#activeIds.delete(id);
-        document.getElementById(`budget-${id}`)
-            ?.classList.toggle('selected', active);
-        this.#updateToolbar();
-    }
-
-    #syncSelectionStyles() {
-        this.#items.forEach(item => {
-            const row = document.getElementById(`budget-${item.id}`);
-            if (!row) return;
-            const isSelected = this.#activeIds.has(item.id);
-            row.classList.toggle('selected', isSelected);
-            row.querySelector('.budget-select').checked = isSelected;
-        });
-    }
-
-    #updateToolbar() {
-        const hasSelection = this.#activeIds.size > 0;
-        this.deleteBtn.disabled = !hasSelection;
-        this.selectAllBtn.classList.toggle(
-            'active',
-            this.#activeIds.size === this.#items.length && this.#items.length > 0
-        );
     }
 
     #updateProgress() {
@@ -1790,24 +1756,18 @@ class BudgetCard extends Card {
         const amountStr = RateService.formatLocalSymbol(item.amount).padStart(10);
         return `
             <div class="budget-entry" id="budget-${item.id}" data-id="${item.id}">
-                <input type="checkbox" class="budget-select" ${this.#activeIds.has(item.id) ? 'checked' : ''}>
+                <input type="checkbox" class="item-select" ${this.#listManager.isSelected(item.id) ? 'checked' : ''}>
                 <div>${dateStr}  <span class="highlight">${amountStr}</span>  ${item.note}</div>
+                <button class="item-handle" title="More"><svg><use href="#icon-menu"/></svg></button>
             </div>`;
     }
 
-    #wireListeners(row, id) {
-        const checkbox = row.querySelector('.budget-select');
-        checkbox.addEventListener('change', (e) => {
-            e.stopPropagation();
-            this.#setActive(id, checkbox.checked);
-        });
-    }
-
     #renderAll() {
-        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
-        this.listElement.querySelectorAll('.budget-entry').forEach(row => {
-            this.#wireListeners(row, parseInt(row.dataset.id));
+        this.#listManager.clearItems();
+        this.#items.forEach(item => {
+            var element = this.#listManager.add(item);
         });
+        this.#listManager.setItems(this.#items);
     }
 
     #save() {
@@ -1844,8 +1804,8 @@ class BudgetCard extends Card {
 
     addExternalItem(amount, note = '') {
         // prefill form from external source (e.g. basket)
-        this.amountLocalInput.value = RateService.formatLocalInput(amount);
-        this.amountForeignInput.value = RateService.formatForeignInput(RateService.toForeign(amount));
+        this.localInput.value = RateService.formatLocalInput(amount);
+        this.foreignInput.value = RateService.formatForeignInput(RateService.toForeign(amount));
         if (note) this.noteInput.value = note;
         this.formElement.show();
         this.noteInput.focus({ preventScroll: true });

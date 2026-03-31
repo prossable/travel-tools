@@ -1089,11 +1089,17 @@ header {
 /* BUDGET */
 #card-budget {
     .budget-entry {
+        position: relative;
         display: grid;
-        grid-template-columns: auto 1fr auto;
+        grid-template-columns: 1fr auto;
         align-items: center;
         gap: 12px;
         white-space: pre-wrap;
+    }
+
+    .selection-mode .budget-entry {
+        grid-template-columns: auto 1fr auto;
+
     }
 
     .budget-progress-bar {

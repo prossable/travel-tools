@@ -467,13 +467,6 @@ class ListManager {
 
     isSelected(id) { return this.#activeIds.has(id); }
 
-    remove(id) {
-        const row = document.getElementById(`${this.#itemPrefix}${id}`);
-        row?.remove();
-        this.#activeIds.delete(id);
-        this.#checkFade();
-    }
-
     selectItem(id) {
         if (!this.listElement.classList.contains('selection-mode')) {
             this.#enterSelectionMode();
@@ -567,5 +560,19 @@ class ListManager {
 
         // return the element for any further customisation
         return element;
+    }
+
+    remove(id) {
+        const row = document.getElementById(`${this.#itemPrefix}${id}`);
+        row?.remove();
+        this.#activeIds.delete(id);
+        this.#checkFade();
+    }
+
+    clearItems() {
+        this.listElement.innerHTML = '';
+        this.#items = [];
+        this.#activeIds.clear();
+        this.#checkFade();
     }
 }
