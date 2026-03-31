@@ -1024,14 +1024,14 @@ class DebtCard extends Card {
         // list manager
         this.listElement = document.getElementById('debt-list');
         const listActions = [
-            //{ icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
-            //{ icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
+            { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
+            { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
         ];
         this.#listManager = new ListManager(this.listElement,
             document.getElementById('debt-select-all'),
             this.deleteButton,
             'debt-',
-            null,
+            listActions,
             (item) => { return this.#itemHTML(item); },
             (ids) => {
                 console.log("delete", ids);
@@ -1109,6 +1109,31 @@ class DebtCard extends Card {
         this.formElement.hide();
         this.#save();
         this.#update();
+    }
+
+    #moveItem(id, direction) {
+        const index = this.#items.findIndex(i => i.id === id);
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= this.#items.length) return;
+
+        // swap in array
+        [this.#items[index], this.#items[newIndex]] =
+            [this.#items[newIndex], this.#items[index]];
+
+        // swap in DOM
+        const el = document.getElementById(`debt-${id}`);
+        const sibling = direction === -1
+            ? el.previousElementSibling
+            : el.nextElementSibling;
+        if (!sibling) return;
+        if (direction === -1) {
+            sibling.insertAdjacentElement('beforebegin', el);
+        } else {
+            sibling.insertAdjacentElement('afterend', el);
+        }
+
+        this.#listManager.setItems(this.#items);
+        this.#save();
     }
 
     #save() {

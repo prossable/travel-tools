@@ -123,6 +123,7 @@ textarea {
     height: 30px;
     transition: background-color .2s, height 0.2s;
     -moz-appearance: textfield;
+    appearance: textfield;
     -webkit-user-select: text;
     user-select: text;
 
@@ -953,11 +954,10 @@ header {
         content: '';
         position: absolute;
         inset: 0;
-        background: var(--card-bg1);
+        background: var(--card-bg2);
         opacity: .75;
         border-radius: 10px;
         z-index: -1;
-        /* behind content */
     }
 }
 

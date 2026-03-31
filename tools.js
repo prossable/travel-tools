@@ -393,8 +393,8 @@ class ListManager {
         return `
             <div class="item-overlay">
                 <button class="overlay-check" title="Select"><svg><use href="#icon-check"/></svg></button>
-                <button class="overlay-delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
                 ${actionButtons}
+                <button class="overlay-delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
                 <span></span>
                 <button class="overlay-close" title="Close"><svg><use href="#icon-close"/></svg></button>
             </div>`;
@@ -490,10 +490,6 @@ class ListManager {
             this.#closeOverlay();
             this.selectItem(id)
         });
-        deleteBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.#onDelete?.(new Set([id]));
-        });
         overlay.querySelectorAll('.overlay-action').forEach(btn => {
             const action = this.#actions.find(a => a.label === btn.dataset.action);
             if (!action) return;
@@ -502,6 +498,10 @@ class ListManager {
                 this.#closeOverlay();
                 action.onClick(id);
             });
+        });
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.#onDelete?.(new Set([id]));
         });
         closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
