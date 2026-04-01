@@ -262,6 +262,7 @@ class ListManager {
     #onDelete;
     #onSelectionChanged;
     #activeOverlayId = null;
+    #deleteButton;
 
     constructor(listElement, selectAllBtn, deleteBtn, itemPrefix, actions, getHtml, onDelete, onSelectionChanged) {
         this.listElement = listElement;
@@ -270,6 +271,7 @@ class ListManager {
         this.#getHtml = getHtml;
         this.#onDelete = onDelete ?? null;
         this.#onSelectionChanged = onSelectionChanged ?? null;
+        this.#deleteButton = deleteBtn;
 
         selectAllBtn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -283,6 +285,7 @@ class ListManager {
             this.#onDelete?.(new Set(this.#activeIds));
         });
 
+        this.#deleteButton.disabled = true;
         document.addEventListener('click', () => this.#closeOverlay());
     }
 
@@ -304,10 +307,12 @@ class ListManager {
     }
 
     #enterSelectionMode() {
+        console.log('entering selection mode');
         this.listElement.classList.add('selection-mode');
     }
 
     #exitSelectionMode() {
+        console.log('exiting selection mode');
         this.listElement.classList.remove('selection-mode');
         this.#activeIds.clear();
         this.#items.forEach(item => {
@@ -315,6 +320,7 @@ class ListManager {
             const cb = row?.querySelector('.item-select');
             if (cb) cb.checked = false;
         });
+        this.#deleteButton.disabled = true;
         this.#onSelectionChanged?.(new Set());
     }
 
@@ -329,10 +335,10 @@ class ListManager {
         const cb = row?.querySelector('.item-select');
         if (cb) cb.checked = this.#activeIds.has(id);
 
+        this.#deleteButton.disabled = false;
         if (this.#activeIds.size === 0) {
             this.#exitSelectionMode();
         }
-
         this.#onSelectionChanged?.(new Set(this.#activeIds));
     }
 
@@ -372,6 +378,7 @@ class ListManager {
         const row = document.getElementById(`${this.#itemPrefix}${id}`);
         const cb = row?.querySelector('.item-select');
         if (cb) cb.checked = true;
+        this.#deleteButton.disabled = false;
         this.#onSelectionChanged?.(new Set(this.#activeIds));
     }
 
@@ -385,6 +392,7 @@ class ListManager {
             const cb = row?.querySelector('.item-select');
             if (cb) cb.checked = true;
         });
+        this.#deleteButton.disabled = false;
         this.#onSelectionChanged?.(new Set(this.#activeIds));
     }
 

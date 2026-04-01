@@ -597,8 +597,6 @@ class MarketTallyCard extends Card {
         // elements
         this.listElement = document.getElementById('tally-list');
         this.addButton = document.getElementById('tally-add');
-        this.selectAllButton = document.getElementById('tally-select');
-        this.deleteButton = document.getElementById('tally-delete');
         this.spentForeignOutput = document.getElementById('tally-spent-foreign');
         this.spentLocalOutput = document.getElementById('tally-spent-local');
         this.remainingForeignOutput = document.getElementById('tally-remaining-foreign');
@@ -606,13 +604,13 @@ class MarketTallyCard extends Card {
 
         // list manager
         const listActions = [
-            { icon: '#icon-add', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
+            { icon: '#icon-add-below', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
             { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
             { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
         ];
         this.#listManager = new ListManager(this.listElement,
-            this.selectAllButton,
-            this.deleteButton,
+            document.getElementById('tally-select'),
+            document.getElementById('tally-delete'),
             'tally-',
             listActions,
             (item) => { return this.#itemHTML(item); },
@@ -632,7 +630,7 @@ class MarketTallyCard extends Card {
                     this.update();
                 }
             },
-            (ids) => { this.deleteButton.disabled = ids.size === 0; }
+            (ids) => { }
         );
 
         // add
@@ -778,8 +776,6 @@ class MarketTallyCard extends Card {
     // ── Public ────────────────────────────────────────
 
     update() {
-        this.deleteButton.disabled = this.#listManager.getActiveIds().size === 0;
-
         const withPrice = this.#items.filter(i => i.price !== null);
         const got = withPrice.filter(i => i.checked);
         const need = withPrice.filter(i => !i.checked);
@@ -992,7 +988,6 @@ class DebtCard extends Card {
             e.stopPropagation();
             this.#toggleForm();
         });
-        this.deleteButton = document.getElementById('debt-clear');
 
         // new item form
         this.formElement = UIDisplay.create(document.getElementById('debt-form'), false);
@@ -1029,7 +1024,7 @@ class DebtCard extends Card {
         ];
         this.#listManager = new ListManager(this.listElement,
             document.getElementById('debt-select-all'),
-            this.deleteButton,
+            document.getElementById('debt-clear'),
             'debt-',
             listActions,
             (item) => { return this.#itemHTML(item); },
@@ -1046,7 +1041,7 @@ class DebtCard extends Card {
                     this.#update();
                 }
             },
-            (ids) => { this.deleteButton.disabled = ids.size === 0; }
+            (ids) => { }
         );
 
         // services
@@ -1591,9 +1586,6 @@ class BudgetCard extends Card {
             this.#toggleForm();
         });
 
-        this.selectAllButton = document.getElementById('budget-select-all');
-        this.deleteButton = document.getElementById('budget-delete');
-
         // form
         this.formElement = UIDisplay.create(document.getElementById('budget-form'), false);
 
@@ -1638,8 +1630,8 @@ class BudgetCard extends Card {
 
         // list manager
         this.#listManager = new ListManager(document.getElementById('budget-list'),
-            this.selectAllButton,
-            this.deleteButton,
+            document.getElementById('budget-select-all'),
+            document.getElementById('budget-delete'),
             'budget-',
             null,
             (item) => { return this.#itemHTML(item); },
@@ -1658,8 +1650,7 @@ class BudgetCard extends Card {
                     this.#save();
                     this.update();
                 }
-            },
-            (ids) => { this.deleteButton.disabled = ids.size === 0; }
+            }
         );
 
         // progress
@@ -1912,9 +1903,6 @@ class ChecklistCard extends Card {
             this.pasteForm.toggleDisplay();
         });
 
-        this.selectAllBtn = document.getElementById('checklist-select-all-btn');
-        this.deleteItemsBtn = document.getElementById('checklist-delete-items-btn');
-
         this.copyItemsBtn = document.getElementById('checklist-copy-items-btn');
         this.copyItemsBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -1941,13 +1929,13 @@ class ChecklistCard extends Card {
         this.listContainer = UIDisplay.create(document.getElementById('checklist-content'), false);
 
         const listActions = [
-            { icon: '#icon-add', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
+            { icon: '#icon-add-below', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
             { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
             { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
         ];
         this.#listManager = new ListManager(document.getElementById('checklist-list'),
-            this.selectAllBtn,
-            this.deleteItemsBtn,
+            document.getElementById('checklist-select-all-btn'),
+            document.getElementById('checklist-delete-items-btn'),
             'cli-',
             listActions,
             (item) => { return this.#itemHTML(item); },
