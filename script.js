@@ -1941,9 +1941,9 @@ class ChecklistCard extends Card {
         this.listContainer = UIDisplay.create(document.getElementById('checklist-content'), false);
 
         const listActions = [
-            // { icon: '#icon-add', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
-            // { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
-            // { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
+            { icon: '#icon-add', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
+            { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
+            { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
         ];
         this.#listManager = new ListManager(document.getElementById('checklist-list'),
             this.selectAllBtn,
@@ -1960,6 +1960,7 @@ class ChecklistCard extends Card {
                     ids.forEach(id => {
                         this.#items = this.#items.filter(i => i.id !== id);
                         this.#listManager.remove(id);
+                        this.#activeList.sortOrder = this.#activeList.sortOrder.filter(i => i !== id);
                     });
                     this.#listManager.setItems(this.#items);
                     this.#listManager.clearSelection();
@@ -1998,11 +1999,31 @@ class ChecklistCard extends Card {
         this.#listSelector.setValue(id);
 
         this.#items = await StorageService.getChecklistItems(id);
+
+        // validate sort order
+        const originalIds = this.#items.map(item => item.id);
+        let validatedList = [...new Set(this.#activeList.sortOrder || [])].filter(id =>
+            originalIds.includes(id)
+        );
+        originalIds.forEach(id => {
+            if (!validatedList.includes(id)) {
+                validatedList.push(id);
+            }
+        });
+        this.#activeList.sortOrder = validatedList;
+        await StorageService.updateChecklist(this.#activeList);
+
+        // resort items
+        const itemLookup = new Map(this.#items.map(item => [item.id, item]));
+        this.#items = validatedList.map(id => itemLookup.get(id));
+
+        // update UI
         this.renameInput.value = this.#activeList.name;
         this.listForm.hide();
         this.renameForm.hide();
         this.pasteForm.hide();
 
+        // update listand data
         this.#listManager.clearItems();
         this.#items.forEach(item => {
             var element = this.#listManager.add(item);
@@ -2060,13 +2081,58 @@ class ChecklistCard extends Card {
         items.forEach(item => {
             var element = this.#listManager.add(item);
             this.#wireListeners(element, item.id);
+            this.#activeList.sortOrder.push(item.id);
         });
+        await StorageService.updateChecklist(this.#activeList);
 
         this.pasteInput.value = '';
         this.pasteForm.hide();
         await this.#updateListCounts();
         this.#updateProgress();
         this.#updateSummary();
+    }
+
+    async #addItemAfter(id) {
+        const index = this.#items.findIndex(i => i.id === id);
+        const item = await StorageService.addChecklistItem(this.#activeList.id, "");
+        this.#items.splice(index + 1, 0, item);
+        this.#activeList.sortOrder.splice(index + 1, 0, item.id);
+        this.#listManager.setItems(this.#items);
+
+        var element = this.#listManager.add(item, id);
+        element.querySelector('.checklist-item-name').focus({ preventScroll: true });
+        this.#wireListeners(element, item.id);
+
+        await StorageService.updateChecklist(this.#activeList);
+        await this.#updateListCounts();
+        this.#updateProgress();
+        this.#updateSummary();
+    }
+
+    async #moveItem(id, direction) {
+        const index = this.#items.findIndex(i => i.id === id);
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= this.#items.length) return;
+
+        // swap in array
+        [this.#items[index], this.#items[newIndex]] =
+            [this.#items[newIndex], this.#items[index]];
+
+        // swap in DOM
+        const el = document.getElementById(`cli-${id}`);
+        const sibling = direction === -1
+            ? el.previousElementSibling
+            : el.nextElementSibling;
+        if (!sibling) return;
+        if (direction === -1) {
+            sibling.insertAdjacentElement('beforebegin', el);
+        } else {
+            sibling.insertAdjacentElement('afterend', el);
+        }
+
+        this.#listManager.setItems(this.#items);
+        this.#activeList.sortOrder = this.#items.map(item => item.id);
+        await StorageService.updateChecklist(this.#activeList);
     }
 
     async #renameList(name) {
