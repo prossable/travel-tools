@@ -348,7 +348,7 @@ class ListManager {
 
         return `
             <div class="item-overlay">
-                <button class="overlay-check" title="Select"><svg><use href="#icon-check"/></svg></button>
+                <button class="overlay-check" title="Select"><svg><use href="#icon-checkbox"/></svg></button>
                 ${actionButtons}
                 <button class="overlay-delete" title="Delete"><svg><use href="#icon-delete"/></svg></button>
                 <span></span>
