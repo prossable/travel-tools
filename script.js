@@ -38,7 +38,7 @@ class Card {
 }
 
 class RateCard extends Card {
-    constructor(rateService) {
+    constructor() {
         super('card-rate');
 
         // elements
@@ -109,7 +109,7 @@ class RateCard extends Card {
 class ReferenceCard extends Card {
     #multiplier = 1;
 
-    constructor(rateService) {
+    constructor() {
         super('card-reference');
 
         // elements
@@ -183,7 +183,7 @@ class ReferenceCard extends Card {
 }
 
 class CostCard extends Card {
-    constructor(rateService) {
+    constructor() {
         super('card-cost');
 
         // elements
@@ -261,7 +261,7 @@ class CostCard extends Card {
 }
 
 class MarketWeightCard extends Card {
-    constructor(rateService) {
+    constructor() {
         super('card-market');
 
         // elements
@@ -313,7 +313,7 @@ class BillCard extends Card {
     lastBillPercent = null;
     #splitRows = [];
 
-    constructor(rateService) {
+    constructor() {
         super('card-bill');
 
         // elements
@@ -1165,12 +1165,12 @@ class DebtCard extends Card {
                     <button class="${!item.settled ? 'active' : ''}"><svg><use href="#icon-debt"/></svg></button>
                     <button class="${item.settled ? 'active' : ''}"><svg><use href="#icon-check"/></svg></button>
                 </div>
-                <div class="info if-checked">
+                <label class="if-checked">
                     <span>${item.person}</span>
                     <span class="direction ${item.direction}">${item.direction === 'owe' ? 'is owed' : 'owes me'}</span>
                     <span class="highlight">${RateService.formatLocalFull(item.amount)}</span>
                     ${item.note ? ` for ${item.note}` : ''}
-                </div>
+                </label>
                 <button class="item-handle" title="More"><svg><use href="#icon-menu"/></svg></button>
             </div>`;
     }
@@ -1757,7 +1757,7 @@ class BudgetCard extends Card {
         return `
             <div class="budget-entry" id="budget-${item.id}" data-id="${item.id}">
                 <input type="checkbox" class="item-select" ${this.#listManager.isSelected(item.id) ? 'checked' : ''}>
-                <div><span class="accent">${dateStr}: </span><span class="highlight">${amountStr}</span>  ${item.note}</div>
+                <label><span class="accent">${dateStr}: </span><span class="highlight">${amountStr}</span>  ${item.note}</label>
                 <button class="item-handle" title="More"><svg><use href="#icon-menu"/></svg></button>
             </div>`;
     }
@@ -1816,10 +1816,9 @@ class ChecklistCard extends Card {
     #lists = [];
     #activeList = null;
     #items = [];
-    #selection;
-
     #listSelector;
     #templateSelector;
+    #listManager;
 
     constructor() {
         super('card-checklist');
@@ -1901,10 +1900,6 @@ class ChecklistCard extends Card {
         // item toolbar
         this.toolbar = UIDisplay.create(document.getElementById('checklist-toolbar'), false);
 
-        this.modeInput = new InputTab(document.getElementById('checklist-mode'), 'check', (value) => {
-            this.#syncToolbarMode();
-        });
-
         this.addItemBtn = document.getElementById('checklist-add-item-btn');
         this.addItemBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
@@ -1923,7 +1918,7 @@ class ChecklistCard extends Card {
         this.copyItemsBtn = document.getElementById('checklist-copy-items-btn');
         this.copyItemsBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            const ids = this.#selection.getActiveIds();
+            const ids = this.#listManager.getActiveIds();
             const data = this.#items.filter(obj => ids.has(obj.id)).map(obj => obj.name).join(', ');
             await navigator.clipboard.writeText(data);
         });
@@ -1944,32 +1939,38 @@ class ChecklistCard extends Card {
 
         // list element
         this.listContainer = UIDisplay.create(document.getElementById('checklist-content'), false);
-        this.listElement = document.getElementById('checklist-list');
 
-        this.#selection = new SelectionManager(this.selectAllBtn, this.deleteItemsBtn, 'cli-', 'checklist-select',
+        const listActions = [
+            // { icon: '#icon-add', label: 'Add below', onClick: (id) => this.#addItemAfter(id) },
+            // { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
+            // { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
+        ];
+        this.#listManager = new ListManager(document.getElementById('checklist-list'),
+            this.selectAllBtn,
+            this.deleteItemsBtn,
+            'cli-',
+            listActions,
+            (item) => { return this.#itemHTML(item); },
             async (ids) => {
-                await StorageService.deleteChecklistItems([...ids]);
-                ids.forEach(id => {
-                    this.#items = this.#items.filter(i => i.id !== id);
-                    document.getElementById(`cli-${id}`)?.remove();
-                });
-                this.#selection.setItems(this.#items);
-                await this.#updateListCounts();
-                this.#updateProgress();
-                this.#updateSummary();
+                const names = [...ids]
+                    .map(id => this.#items.find(i => i.id === id)?.name)
+                    .filter(Boolean)
+                    .join(', ');
+                if (confirm(`Delete checklist items: ${names}?`)) {
+                    ids.forEach(id => {
+                        this.#items = this.#items.filter(i => i.id !== id);
+                        this.#listManager.remove(id);
+                    });
+                    this.#listManager.setItems(this.#items);
+                    this.#listManager.clearSelection();
+                    await StorageService.deleteChecklistItems([...ids]);
+                    await this.#updateListCounts();
+                    this.#updateProgress();
+                    this.#updateSummary();
+                }
             },
-            () => {
-                this.copyItemsBtn.disabled = this.#selection.getActiveIds().size === 0;
-            }
+            (ids) => { this.copyItemsBtn.disabled = this.#listManager.getActiveIds().size === 0; }
         );
-
-        // bottom toolbar
-        this.toolbar2 = document.getElementById('checklist-toolbar2');
-        this.addItem2Btn = document.getElementById('checklist-add-item2-btn');
-        this.addItem2Btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await this.#addItems(['']);
-        });
 
         // progress
         this.progressFill = document.getElementById('checklist-progress-fill');
@@ -1988,7 +1989,6 @@ class ChecklistCard extends Card {
         if (this.#lists.length > 0) await this.#selectList(this.#lists[0].id);
         this.#updateSummary();
         this.#resetForm();
-        this.#syncToolbarMode();
     }
 
     async #selectList(id) {
@@ -2002,7 +2002,22 @@ class ChecklistCard extends Card {
         this.listForm.hide();
         this.renameForm.hide();
         this.pasteForm.hide();
-        this.#renderAll();
+
+        this.#listManager.clearItems();
+        this.#items.forEach(item => {
+            var element = this.#listManager.add(item);
+            this.#wireListeners(element, item.id);
+        });
+        this.#listManager.setItems(this.#items);
+        this.#updateProgress();
+    }
+
+    #resetForm() {
+        this.nameInput.value = '';
+        this.nameError.textContent = '';
+        this.useTemplateCheck.checked = false;
+        this.#templateSelector.setDisplay(false);
+        this.#templateSelector.clearValue();
     }
 
     async #addList() {
@@ -2031,7 +2046,6 @@ class ChecklistCard extends Card {
         } else {
             this.#addItems(['']);
         }
-        this.modeInput.setValue('edit');
 
         this.#resetForm();
         this.listForm.hide();
@@ -2041,14 +2055,11 @@ class ChecklistCard extends Card {
         if (!this.#activeList || !names || !names.length) return;
         const items = await StorageService.addChecklistItems(this.#activeList.id, names);
         this.#items = [...this.#items, ...items];
-        this.#selection.setItems(this.#items);
+        this.#listManager.setItems(this.#items);
 
-        items.forEach((item, index) => {
-            const el = document.createElement('div');
-            el.innerHTML = this.#itemHTML(item);
-            const itemEl = el.firstElementChild;
-            this.listElement.appendChild(itemEl);
-            this.#wireListeners(itemEl, item.id);
+        items.forEach(item => {
+            var element = this.#listManager.add(item);
+            this.#wireListeners(element, item.id);
         });
 
         this.pasteInput.value = '';
@@ -2082,7 +2093,7 @@ class ChecklistCard extends Card {
             this.#lists = this.#lists.filter(l => l.id !== this.#activeList.id);
             this.#activeList = null;
             this.#items = [];
-            this.listElement.innerHTML = '';
+            this.#listManager.clearItems();
             this.#syncListSelector();
             this.#updateProgress();
             this.#updateSummary();
@@ -2128,28 +2139,6 @@ class ChecklistCard extends Card {
         this.listContainer.setDisplay(hasLists);
     }
 
-    #syncToolbarMode() {
-        const isEdit = this.modeInput.getValue() === 'edit';
-        this.cardElement.classList.toggle('edit-mode', isEdit);
-        this.cardElement.classList.toggle('check-mode', !isEdit);
-        UIDisplay.setVisible(this.addItemBtn, isEdit);
-        UIDisplay.setVisible(this.addItemsBtn, isEdit);
-        UIDisplay.setVisible(this.selectAllBtn, isEdit);
-        UIDisplay.setVisible(this.deleteItemsBtn, isEdit);
-        UIDisplay.setVisible(this.copyItemsBtn, isEdit);
-        UIDisplay.setVisible(this.toolbar2, isEdit);
-        this.pasteForm.hide();
-        if (!isEdit) this.#selection.clear();
-    }
-
-    #resetForm() {
-        this.nameInput.value = '';
-        this.nameError.textContent = '';
-        this.useTemplateCheck.checked = false;
-        this.#templateSelector.setDisplay(false);
-        this.#templateSelector.clearValue();
-    }
-
     #updateProgress() {
         if (!this.#activeList) {
             return;
@@ -2177,29 +2166,19 @@ class ChecklistCard extends Card {
     #itemHTML(item) {
         return `
             <div class="checklist-item ${item.checked ? 'checked' : ''}" id="cli-${item.id}" data-id="${item.id}">
-                <input type="checkbox" class="checklist-select">
-                <input type="text" class="checklist-item-name if-edit-mode if-checked" value="${item.name}" placeholder="Item">
+                <input type="checkbox" class="item-select" ${this.#listManager.isSelected(item.id) ? 'checked' : ''}>
                 <div class="toggle checklist-toggle">
-                    <button class="${!item.checked ? 'active' : ''}">
-                        <svg><use href="#icon-close"/></svg>
-                    </button>
-                    <button class="${item.checked ? 'active' : ''}">
-                        <svg><use href="#icon-check"/></svg>
-                    </button>
-                </div>
+                    <button class="${!item.checked ? 'active' : ''}"><svg><use href="#icon-close"/></svg></button>
+                    <button class="${item.checked ? 'active' : ''}"><svg><use href="#icon-check"/></svg></button>
+                </div> 
+                <input type="text" class="checklist-item-name if-edit-mode if-checked" value="${item.name}" placeholder="Item">
+                <button class="item-handle" title="More"><svg><use href="#icon-menu"/></svg></button>       
             </div>`;
     }
 
     #wireListeners(row, id) {
-        const checkbox = row.querySelector('.checklist-select');
         const nameInput = row.querySelector('.checklist-item-name');
         const toggle = row.querySelector('.checklist-toggle');
-
-        // selection
-        checkbox.addEventListener('change', (e) => {
-            e.stopPropagation();
-            this.#selection.setActive(id, checkbox.checked);
-        });
 
         // name edit
         nameInput.addEventListener('blur', async () => {
@@ -2223,15 +2202,6 @@ class ChecklistCard extends Card {
                 this.#updateSummary();
             }
         );
-    }
-
-    #renderAll() {
-        this.listElement.innerHTML = this.#items.map(i => this.#itemHTML(i)).join('');
-        this.listElement.querySelectorAll('.checklist-item').forEach(row => {
-            this.#wireListeners(row, parseInt(row.dataset.id));
-        });
-        this.#selection.setItems(this.#items);
-        this.#updateProgress();
     }
 }
 

@@ -120,6 +120,7 @@ textarea {
     padding: 6px 10px;
     outline: none;
     width: 100%;
+    flex: 1;
     height: 30px;
     transition: background-color .2s, height 0.2s;
     -moz-appearance: textfield;
@@ -225,6 +226,9 @@ input[type="date"] {
     pointer-events: none;
     width: 0;
     height: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 input[type="checkbox"] {
@@ -238,9 +242,11 @@ input[type="checkbox"] {
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
+    flex: 0;
     transition: background 0.2s, border-color 0.2s;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 
     &:checked {
         &::after {
@@ -515,6 +521,67 @@ div {
     }
 }
 
+/* List */
+
+.item-select {
+    display: none;
+}
+
+.selection-mode .item-select {
+    display: block;
+}
+
+.item-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    align-items: center;
+    gap: 12px;
+    z-index: 10;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--card-bg2);
+        z-index: -1;
+        background: rgba(25, 45, 55, .8);
+        box-shadow: inset 0 0px 10px 10px var(--card-bg1);
+    }
+}
+
+.overlay-open .item-overlay {
+    display: flex;
+
+    span {
+        flex: 1;
+    }
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    max-height: 40vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 10px;
+
+    background: linear-gradient(var(--card-bg1) 30%, rgba(0, 0, 0, 0)) center top,
+        linear-gradient(rgba(0, 0, 0, 0), var(--card-bg1) 70%) center bottom,
+        radial-gradient(farthest-side at 50% 0, rgba(60, 155, 215, .5), rgba(0, 0, 0, 0)) center top,
+        radial-gradient(farthest-side at 50% 100%, rgba(60, 155, 215, .5), rgba(0, 0, 0, 0)) center bottom;
+    background-repeat: no-repeat;
+    background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
+    background-attachment: local, local, scroll, scroll;
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--color2) transparent;
+    scrollbar-gutter: stable;
+}
+
 /* GENERIC */
 label {
     user-select: none;
@@ -706,15 +773,6 @@ header {
     text-decoration: line-through;
 }
 
-.check-mode .if-edit-mode {
-    pointer-events: none;
-    border-color: transparent;
-    background: transparent;
-    padding: 0;
-    transition: opacity 0.2s;
-
-}
-
 /* CHECKLIST */
 #card-checklist {
     textarea {
@@ -728,14 +786,14 @@ header {
     }
 
     .checklist-item {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 12px;
+    }
 
-
-        .checklist-select {
-            display: none;
-        }
+    .selection-mode .checklist-item {
+        grid-template-columns: auto auto 1fr 1fr auto;
     }
 
     &.edit-mode {
@@ -934,17 +992,12 @@ header {
     .tally-item {
         position: relative;
         align-items: center;
-        display: grid;
-        grid-template-columns: auto 1fr 1fr auto;
+        display: flex;
         gap: 12px;
 
         .tally-price {
             text-align: right;
         }
-    }
-
-    .selection-mode .tally-item {
-        grid-template-columns: auto auto 1fr 1fr auto;
     }
 
     .total span:nth-child(3n+2) {
@@ -955,73 +1008,6 @@ header {
     .total span:nth-child(3n) {
         color: var(--color1);
         text-align: right;
-    }
-}
-
-/* List */
-
-.item-select {
-    display: none;
-}
-
-.selection-mode .item-select {
-    display: block;
-}
-
-.item-overlay {
-    display: none;
-    position: absolute;
-    inset: 0;
-    border-radius: 10px;
-    align-items: center;
-    gap: 12px;
-    z-index: 10;
-
-    &::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: var(--card-bg2);
-        opacity: .75;
-        border-radius: 10px;
-        z-index: -1;
-    }
-}
-
-.overlay-open .item-overlay {
-    display: flex;
-
-    span {
-        flex: 1;
-    }
-}
-
-.list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    position: relative;
-    max-height: 50vh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-
-    border-radius: 10px;
-    box-shadowX: inset 0 -25px 10px -15px rgba(60, 155, 215, .2);
-
-    background: linear-gradient(var(--card-bg1) 30%, rgba(0, 0, 0, 0)) center top,
-        linear-gradient(rgba(0, 0, 0, 0), var(--card-bg1) 70%) center bottom,
-        radial-gradient(farthest-side at 50% 0, rgba(60, 155, 215, .5), rgba(0, 0, 0, 0)) center top,
-        radial-gradient(farthest-side at 50% 100%, rgba(60, 155, 215, .5), rgba(0, 0, 0, 0)) center bottom;
-    background-repeat: no-repeat;
-    background-size: 100% 40px, 100% 40px, 100% 14px, 100% 14px;
-    background-attachment: local, local, scroll, scroll;
-
-    scrollbar-width: thin;
-    scrollbar-color: var(--color2) transparent;
-    scrollbar-gutter: stable;
-
-    &.at-bottom {
-        box-shadow: none;
     }
 }
 
@@ -1067,13 +1053,12 @@ header {
 /* DEBT */
 .debt-entry {
     position: relative;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
+    display: flex;
     align-items: center;
     gap: 12px;
 
-    &:has(.selection-mode) {
-        grid-template-columns: auto auto 1fr auto;
+    label {
+        flex: 1;
     }
 
     .direction.owe {
@@ -1085,24 +1070,17 @@ header {
     }
 }
 
-.selection-mode .debt-entry {
-    grid-template-columns: auto auto 1fr auto;
-
-}
-
 /* BUDGET */
 #card-budget {
     .budget-entry {
         position: relative;
-        display: grid;
-        grid-template-columns: 1fr auto;
+        display: flex;
         align-items: center;
         gap: 12px;
-    }
 
-    .selection-mode .budget-entry {
-        grid-template-columns: auto 1fr auto;
-
+        label {
+            flex: 1;
+        }
     }
 
     .budget-progress-bar {
