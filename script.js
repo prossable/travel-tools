@@ -1010,6 +1010,10 @@ class DebtCard extends Card {
 
         this.modeInput = new InputTab(document.getElementById('debt-mode'), 'owe');
 
+        this.dateInput = new InputDate(document.getElementById('debt-date'),
+            document.getElementById('debt-date-trigger'),
+            RateService.getLocalDate());
+
         this.addButton = document.getElementById('debt-add');
         this.addButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1018,15 +1022,11 @@ class DebtCard extends Card {
 
         // list manager
         this.listElement = document.getElementById('debt-list');
-        const listActions = [
-            { icon: '#icon-arrow-up', label: 'Move up', onClick: (id) => this.#moveItem(id, -1) },
-            { icon: '#icon-arrow-down', label: 'Move down', onClick: (id) => this.#moveItem(id, 1) }
-        ];
         this.#listManager = new ListManager(this.listElement,
             document.getElementById('debt-select-all'),
             document.getElementById('debt-clear'),
             'debt-',
-            listActions,
+            null,
             (item) => { return this.#itemHTML(item); },
             (ids) => {
                 console.log("delete", ids);
@@ -1075,6 +1075,7 @@ class DebtCard extends Card {
         this.foreignInput.value = '';
         this.localInput.value = '';
         this.modeInput.setValue('owe');
+        this.dateInput.setValue(RateService.getLocalDate());
     }
 
     #addDebt() {
@@ -1091,44 +1092,16 @@ class DebtCard extends Card {
             amount: RateService.toLocal(foreignVal),
             direction: this.modeInput.getValue(),
             note,
-            settled: false
+            settled: false,
+            date: this.dateInput.getValue() || RateService.getLocalDate()
         };
 
         this.#items.push(debt);
-        this.#listManager.setItems(this.#items);
-
-        var element = this.#listManager.add(debt);
-        this.#wireListeners(element, debt.id);
-
+        this.#items.sort((a, b) => !a.date ? -1 : !b.date ? 1 : a.date.localeCompare(b.date) || a.id - b.id);
+        this.#save();
+        this.#renderAll();
         this.#clearForm();
         this.formElement.hide();
-        this.#save();
-        this.#update();
-    }
-
-    #moveItem(id, direction) {
-        const index = this.#items.findIndex(i => i.id === id);
-        const newIndex = index + direction;
-        if (newIndex < 0 || newIndex >= this.#items.length) return;
-
-        // swap in array
-        [this.#items[index], this.#items[newIndex]] =
-            [this.#items[newIndex], this.#items[index]];
-
-        // swap in DOM
-        const el = document.getElementById(`debt-${id}`);
-        const sibling = direction === -1
-            ? el.previousElementSibling
-            : el.nextElementSibling;
-        if (!sibling) return;
-        if (direction === -1) {
-            sibling.insertAdjacentElement('beforebegin', el);
-        } else {
-            sibling.insertAdjacentElement('afterend', el);
-        }
-
-        this.#listManager.setItems(this.#items);
-        this.#save();
     }
 
     #save() {
@@ -1140,10 +1113,16 @@ class DebtCard extends Card {
         const stored = localStorage.getItem('debts');
         if (stored) {
             this.#items = JSON.parse(stored);
+            this.#items.sort((a, b) => !a.date ? -1 : !b.date ? 1 : a.date.localeCompare(b.date) || a.id - b.id);
             this.#nextId = parseInt(localStorage.getItem('debtsNextId')) ||
                 this.#items.reduce((max, d) => Math.max(max, d.id), 0) + 1;
         }
 
+        this.#renderAll();
+    }
+
+    #renderAll() {
+        this.#listManager.clearItems();
         this.#items.forEach(item => {
             var element = this.#listManager.add(item);
             this.#wireListeners(element, item.id);
@@ -1153,6 +1132,7 @@ class DebtCard extends Card {
     }
 
     #itemHTML(item) {
+        const dateStr = InputDate.format(item.date);
         return `
             <div class="debt-entry ${item.settled ? 'checked' : ''}" id="debt-${item.id}" data-id="${item.id}">
                 <input type="checkbox" class="item-select" ${this.#listManager.isSelected(item.id) ? 'checked' : ''}>
@@ -1161,6 +1141,7 @@ class DebtCard extends Card {
                     <button class="${item.settled ? 'active' : ''}"><svg><use href="#icon-check"/></svg></button>
                 </div>
                 <label class="if-checked">
+                    <span class="accent">${dateStr}: </span>
                     <span>${item.person}</span>
                     <span class="direction ${item.direction}">${item.direction === 'owe' ? 'is owed' : 'owes me'}</span>
                     <span class="highlight">${RateService.formatLocalFull(item.amount)}</span>
@@ -1700,12 +1681,11 @@ class BudgetCard extends Card {
         };
 
         this.#items.push(item);
-        this.#items.sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+        this.#items.sort((a, b) => !a.date ? -1 : !b.date ? 1 : a.date.localeCompare(b.date) || a.id - b.id);
         this.#save();
         this.#renderAll();
         this.#clearForm();
         this.formElement.hide();
-        this.update();
     }
 
     #updateLabels() {
@@ -1759,6 +1739,7 @@ class BudgetCard extends Card {
             var element = this.#listManager.add(item);
         });
         this.#listManager.setItems(this.#items);
+        this.update();
     }
 
     #save() {
@@ -1770,11 +1751,11 @@ class BudgetCard extends Card {
         const stored = localStorage.getItem('budgetItems');
         if (stored) {
             this.#items = JSON.parse(stored);
+            this.#items.sort((a, b) => !a.date ? -1 : !b.date ? 1 : a.date.localeCompare(b.date) || a.id - b.id);
             this.#nextId = parseInt(localStorage.getItem('budgetNextId')) ||
                 this.#items.reduce((max, i) => Math.max(max, i.id), 0) + 1;
         }
         this.#renderAll();
-        this.update();
     }
 
     // ── Public ────────────────────────────────────────

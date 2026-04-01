@@ -190,6 +190,7 @@ class InputDate extends UIDisplay {
     }
 
     static format(dateString) {
+        if (!dateString) return '-';
         const [year, month, day] = dateString.split('-').map(Number);
         return new Date(year, month - 1, day).toLocaleDateString(
             RateService.getLocalCurrency().locale, {
