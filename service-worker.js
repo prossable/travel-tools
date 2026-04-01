@@ -1,4 +1,4 @@
-const VERSION = '1.38';
+const VERSION = '1.39';
 const CACHE = `travel-tools-${VERSION}`;
 
 const ASSETS = [
