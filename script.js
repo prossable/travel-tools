@@ -596,7 +596,20 @@ class MarketTallyCard extends Card {
 
         // elements
         this.listElement = document.getElementById('tally-list');
+
+        // toolbar
         this.addButton = document.getElementById('tally-add');
+        this.addButton.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            await this.#addItems(['']);
+        });
+
+        this.addItemsBtn = document.getElementById('tally-add-many');
+        this.addItemsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.pasteForm.toggleDisplay();
+        });
+
         this.spentForeignOutput = document.getElementById('tally-spent-foreign');
         this.spentLocalOutput = document.getElementById('tally-spent-local');
         this.remainingForeignOutput = document.getElementById('tally-remaining-foreign');
@@ -633,10 +646,18 @@ class MarketTallyCard extends Card {
             (ids) => { }
         );
 
-        // add
-        this.addButton.addEventListener('click', (e) => {
+        // items form
+        this.pasteForm = UIDisplay.create(document.getElementById('tally-paste-form'), false);
+        this.pasteInput = document.getElementById('tally-paste');
+
+        this.pasteAddBtn = document.getElementById('tally-paste-items-btn');
+        this.pasteAddBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.#addItem();
+            const names = this.pasteInput.value
+                .split(/[\n\r\t,]+/)
+                .map(n => n.trim())
+                .filter(n => n.length > 0);
+            this.#addItems(names);
         });
 
         // rate / currency
@@ -653,15 +674,21 @@ class MarketTallyCard extends Card {
         return { id: this.#nextId++, label, price, checked };
     }
 
-    #addItem(label = '', price = null) {
-        const item = this.#createItem(label, price);
-        this.#items.push(item);
+    async #addItems(names) {
+        if (!names || !names.length) return;
+
+        names.forEach(name => {
+            const item = this.#createItem(name);
+            this.#items.push(item);
+
+            var element = this.#listManager.add(item);
+            // element.querySelector('.tally-label').focus({ preventScroll: true });
+            this.#wireListeners(element, item.id);
+        });
+
         this.#listManager.setItems(this.#items);
-
-        var element = this.#listManager.add(item);
-        element.querySelector('.tally-label').focus({ preventScroll: true });
-        this.#wireListeners(element, item.id);
-
+        this.pasteInput.value = '';
+        this.pasteForm.hide();
         this.#save();
         this.update();
     }
@@ -788,10 +815,6 @@ class MarketTallyCard extends Card {
         this.remainingForeignOutput.textContent = RateService.formatForeignFull(remainingForeign);
         this.remainingLocalOutput.textContent = RateService.formatLocalFull(RateService.toLocal(remainingForeign));
         this.updateSummary(RateService.formatLocalFull(RateService.toLocal(totalForeign)));
-    }
-
-    addExternalItem(label, price) {
-        this.#addItem(label, price);
     }
 }
 

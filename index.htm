@@ -734,12 +734,34 @@
                         <button id="tally-add" title="Add item"><svg>
                                 <use href="#icon-add" />
                             </svg></button>
+                        <button id="tally-add-many" title="Add list">
+                            <svg>
+                                <use href="#icon-add-many" />
+                            </svg>
+                        </button>
                         <button id="tally-select" title="Select All"><svg>
                                 <use href="#icon-checkbox-many" />
                             </svg></button>
                         <button id="tally-delete" class="red if-selection-mode" title="Delete Selected"><svg>
                                 <use href="#icon-delete" />
                             </svg></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add list form -->
+            <section id="tally-paste-form" class="form">
+                <div>
+                    <div class="label-group">
+                        <label>Paste items (comma, tab, or newline separated)</label>
+                        <textarea id="tally-paste" placeholder="Snacks, Drinks, Sunblock…" rows="3"></textarea>
+                    </div>
+                    <div class="row-right">
+                        <button id="tally-paste-items-btn">
+                            <svg>
+                                <use href="#icon-add" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </section>
