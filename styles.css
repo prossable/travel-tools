@@ -328,7 +328,7 @@ div.toggle {
     border: 0px;
     border-radius: 10px;
     overflow: hidden;
-    width: 60px;
+    width: 50px;
 
     @media (hover: hover) {
         &:hover button.active {
@@ -341,6 +341,7 @@ div.toggle {
     }
 
     >button {
+        width: fit-content;
         padding: 8px 0;
         border-radius: 0;
         flex: 1;
@@ -997,6 +998,7 @@ header {
 
         .tally-price {
             text-align: right;
+            flex: .25;
         }
     }
 
